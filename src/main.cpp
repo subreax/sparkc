@@ -28,7 +28,7 @@ int main(int argc, char** argv) {
     while (lexer.hasNext()) {
         auto token = lexer.next();
         token.value.copyTo(tokenValue, 64);
-        cout << token.kind << ": '" << tokenValue << "' (" << token.line << ":" << token.col << ")" << endl;
+        printf("%-20s '%s' (%d:%d)\n", TokenKind_toString(token.kind), tokenValue, token.line, token.col);
     }
 
     return 0;

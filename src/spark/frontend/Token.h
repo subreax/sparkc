@@ -30,3 +30,5 @@ struct Token {
     int line;
     int col;
 };
+
+const char* TokenKind_toString(TokenKind kind);
