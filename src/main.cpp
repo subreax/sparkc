@@ -2,8 +2,40 @@
 #include <fstream>
 #include <sstream>
 #include "spark/frontend/Lexer.h"
+#include "spark/frontend/Parser.h"
+#include "mermaid/Ast2Mermaid.h"
 using namespace std;
 
+
+string readFile(const char* path);
+void writeMermaidAst(AstExp* exp, const char* outFile);
+
+
+int main(int argc, char** argv) {
+    if (argc == 1) {
+        cout << "Specify source file to compile" << endl;
+        return 1;
+    }
+
+    string source = readFile(argv[1]);
+    Lexer lexer(source.c_str());
+    LinearAllocator astAlloc(4096);
+    Parser parser(lexer, astAlloc);
+    auto res = parser.parseExpression();
+    if (!res.isOk) {
+        cout << "Failed to parse expression" << endl;
+        auto& diag = parser.getDiagnostics();
+        for (auto str : diag) {
+            cout << str << endl;
+        }
+        return 1;
+    }
+
+    auto* ast = res.value;
+    writeMermaidAst(ast, "ast.md");
+    
+    return 0;
+}
 
 string readFile(const char* path) {
     ifstream fin(path);
@@ -16,20 +48,17 @@ string readFile(const char* path) {
     return oss.str();
 }
 
-int main(int argc, char** argv) {
-    if (argc == 1) {
-        cout << "Specify source file to compile" << endl;
-        return 1;
-    }
+void writeMermaidAst(AstExp* exp, const char* outFile) {
+    Ast2Mermaid conv;
+    std::vector<std::string> mermaid;
+    conv.toMermaid(exp, mermaid);
 
-    string source = readFile(argv[1]);
-    Lexer lexer(source.c_str());
-    char tokenValue[64];
-    while (lexer.hasNext()) {
-        auto token = lexer.next();
-        token.value.copyTo(tokenValue, 64);
-        printf("%-20s '%s' (%d:%d)\n", TokenKind_toString(token.kind), tokenValue, token.line, token.col);
+    ofstream astOut("ast.md");
+    astOut << "```mermaid\n";
+    astOut << "flowchart TB\n";
+    for (const auto& str : mermaid) {
+        astOut << "    " << str << "\n";
     }
-
-    return 0;
+    astOut << "```";
+    astOut.close();
 }

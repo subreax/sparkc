@@ -22,13 +22,16 @@ enum TokenKind {
 };
 
 struct Token {
+    Token() = default;
+
     Token(TokenKind kind, StringRef value, int line, int col)
         : kind(kind), value(value), line(line), col(col) { }
 
-    TokenKind kind;
-    StringRef value;
-    int line;
-    int col;
+    TokenKind kind = T_BAD;
+    StringRef value = StringRef::nullInstance();
+    int line = 0;
+    int col = 0;
 };
 
 const char* TokenKind_toString(TokenKind kind);
+std::string TokenKind_toStdString(TokenKind kind);

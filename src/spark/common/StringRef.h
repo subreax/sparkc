@@ -1,5 +1,6 @@
 #pragma once
 #include <algorithm>
+#include <string>
 
 class StringRef {
 public:
@@ -10,9 +11,9 @@ public:
         return StringRef(nullptr, 0);
     }
 
-    void copyTo(char* out, int capacity) const {
+    int copyTo(char* out, int capacity) const {
         if (capacity == 0) {
-            return;
+            return 0;
         }
 
         if (isNotNull()) {
@@ -22,8 +23,10 @@ public:
                 out[i] = str[i];
             }
             out[i] = 0;
+            return i;
         } else {
-            *out = 0;
+            out[0] = 0;
+            return 0;
         }
     }
 
@@ -44,6 +47,9 @@ private:
     int length;
 };
 
+
+std::string operator+(const std::string& s1, StringRef s2);
+std::string operator+(StringRef s1, const std::string& s2);
 
 // capacity = 10
 // len = 10

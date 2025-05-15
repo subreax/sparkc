@@ -29,3 +29,7 @@ const char* TokenKind_toString(TokenKind kind) {
         return "KIND_iS_OUT_OF_RANGE";
     }
 }
+
+std::string TokenKind_toStdString(TokenKind kind) {
+    return std::string(TokenKind_toString(kind));
+}

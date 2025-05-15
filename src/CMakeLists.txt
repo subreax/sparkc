@@ -1,1 +1,1 @@
-add_executable(sparkc main.cpp spark/frontend/Token.cpp)
+add_executable(sparkc main.cpp spark/frontend/Token.cpp spark/common/StringRef.cpp)
