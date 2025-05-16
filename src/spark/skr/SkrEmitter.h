@@ -40,11 +40,11 @@ private:
     SkrBinary::Operator binaryOpOf(AstBinaryExp::Operator astOp) {
         switch (astOp)
         {
-        case AstBinaryExp::Operator::OP_PLUS: return SkrBinary::Operator::Plus;
-        case AstBinaryExp::Operator::OP_MINUS: return SkrBinary::Operator::Minus;
-        case AstBinaryExp::Operator::OP_MUL: return SkrBinary::Operator::Mul;
-        case AstBinaryExp::Operator::OP_DIV: return SkrBinary::Operator::Div;
-        case AstBinaryExp::Operator::OP_REM: return SkrBinary::Operator::Rem;
+        case AstBinaryExp::Operator::Plus: return SkrBinary::Operator::Plus;
+        case AstBinaryExp::Operator::Minus: return SkrBinary::Operator::Minus;
+        case AstBinaryExp::Operator::Mul: return SkrBinary::Operator::Mul;
+        case AstBinaryExp::Operator::Div: return SkrBinary::Operator::Div;
+        case AstBinaryExp::Operator::Rem: return SkrBinary::Operator::Rem;
         default:
             printf("Can't map AstBinaryExp::Operator to SkrBinary::Operator");
             std::abort();

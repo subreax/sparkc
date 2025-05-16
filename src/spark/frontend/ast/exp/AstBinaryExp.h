@@ -4,11 +4,11 @@
 class AstBinaryExp : public AstExp {
 public:
     enum class Operator {
-        OP_PLUS,
-        OP_MINUS,
-        OP_MUL,
-        OP_DIV,
-        OP_REM
+        Plus,
+        Minus,
+        Mul,
+        Div,
+        Rem
     };
 
     AstBinaryExp(AstExp* left, Operator op, AstExp* right) 
@@ -23,15 +23,15 @@ public:
 
     static Operator toBinaryOperator(TokenKind kind) {
         switch (kind) {
-        case T_PLUS:        return Operator::OP_PLUS;
-        case T_HYPHEN:      return Operator::OP_MINUS;
-        case T_ASTERISK:    return Operator::OP_MUL;
-        case T_FWD_SLASH:   return Operator::OP_DIV;
-        case T_PERCENT:     return Operator::OP_REM;
+        case T_PLUS:        return Operator::Plus;
+        case T_HYPHEN:      return Operator::Minus;
+        case T_ASTERISK:    return Operator::Mul;
+        case T_FWD_SLASH:   return Operator::Div;
+        case T_PERCENT:     return Operator::Rem;
         }
         printf("Unknown binary operator: %s\n", TokenKind_toString(kind));
         std::abort();
-        return Operator::OP_PLUS;
+        return Operator::Plus;
     }
 
     static const char* operatorToString(Operator op) {
