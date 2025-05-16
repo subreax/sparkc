@@ -9,6 +9,15 @@ public:
         end = begin + sz;
     }
 
+    LinearAllocator(const LinearAllocator&) = delete;
+    LinearAllocator& operator=(const LinearAllocator&) = delete;
+    LinearAllocator(LinearAllocator&&) = delete;
+
+    ~LinearAllocator() {
+        free(begin);
+    }
+
+
     uint8_t* allocate(size_t blockSz) {
         if (getFreeSize() >= blockSz) {
             uint8_t* block = ptr;
@@ -20,7 +29,7 @@ public:
     }
 
     template<typename T, typename... Args>
-    T* create(Args... args) {
+    inline T* create(Args... args) {
         uint8_t* block = allocate(sizeof(T));
         return new(block) T(args...);
     }

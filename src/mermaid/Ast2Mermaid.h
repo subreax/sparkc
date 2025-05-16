@@ -38,7 +38,13 @@ private:
     }
 
     std::string addValue(const std::string& blank, const std::string& type, const std::string& value) {
-        return blank + "(\"" + type + "\n\\" + value + "\")";
+        return blank + "(\"" + type + "\n" + bslashIfNeeded(value) + value + "\")";
+    }
+
+    const char* bslashIfNeeded(const std::string& s) {
+        if (s.empty()) return "";
+        if (isalnum(s[0])) return "";
+        return "\\";
     }
 
     int id = 0;
