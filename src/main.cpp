@@ -5,16 +5,15 @@
 #include "spark/frontend/Parser.h"
 #include "spark/skr/SkrEmitter.h"
 #include "spark/backend/rv/Skr2RvaPseudo.h"
-#include "mermaid/Ast2Mermaid.h"
+#include "printer/ast/AstMermaidPrinter.h"
+#include "printer/skr/SkrPrinter.h"
 #include "printer/rva/RvaPrinter.h"
 using namespace std;
 
 
 string readFile(const char* path);
 void writeMermaidAst(AstExp* exp, const char* outFile);
-void printSkrs(const std::vector<SkrInstruction*>& skrs);
-ostream& operator<<(ostream& os, const SkrValue& skr);
-ostream& operator<<(ostream& os, SkrBinary::Operator op);
+void dump(const LinearAllocator& allocator, const char* outFile);
 void dump(const uint8_t* block, size_t sz, const char* outFile);
 
 
@@ -43,24 +42,23 @@ int main(int argc, char** argv) {
 
     LinearAllocator idAlloc(2048, true);
     LinearAllocator skrAlloc(2048);
+    LinearAllocator rvaAlloc(2048);
+
     IdentifierGen idGen(idAlloc);
 
     std::vector<SkrInstruction*> skrs;
     SkrEmitter skrEmitter(skrAlloc, idGen, skrs);
     skrEmitter.emit("pixel", astExp);
-    dump(idAlloc.getBlock(), idAlloc.getSize(), "idAlloc.bin");
     cout << "== skr ==" << endl;
-    printSkrs(skrs);
+    SkrPrinter::print(cout, skrs);    
 
-
-    LinearAllocator rvaAlloc(2048);
-    std::vector<RvAInstruction*> rva;
+    std::vector<RvaInstruction*> rva;
     Skr2RvaPseudo s2rp(rvaAlloc, skrs, rva);
     s2rp.emit();
-
     cout << endl << "== rva ==" << endl;
-    RvaPrinter(rva).print(cout);
+    RvaPrinter::print(cout, rva);
 
+    dump(idAlloc, "idAlloc.bin");
     return 0;
 }
 
@@ -76,53 +74,16 @@ string readFile(const char* path) {
 }
 
 void writeMermaidAst(AstExp* exp, const char* outFile) {
-    Ast2Mermaid conv;
-    std::vector<std::string> mermaid;
-    conv.toMermaid(exp, mermaid);
+    AstMermaidPrinter conv;
+    std::ostringstream oss;
+    conv.toMermaid(oss, exp);
 
     ofstream astOut("ast.md");
     astOut << "```mermaid\n";
     astOut << "flowchart TB\n";
-    for (const auto& str : mermaid) {
-        astOut << "    " << str << "\n";
-    }
+    astOut << oss.str();
     astOut << "```";
     astOut.close();
-}
-
-void printSkrs(const std::vector<SkrInstruction*>& skrs) {
-    for (auto* skr : skrs) {
-        if (skr->getType() == SkrInstruction::Type::Binary) {
-            auto* bin = (SkrBinary*) skr;
-            cout << *bin->getDst() << " = " << *bin->getLeft() << " " << bin->getOperator() << " " << *bin->getRight() << endl;
-        } else {
-            cout << "unknown skr: " << (int) skr->getType() << endl;
-        }
-    }
-}
-
-ostream& operator<<(ostream& os, const SkrValue& skr) {
-    if (skr.getType() == SkrValue::Type::Const) {
-        os << ((SkrConst*) &skr)->getConst();
-    } 
-    else if (skr.getType() == SkrValue::Type::Var) {
-        os << ((SkrVar*) &skr)->getId();
-    } 
-    else {
-        os << "_unknown_: " << (int) skr.getType();
-    }
-    return os;
-}
-
-ostream& operator<<(ostream& os, SkrBinary::Operator op) {
-    static const char* OPS[5] = { "+", "-", "*", "/", "%" };
-    int iop = (int) op;
-    if (iop < 5) {
-        os << OPS[iop];
-    } else {
-        os << "_unknown_:" << iop;
-    }
-    return os;
 }
 
 void dump(const uint8_t* block, size_t sz, const char* outFile) {
@@ -132,4 +93,8 @@ void dump(const uint8_t* block, size_t sz, const char* outFile) {
         fputc(block[i], f);
     }
     fclose(f);
+}
+
+void dump(const LinearAllocator& allocator, const char* outFile) {
+    dump(allocator.getBlock(), allocator.getFreeSize(), outFile);
 }

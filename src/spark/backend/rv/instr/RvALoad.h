@@ -1,15 +1,15 @@
 #pragma once
-#include "RvAInstruction.h"
+#include "RvaInstruction.h"
 
-class RvALoad : public RvAInstruction {
+class RvaLoad : public RvaInstruction {
 public:
-    RvALoad(RvAValue* to, RvAValue* fromAddr) 
-        : RvAInstruction(Type::Load)
+    RvaLoad(RvaValue* to, RvaValue* fromAddr) 
+        : RvaInstruction(Type::Load)
         , to(to)
         , fromAddr(fromAddr) {}
 
     void emit(RvListing& listing) override {}
 
-    RvAValue* to;
-    RvAValue* fromAddr;
+    RvaValue* to;
+    RvaValue* fromAddr;
 };

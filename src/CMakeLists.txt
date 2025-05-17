@@ -3,5 +3,6 @@ add_executable(sparkc
     spark/frontend/Token.cpp 
     spark/common/StringRef.cpp
     spark/backend/rv/assembler/RvListing.cpp
+    printer/skr/SkrPrinter.cpp
     printer/rva/RvaPrinter.cpp
 )

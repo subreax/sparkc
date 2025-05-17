@@ -1,4 +1,5 @@
 #include "RvaPrinter.h"
+#include <iomanip>
 
 static constexpr const char* _REG_STR[] = {
     "zero", "ra", "sp", "gp", "tp", "t0", "t1", "t2", "s0", "s1",
@@ -18,33 +19,6 @@ inline const char* sign(int v) {
     }
 }
 
-std::ostream& operator<<(std::ostream& os, const RvAValue& value) {
-    auto type = value.getType();
-    switch (type)
-    {
-    case RvAValue::Type::Imm:
-        os << ((const RvAImm*) &value)->getValue();
-        break;
-
-    case RvAValue::Type::PseudoReg:
-        os << "p(" << ((const RvAPseudoReg*) &value)->getId() << ")";
-        break;
-    
-    case RvAValue::Type::Register:
-        os << ((const RvARegister*) &value)->getReg();
-        break;
-
-    case RvAValue::Type::Memory: {
-        auto* it = (const RvAMemory*) &value;
-        os << "*(" << it->getBase() << sign(it->getOffset()) << it->getOffset() << ")";
-    }
-        break;
-
-    default:
-        break;
-    }
-    return os;
-}
 
 std::ostream& operator<<(std::ostream& os, RvReg reg) {
     if ((int) reg < 32) {
@@ -55,11 +29,75 @@ std::ostream& operator<<(std::ostream& os, RvReg reg) {
     return os;
 }
 
-std::ostream& operator<<(std::ostream& os, RvABinary::Operator op) {
+std::ostream& operator<<(std::ostream& os, RvaBinary::Operator op) {
     if ((int) op < _RVA_BINARY_OP_SZ) {
         os << _RVA_BINARY_OP[(int) op];
     } else {
         os << "unknown_op_" << (int) op;
     }
     return os;
+}
+
+
+std::ostream& operator<<(std::ostream& os, const RvaValue& value) {
+    auto type = value.getType();
+    switch (type)
+    {
+    case RvaValue::Type::Imm:
+        os << ((const RvaImm*) &value)->getValue();
+        break;
+
+    case RvaValue::Type::PseudoReg:
+        os << "p(" << ((const RvaPseudoReg*) &value)->getId() << ")";
+        break;
+    
+    case RvaValue::Type::Register:
+        os << ((const RvaRegister*) &value)->getReg();
+        break;
+
+    case RvaValue::Type::Memory: {
+        auto* it = (const RvaMemory*) &value;
+        os << "*(" << it->getBase() << sign(it->getOffset()) << it->getOffset() << ")";
+    }
+        break;
+
+    default:
+        break;
+    }
+    return os;
+}
+
+
+void printType(std::ostream& os, const char* type) {
+    os << type << std::setw(16);
+}
+
+void printBinary(std::ostream& os, const RvaBinary* it) {
+    printType(os, "binary");
+    os << *it->dst << " = " << *it->left << " " << it->op << " " << *it->right;
+}
+
+void printMove(std::ostream& os, const RvaMov* it) {
+    printType(os, "move");
+    os << *it->to << " = " << *it->from;
+}
+
+
+void RvaPrinter::print(std::ostream& os, const std::vector<RvaInstruction*>& instructions) {
+    for (const auto* instr : instructions) {
+        auto type = instr->getType();
+
+        switch (type) {
+        case RvaInstruction::Type::Binary:
+            printBinary(os, (const RvaBinary*) instr);
+            break;
+        
+        case RvaInstruction::Type::Move:
+            printMove(os, (const RvaMov*) instr);
+            break;
+
+        default: os << "unknown" << "unknown rva type: " << (int) type;
+        }
+        os << "\n";
+    }
 }

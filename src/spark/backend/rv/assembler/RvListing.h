@@ -4,7 +4,7 @@
 
 class RvListing {
 public:
-    void add(class RvAInstruction* instr);
+    void add(class RvaInstruction* instr);
 
 private:
     std::vector<uint32_t> bin;

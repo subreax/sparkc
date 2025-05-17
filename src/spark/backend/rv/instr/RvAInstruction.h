@@ -1,14 +1,14 @@
 #pragma once
-#include "../RvAValue.h"
+#include "../RvaValue.h"
 #include "../assembler/RvListing.h"
 
-class RvAInstruction {
+class RvaInstruction {
 public:
     enum class Type {
         Prologue, Epilogue, Binary, Move, Load, Store
     };
 
-    RvAInstruction(Type type) : type(type) { }
+    RvaInstruction(Type type) : type(type) { }
 
     Type getType() const { return type; }
 

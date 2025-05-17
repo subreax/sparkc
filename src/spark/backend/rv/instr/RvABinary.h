@@ -1,8 +1,8 @@
 #pragma once
-#include "RvAInstruction.h"
+#include "RvaInstruction.h"
 #include "../../../skr/instr/SkrBinary.h"
 
-class RvABinary : public RvAInstruction {
+class RvaBinary : public RvaInstruction {
 public:
     enum class Operator {
         Plus,
@@ -12,8 +12,8 @@ public:
         Rem,
     };
 
-    RvABinary(RvAValue* dst, RvAValue* left, Operator op, RvAValue* right)
-        : RvAInstruction(Type::Binary)
+    RvaBinary(RvaValue* dst, RvaValue* left, Operator op, RvaValue* right)
+        : RvaInstruction(Type::Binary)
         , dst(dst)
         , left(left)
         , op(op)
@@ -25,8 +25,8 @@ public:
         return (Operator) op; // todo: be careful
     }
 
-    RvAValue* dst;
-    RvAValue* left;
+    RvaValue* dst;
+    RvaValue* left;
     Operator op;
-    RvAValue* right;
+    RvaValue* right;
 };
