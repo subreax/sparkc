@@ -5,6 +5,7 @@
 #include "spark/frontend/Parser.h"
 #include "spark/skr/SkrEmitter.h"
 #include "spark/backend/rv/Skr2RvaPseudo.h"
+#include "spark/backend/rv/RvaPseudoReplacer.h"
 #include "printer/ast/AstMermaidPrinter.h"
 #include "printer/skr/SkrPrinter.h"
 #include "printer/rva/RvaPrinter.h"
@@ -50,12 +51,14 @@ int main(int argc, char** argv) {
     SkrEmitter skrEmitter(skrAlloc, idGen, skrs);
     skrEmitter.emit("pixel", astExp);
     cout << "== skr ==" << endl;
-    SkrPrinter::print(cout, skrs);    
+    SkrPrinter::print(cout, skrs);
+    cout << endl;
 
     std::vector<RvaInstruction*> rva;
-    Skr2RvaPseudo s2rp(rvaAlloc, skrs, rva);
-    s2rp.emit();
-    cout << endl << "== rva ==" << endl;
+    StackFrame frame(rvaAlloc);
+    Skr2RvaPseudo::emit(rvaAlloc, skrs, rva);
+    RvaPseudoReplacer::replace(frame, rva);
+    cout << "== rva ==" << endl;
     RvaPrinter::print(cout, rva);
 
     dump(idAlloc, "idAlloc.bin");

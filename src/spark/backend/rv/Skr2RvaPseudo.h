@@ -6,6 +6,10 @@
 
 class Skr2RvaPseudo {
 public:
+    static void emit(LinearAllocator& allocator, const std::vector<SkrInstruction*>& skrs, std::vector<RvaInstruction*>& out) {
+        Skr2RvaPseudo(allocator, skrs, out).emit();
+    }
+
     Skr2RvaPseudo(LinearAllocator& allocator, const std::vector<SkrInstruction*>& skrs, std::vector<RvaInstruction*>& out) 
         : allocator(allocator)
         , skrs(skrs)

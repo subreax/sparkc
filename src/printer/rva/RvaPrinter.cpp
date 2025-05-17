@@ -57,7 +57,7 @@ std::ostream& operator<<(std::ostream& os, const RvaValue& value) {
 
     case RvaValue::Type::Memory: {
         auto* it = (const RvaMemory*) &value;
-        os << "*(" << it->getBase() << sign(it->getOffset()) << it->getOffset() << ")";
+        os << "[" << it->getBase() << sign(it->getOffset()) << it->getOffset() << "]";
     }
         break;
 
