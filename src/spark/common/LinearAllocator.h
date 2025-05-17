@@ -3,8 +3,11 @@
 
 class LinearAllocator {
 public:
-    LinearAllocator(size_t sz) {
+    LinearAllocator(size_t sz, bool zeroMem = false) {
         begin = (uint8_t*) malloc(sz);
+        if (zeroMem) {
+            memset(begin, 0, sz);
+        }
         ptr = begin;
         end = begin + sz;
     }
@@ -34,7 +37,7 @@ public:
         return new(block) T(args...);
     }
 
-    void freeAll() {
+    void reset() {
         ptr = begin;
     }
 
@@ -42,6 +45,10 @@ public:
     size_t getFreeSize() const {
         return end - ptr;
     }
+
+    const size_t getSize() const { return end - begin; }
+
+    const uint8_t* getBlock() const { return begin; }
 
 private:
     uint8_t* begin;

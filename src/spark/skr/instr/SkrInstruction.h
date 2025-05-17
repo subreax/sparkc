@@ -7,6 +7,9 @@ public:
     };
 
     SkrInstruction(Type type) : type(type) {  }
+    SkrInstruction(const SkrInstruction&) = delete;
+    SkrInstruction& operator=(const SkrInstruction&) = delete;
+    SkrInstruction(SkrInstruction&&) = delete;
 
     Type getType() const { return type; }
 

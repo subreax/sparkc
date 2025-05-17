@@ -7,9 +7,10 @@
 
 class SkrEmitter {
 public:
-    SkrEmitter(LinearAllocator& allocator, IdentifierGen& idGen) 
+    SkrEmitter(LinearAllocator& allocator, IdentifierGen& idGen, std::vector<SkrInstruction*>& out) 
         : allocator(allocator)
-        , idGen(idGen) {  }
+        , idGen(idGen)
+        , out(out) {  }
 
     SkrValue* emit(const char* funName, AstExp* exp) {
         if (exp->getType() == AstExp::EXP_CONSTANT) {
@@ -24,8 +25,6 @@ public:
             return nullptr;
         }
     }
-
-    std::vector<SkrInstruction*>& getSkrs() { return out; }
 
 private:
     SkrValue* emitBinary(const char* funName, AstBinaryExp* exp) {
@@ -54,5 +53,5 @@ private:
 
     LinearAllocator& allocator;
     IdentifierGen& idGen;
-    std::vector<SkrInstruction*> out;
+    std::vector<SkrInstruction*>& out;
 };

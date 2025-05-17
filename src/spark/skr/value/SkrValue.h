@@ -27,10 +27,10 @@ private:
 
 class SkrVar : public SkrValue {
 public:
-    SkrVar(const char* identifier) : SkrValue(Type::Var), identifier(identifier) {  }
+    SkrVar(const char* id) : SkrValue(Type::Var), id(id) {  }
 
-    const char* getIdentifier() const { return identifier; }
+    const char* getId() const { return id; }
 
 private:
-    const char* identifier;
+    const char* id;
 };
