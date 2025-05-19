@@ -4,21 +4,21 @@
 
 class StringRef {
 public:
-    StringRef(const char* str, int length) 
+    StringRef(const char* str, size_t length) 
         : str(str), length(length) { }
 
     static StringRef nullInstance() {
         return StringRef(nullptr, 0);
     }
 
-    int copyTo(char* out, int capacity) const {
+    size_t copyTo(char* out, size_t capacity) const {
         if (capacity == 0) {
             return 0;
         }
 
         if (isNotNull()) {
-            int count = std::min(capacity - 1, length);
-            int i;
+            size_t count = std::min(capacity - 1, length);
+            size_t i;
             for (i = 0; i < count; i++) {
                 out[i] = str[i];
             }
@@ -34,7 +34,7 @@ public:
         return str != nullptr;
     }
 
-    int getLength() const {
+    size_t getLength() const {
         return length;
     }
 
@@ -42,9 +42,15 @@ public:
         return str;
     }
 
+    std::string toString(size_t maxLen = 32) const {
+        char* buf = (char*) alloca(std::min(maxLen, length + 1));
+        copyTo(buf, maxLen);
+        return std::string(buf);
+    }
+
 private:
     const char* str;
-    int length;
+    size_t length;
 };
 
 

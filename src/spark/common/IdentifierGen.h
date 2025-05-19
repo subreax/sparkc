@@ -1,5 +1,6 @@
 #pragma once
 #include "LinearAllocator.h"
+#include "StringUtils.h"
 
 class IdentifierGen {
 public:
@@ -21,19 +22,10 @@ public:
 
 private:
     size_t generate(const char* id) {
-        size_t len = copy(nameBuf, id, MAX_ID_LEN);
+        size_t len = StringUtils::copy(nameBuf, id, MAX_ID_LEN);
         len += sprintf(nameBuf + len, ".%d", counter);
         counter++;
         return len;
-    }
-
-    static size_t copy(char* to, const char* from, size_t max) {
-        size_t i = 0;
-        for ( ; *from && i < max; i++) {
-            to[i] = *from;
-            from++;
-        }
-        return i;
     }
 
     char nameBuf[MAX_ID_LEN + 16];

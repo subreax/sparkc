@@ -6,7 +6,34 @@
 
 class AstMermaidPrinter {
 public:
-    void toMermaid(std::ostream& os, AstExp* exp, const std::string& parent = "") {
+    void toMermaid(std::ostream& os, AstProgram* prog) {
+        auto node = createBlankNode();
+        os << joinParentAndChild("", addValue(node, "program")) << "\n";
+        for (auto* func : prog->functions) {
+            toMermaid(os, func, node);
+        }
+    }
+
+    void toMermaid(std::ostream& os, AstFunction* func, const std::string& parent) {
+        const auto& statements = func->getStatements();
+        auto node = createBlankNode();
+        os << joinParentAndChild(parent, addValue(node, "function", func->getName())) << "\n";
+        for (const auto& st : statements) {
+            toMermaid(os, st, node);
+        }
+    }
+
+    void toMermaid(std::ostream& os, AstStatement* st, const std::string& parent) {
+        auto type = st->getType();
+        if (type == AstStatement::Type::Return) {
+            auto node = createBlankNode();
+            os << joinParentAndChild(parent, addValue(node, "return")) << "\n";
+            auto* it = (AstReturnStatement*) st;
+            toMermaid(os, it->getExpression(), node);
+        }
+    }
+
+    void toMermaid(std::ostream& os, AstExp* exp, const std::string& parent) {
         if (exp->getType() == AstExp::EXP_BINARY) {
             auto* bin = (AstBinaryExp*) exp;
             auto op = AstBinaryExp::operatorToString(bin->getOperator());
@@ -38,8 +65,12 @@ private:
         return buf;
     }
 
-    std::string addValue(const std::string& blank, const std::string& type, const std::string& value) {
-        return blank + "(\"" + type + "\n" + bslashIfNeeded(value) + value + "\")";
+    std::string addValue(const std::string& blank, const std::string& type, const std::string& value = "") {
+        if (value.empty()) {
+            return blank + "(\"" + type + "\")";
+        } else {
+            return blank + "(\"" + type + "\n" + bslashIfNeeded(value) + value + "\")";
+        }
     }
 
     const char* bslashIfNeeded(const std::string& s) {

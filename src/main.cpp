@@ -13,7 +13,7 @@ using namespace std;
 
 
 string readFile(const char* path);
-void writeMermaidAst(AstExp* exp, const char* outFile);
+void writeMermaidAst(AstProgram* exp, const char* outFile);
 void dump(const LinearAllocator& allocator, const char* outFile);
 void dump(const uint8_t* block, size_t sz, const char* outFile);
 
@@ -26,40 +26,47 @@ int main(int argc, char** argv) {
 
     string source = readFile(argv[1]);
     Lexer lexer(source.c_str());
+
     LinearAllocator astAlloc(1024);
-    Parser parser(lexer, astAlloc);
-    auto res = parser.parseExpression();
-    if (!res.isOk) {
-        cout << "Failed to parse expression" << endl;
-        auto& diag = parser.getDiagnostics();
-        for (auto str : diag) {
-            cout << str << endl;
-        }
+    LinearAllocator idAlloc(2048, true);
+
+    Parser parser(lexer, astAlloc, idAlloc);
+    AstProgram* program;
+    try {
+        program = parser.parseProgram();
+    } catch (ParserException& e) {
+        cout << "Failed to parse program" << endl;
+        cout << e.getToken().pos << " " << e.what() << endl;
         return 1;
+    } catch (std::exception& e) {
+        cout << "Exception" << endl;
+        cout << e.what() << endl;
+        return 2;
     }
 
-    auto* astExp = res.value;
-    writeMermaidAst(astExp, "ast.md");
+    writeMermaidAst(program, "ast.md");
 
-    LinearAllocator idAlloc(2048, true);
     LinearAllocator skrAlloc(2048);
     LinearAllocator rvaAlloc(2048);
 
     IdentifierGen idGen(idAlloc);
+    LabelGen labelGen(idAlloc);
 
     std::vector<SkrInstruction*> skrs;
-    SkrEmitter skrEmitter(skrAlloc, idGen, skrs);
-    skrEmitter.emit("pixel", astExp);
+    SkrEmitter skrEmitter(skrAlloc, idGen, labelGen, skrs);
+    SkrFunction* func = skrEmitter.emit(program->functions.front());
+    astAlloc.reset();
+
     cout << "== skr ==" << endl;
-    SkrPrinter::print(cout, skrs);
+    SkrPrinter::print(cout, func);
     cout << endl;
 
-    std::vector<RvaInstruction*> rva;
+    /* std::vector<RvaInstruction*> rva;
     StackFrame frame(rvaAlloc);
     Skr2RvaPseudo::emit(rvaAlloc, skrs, rva);
     RvaPseudoReplacer::replace(frame, rva);
     cout << "== rva ==" << endl;
-    RvaPrinter::print(cout, rva);
+    RvaPrinter::print(cout, rva); */
 
     dump(idAlloc, "idAlloc.bin");
     return 0;
@@ -76,10 +83,10 @@ string readFile(const char* path) {
     return oss.str();
 }
 
-void writeMermaidAst(AstExp* exp, const char* outFile) {
+void writeMermaidAst(AstProgram* prog, const char* outFile) {
     AstMermaidPrinter conv;
     std::ostringstream oss;
-    conv.toMermaid(oss, exp);
+    conv.toMermaid(oss, prog);
 
     ofstream astOut("ast.md");
     astOut << "```mermaid\n";

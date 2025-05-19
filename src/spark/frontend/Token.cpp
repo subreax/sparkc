@@ -33,3 +33,13 @@ const char* TokenKind_toString(TokenKind kind) {
 std::string TokenKind_toStdString(TokenKind kind) {
     return std::string(TokenKind_toString(kind));
 }
+
+std::ostream& operator<<(std::ostream& os, TokenPos pos) {
+    os << "[" << pos.line+1 << ":" << pos.col+1 << "]";
+    return os;
+}
+
+std::ostream& operator<<(std::ostream& os, TokenKind kind) {
+    os << TokenKind_toString(kind);
+    return os;
+}

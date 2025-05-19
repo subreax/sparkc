@@ -1,5 +1,6 @@
 #pragma once
 #include "../common/StringRef.h"
+#include <iostream>
 
 enum TokenKind {
     T_INT_KEYWORD, //
@@ -21,17 +22,32 @@ enum TokenKind {
     T_BAD
 };
 
-struct Token {
-    Token() = default;
+struct TokenPos {
+    TokenPos() = default;
+    TokenPos(int line, int col) : line(line), col(col) {  }
 
-    Token(TokenKind kind, StringRef value, int line, int col)
-        : kind(kind), value(value), line(line), col(col) { }
-
-    TokenKind kind = T_BAD;
-    StringRef value = StringRef::nullInstance();
     int line = 0;
     int col = 0;
 };
 
+struct Token {
+    Token() = default;
+
+    static Token bad() { return Token(); }
+
+    Token(TokenKind kind, StringRef value, int line, int col)
+        : kind(kind), value(value), pos(line, col) { }
+
+    inline bool isOk() const { return kind != T_BAD; }
+    inline bool isBad() const { return kind == T_BAD; }
+
+    TokenKind kind = T_BAD;
+    StringRef value = StringRef::nullInstance();
+    TokenPos pos;
+};
+
 const char* TokenKind_toString(TokenKind kind);
 std::string TokenKind_toStdString(TokenKind kind);
+
+std::ostream& operator<<(std::ostream& os, TokenPos pos);
+std::ostream& operator<<(std::ostream& os, TokenKind kind);

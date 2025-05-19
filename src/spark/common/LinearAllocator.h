@@ -1,5 +1,6 @@
 #pragma once
 #include <memory>
+#include "NoMemoryException.h"
 
 class LinearAllocator {
 public:
@@ -27,7 +28,8 @@ public:
             ptr += blockSz;
             return block;
         } else {
-            return nullptr;
+            ptr = end;
+            throw NoMemoryException();
         }
     }
 

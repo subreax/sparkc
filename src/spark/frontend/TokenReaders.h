@@ -60,13 +60,24 @@ public:
     static StringRef readEOF(const char* src) { return readChar(src, '\0'); }
 
 private:
-    static StringRef readKeyword(const char* src, const char* value) {
-        int valueLen = strlen(value);
-        if (strcmp(src, value) == 0 && !isalpha(src[valueLen + 1])) {
-            return StringRef(src, valueLen);
+    static StringRef readKeyword(const char* src, const char* keyword) {
+        int keywordLen = strlen(keyword);
+        if (startsWith(src, keyword) && !(isalnum(src[keywordLen]))) {
+            return StringRef(src, keywordLen);
         } else {
             return StringRef::nullInstance();
         }
+    }
+
+    static bool startsWith(const char* str, const char* beginning) {
+        while (*str && *beginning) {
+            if (*str != *beginning) {
+                return false;
+            }
+            ++str;
+            ++beginning;
+        }
+        return true;
     }
 
     static StringRef readChar(const char* src, char c) {

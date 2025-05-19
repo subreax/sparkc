@@ -24,14 +24,35 @@ std::ostream& operator<<(std::ostream& os, SkrBinary::Operator op) {
     return os;
 }
 
-void SkrPrinter::print(std::ostream& os, const std::vector<SkrInstruction*>& skrs) {
+void SkrPrinter::print(std::ostream& os, SkrFunction* func) {
+    os << "fun " << func->getName() << "(): int" << "\n";
+    const auto& skrs = func->getInstructions();
     for (auto* skr : skrs) {
-        if (skr->getType() == SkrInstruction::Type::Binary) {
-            auto* bin = (SkrBinary*) skr;
-            os << *bin->getDst() << " = " << *bin->getLeft() << " " << bin->getOperator() << " " << *bin->getRight() << "\n";
-        }
-        else {
-            os << "unknown skr: " << (int) skr->getType() << "\n";
-        }
+        os << "    ";
+        print(os, skr);
     }
+}
+
+void SkrPrinter::print(std::ostream& os, SkrInstruction* skr) {
+    auto type = skr->getType();
+    if (type == SkrInstruction::Type::Binary) {
+        auto* bin = (SkrBinary*) skr;
+        os << *bin->getDst() << " = " << *bin->getLeft() << " " << bin->getOperator() << " " << *bin->getRight();
+    }
+    else if (type == SkrInstruction::Type::Copy) {
+        auto* it = (SkrCopy*) skr;
+        os << *it->getTo() << " = " << *it->getFrom();
+    }
+    else if (type == SkrInstruction::Type::Jump) {
+        auto* it = (SkrJump*) skr;
+        os << "Jump to " << it->getLabel();
+    }
+    else if (type == SkrInstruction::Type::Label) {
+        auto* it = (SkrLabel*) skr;
+        os << it->getLabel() << ":";
+    }
+    else {
+        os << "unknown skr: " << (int) type;
+    }
+    os << "\n";
 }
