@@ -2,26 +2,42 @@
 #include <vector>
 #include "../../common/LinearAllocator.h"
 #include "../../skr/instr/everything.h"
+#include "../../skr/SkrFunction.h"
 #include "instr/everything.h"
 
 class Skr2RvaPseudo {
 public:
-    static void emit(LinearAllocator& allocator, const std::vector<SkrInstruction*>& skrs, std::vector<RvaInstruction*>& out) {
-        Skr2RvaPseudo(allocator, skrs, out).emit();
+    static void emit(LinearAllocator& allocator, SkrFunction* func, std::vector<RvaInstruction*>& out) {
+        Skr2RvaPseudo(allocator, func, out).emit();
     }
 
-    Skr2RvaPseudo(LinearAllocator& allocator, const std::vector<SkrInstruction*>& skrs, std::vector<RvaInstruction*>& out) 
+    Skr2RvaPseudo(LinearAllocator& allocator, SkrFunction* func, std::vector<RvaInstruction*>& out) 
         : allocator(allocator)
-        , skrs(skrs)
+        , func(func)
         , out(out) {  }
 
     void emit() {
-        for (const auto* skr : skrs) {
+        add(allocator.create<RvaLabel>(func->getName()));
+        for (const auto* skr : func->getInstructions()) {
             auto type = skr->getType();
-            if (type == SkrInstruction::Type::Binary) {
+            switch (type) {
+            case SkrInstruction::Type::Binary:
                 emitBinary((SkrBinary*) skr);
-            }
-            else {
+                break;
+            
+            case SkrInstruction::Type::Copy:
+                emitCopy((SkrCopy*) skr);
+                break;
+
+            case SkrInstruction::Type::Jump:
+                emitJump((SkrJump*) skr);
+                break;
+
+            case SkrInstruction::Type::Label:
+                emitLabel((SkrLabel*) skr);
+                break;
+
+            default:
                 printf("Unknown skr type: %d", type);
                 std::abort();
             }
@@ -37,6 +53,21 @@ private:
             toPseudo(it->getRight())
         );
         add(instr);
+    }
+
+    void emitCopy(SkrCopy* it) {
+        add(allocator.create<RvaMov>(
+            toPseudo(it->getTo()),
+            toPseudo(it->getFrom())
+        ));
+    }
+
+    void emitJump(SkrJump* it) {
+        add(allocator.create<RvaJump>(it->getLabel()));
+    }
+
+    void emitLabel(SkrLabel* it) {
+        add(allocator.create<RvaLabel>(it->getLabel()));
     }
 
     inline void add(RvaInstruction* instr) {
@@ -62,6 +93,6 @@ private:
     }
 
     LinearAllocator& allocator;
-    const std::vector<SkrInstruction*>& skrs;
+    SkrFunction* func;
     std::vector<RvaInstruction*>& out;
 };

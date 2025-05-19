@@ -18,7 +18,7 @@ public:
 private:
     int generateInternal(const char* id) {
         char* generated = buf;
-        generated += StringUtils::copy(generated, ".L", 2);
+        generated += StringUtils::copy(generated, ".L", 3);
         generated += StringUtils::copy(generated, id, LABEL_MAX_LEN);
         generated += sprintf(generated, "_%d", counter);
         return generated - buf + 1;

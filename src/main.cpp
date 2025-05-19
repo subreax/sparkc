@@ -61,12 +61,12 @@ int main(int argc, char** argv) {
     SkrPrinter::print(cout, func);
     cout << endl;
 
-    /* std::vector<RvaInstruction*> rva;
+    std::vector<RvaInstruction*> rva;
     StackFrame frame(rvaAlloc);
-    Skr2RvaPseudo::emit(rvaAlloc, skrs, rva);
+    Skr2RvaPseudo::emit(rvaAlloc, func, rva);
     RvaPseudoReplacer::replace(frame, rva);
     cout << "== rva ==" << endl;
-    RvaPrinter::print(cout, rva); */
+    RvaPrinter::print(cout, rva);
 
     dump(idAlloc, "idAlloc.bin");
     return 0;
@@ -88,7 +88,7 @@ void writeMermaidAst(AstProgram* prog, const char* outFile) {
     std::ostringstream oss;
     conv.toMermaid(oss, prog);
 
-    ofstream astOut("ast.md");
+    ofstream astOut(outFile);
     astOut << "```mermaid\n";
     astOut << "flowchart TB\n";
     astOut << oss.str();

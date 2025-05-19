@@ -21,13 +21,19 @@ private:
         auto type = it->getType();
         switch (type) {
         case RvaInstruction::Type::Binary:      replace((RvaBinary*) it); break;
+        case RvaInstruction::Type::Move:        replace((RvaMov*) it); break;
         }
     }
 
-    inline void replace(RvaBinary* it) {
+    void replace(RvaBinary* it) {
         replace(&it->dst);
         replace(&it->left);
         replace(&it->right);
+    }
+
+    void replace(RvaMov* it) {
+        replace(&it->from);
+        replace(&it->to);
     }
 
     inline void replace(RvaValue** v) {

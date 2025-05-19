@@ -1,5 +1,6 @@
 #include "RvaPrinter.h"
 #include <iomanip>
+#include <cstring>
 
 static constexpr const char* _REG_STR[] = {
     "zero", "ra", "sp", "gp", "tp", "t0", "t1", "t2", "s0", "s1",
@@ -69,7 +70,9 @@ std::ostream& operator<<(std::ostream& os, const RvaValue& value) {
 
 
 void printType(std::ostream& os, const char* type) {
-    os << type << std::setw(16);
+    char buf[16];
+    snprintf(buf, 16, "%-15s", type);
+    os << buf;
 }
 
 void printBinary(std::ostream& os, const RvaBinary* it) {
@@ -82,6 +85,15 @@ void printMove(std::ostream& os, const RvaMov* it) {
     os << *it->to << " = " << *it->from;
 }
 
+void printLabel(std::ostream& os, const RvaLabel* it) {
+    printType(os, "label");
+    os << it->getValue() << ":";
+}
+
+void printJump(std::ostream& os, const RvaJump* it) {
+    printType(os, "jump");
+    os << "jump to " << it->getLabel();
+}
 
 void RvaPrinter::print(std::ostream& os, const std::vector<RvaInstruction*>& instructions) {
     for (const auto* instr : instructions) {
@@ -94,6 +106,14 @@ void RvaPrinter::print(std::ostream& os, const std::vector<RvaInstruction*>& ins
         
         case RvaInstruction::Type::Move:
             printMove(os, (const RvaMov*) instr);
+            break;
+
+        case RvaInstruction::Type::Label:
+            printLabel(os, (const RvaLabel*) instr);
+            break;
+
+        case RvaInstruction::Type::Jump:
+            printJump(os, (const RvaJump*) instr);
             break;
 
         default: os << "unknown" << "unknown rva type: " << (int) type;
