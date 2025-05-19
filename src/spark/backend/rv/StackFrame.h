@@ -28,6 +28,9 @@ public:
         }
     }
 
+    int getSize() const { return size; }
+    int getSizeAligned16() const { return ((size + 15) / 16) * 16; }
+
 private:
     std::map<const char*, RvaMemory*> var2stack;
     LinearAllocator& rvaAlloc;

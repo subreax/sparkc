@@ -18,6 +18,7 @@ public:
 
     void emit() {
         add(allocator.create<RvaLabel>(func->getName()));
+        add(allocator.create<RvaPrologue>(0));
         for (const auto* skr : func->getInstructions()) {
             auto type = skr->getType();
             switch (type) {
@@ -42,6 +43,7 @@ public:
                 std::abort();
             }
         }
+        add(allocator.create<RvaEpilogue>(0));
         add(allocator.create<RvaRet>());
     }
 

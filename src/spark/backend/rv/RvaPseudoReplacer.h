@@ -14,6 +14,23 @@ public:
     void replace(std::vector<RvaInstruction*>& rvas) {
         for (auto* it : rvas) 
             replace(it);
+        
+        if (rvas.size() > 1) {
+            auto frameSize = frame.getSizeAligned16();
+            auto* prologue = (RvaPrologue*) rvas[1];
+            if (prologue->getType() == RvaInstruction::Type::Prologue) {
+                prologue->setFrameSize(frameSize);
+            } else {
+                printf("[RvaPseudoReplacer] Can't find prologue\n");
+            }
+
+            auto* epilogue = (RvaEpilogue*) rvas[rvas.size() - 2];
+            if (epilogue->getType() == RvaInstruction::Type::Epilogue) {
+                epilogue->setFrameSize(frameSize);
+            } else {
+                printf("[RvaPseudoReplacer] Can't find epilogue\n");
+            }
+        }
     }
 
 private:

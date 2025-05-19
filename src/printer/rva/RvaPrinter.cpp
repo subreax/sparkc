@@ -107,7 +107,17 @@ void printStore(std::ostream& os, const RvaStore* it) {
 
 void printRet(std::ostream& os, const RvaRet* it) {
     printType(os, "return");
-    os << "return";
+    os << "ret";
+}
+
+void printPrologue(std::ostream& os, const RvaPrologue* it) {
+    printType(os, "prologue");
+    os << "prologue " << it->getFrameSize();
+}
+
+void printEpilogue(std::ostream& os, const RvaEpilogue* it) {
+    printType(os, "epilogue");
+    os << "epilogue " << it->getFrameSize();
 }
 
 void RvaPrinter::print(std::ostream& os, const std::vector<RvaInstruction*>& instructions) {
@@ -141,6 +151,14 @@ void RvaPrinter::print(std::ostream& os, const std::vector<RvaInstruction*>& ins
 
         case RvaInstruction::Type::Ret:
             printRet(os, (const RvaRet*) instr);
+            break;
+
+        case RvaInstruction::Type::Prologue:
+            printPrologue(os, (const RvaPrologue*) instr);
+            break;
+        
+        case RvaInstruction::Type::Epilogue:
+            printEpilogue(os, (const RvaEpilogue*) instr);
             break;
 
         default: os << "unknown rva type: " << (int) type;

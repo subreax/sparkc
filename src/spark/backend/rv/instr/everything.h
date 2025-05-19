@@ -6,3 +6,5 @@
 #include "RvaJump.h"
 #include "RvaLabel.h"
 #include "RvaRet.h"
+#include "RvaPrologue.h"
+#include "RvaEpilogue.h"
