@@ -6,6 +6,7 @@
 #include "spark/skr/SkrEmitter.h"
 #include "spark/backend/rv/Skr2RvaPseudo.h"
 #include "spark/backend/rv/RvaPseudoReplacer.h"
+#include "spark/backend/rv/RvaFixer.h"
 #include "printer/ast/AstMermaidPrinter.h"
 #include "printer/skr/SkrPrinter.h"
 #include "printer/rva/RvaPrinter.h"
@@ -16,6 +17,7 @@ string readFile(const char* path);
 void writeMermaidAst(AstProgram* exp, const char* outFile);
 void dump(const LinearAllocator& allocator, const char* outFile);
 void dump(const uint8_t* block, size_t sz, const char* outFile);
+void printAllocatorStats(const char* name, const LinearAllocator& allocator);
 
 
 int main(int argc, char** argv) {
@@ -27,7 +29,7 @@ int main(int argc, char** argv) {
     string source = readFile(argv[1]);
     Lexer lexer(source.c_str());
 
-    LinearAllocator astAlloc(1024);
+    LinearAllocator astAlloc(2048);
     LinearAllocator idAlloc(2048, true);
 
     Parser parser(lexer, astAlloc, idAlloc);
@@ -47,7 +49,8 @@ int main(int argc, char** argv) {
     writeMermaidAst(program, "ast.md");
 
     LinearAllocator skrAlloc(2048);
-    LinearAllocator rvaAlloc(2048);
+    LinearAllocator rvaAlloc1(2048);
+    LinearAllocator rvaAlloc2(2048);
 
     IdentifierGen idGen(idAlloc);
     LabelGen labelGen(idAlloc);
@@ -55,21 +58,43 @@ int main(int argc, char** argv) {
     std::vector<SkrInstruction*> skrs;
     SkrEmitter skrEmitter(skrAlloc, idGen, labelGen, skrs);
     SkrFunction* func = skrEmitter.emit(program->functions.front());
-    astAlloc.reset();
 
     cout << "== skr ==" << endl;
     SkrPrinter::print(cout, func);
     cout << endl;
 
     std::vector<RvaInstruction*> rva;
-    StackFrame frame(rvaAlloc);
-    Skr2RvaPseudo::emit(rvaAlloc, func, rva);
+    StackFrame frame(rvaAlloc1);
+    Skr2RvaPseudo::emit(rvaAlloc1, func, rva);
     RvaPseudoReplacer::replace(frame, rva);
+    std::vector<RvaInstruction*> rvaFixed;
+    RvaFixer(rva, rvaFixed, rvaAlloc2).fix();
+
     cout << "== rva ==" << endl;
     RvaPrinter::print(cout, rva);
+    cout << endl;
+
+    cout << "== rva fixed ==" << endl;
+    RvaPrinter::print(cout, rvaFixed);
+    cout << endl;
+
+    printAllocatorStats("ast", astAlloc);
+    printAllocatorStats("id", idAlloc);
+    printAllocatorStats("skr", skrAlloc);
+    printAllocatorStats("rva1", rvaAlloc1);
+    printAllocatorStats("rva2", rvaAlloc2);
 
     dump(idAlloc, "idAlloc.bin");
     return 0;
+}
+
+
+
+void printAllocatorStats(const char* name, const LinearAllocator& allocator) {
+    auto used = allocator.getUsedSize();
+    auto sz = allocator.getSize();
+    auto percentage = used * 100 / sz;
+    cout << "Allocator " << name << ": " << percentage << "% [" << used << "/" << sz << "]" << endl;
 }
 
 string readFile(const char* path) {

@@ -42,6 +42,7 @@ public:
                 std::abort();
             }
         }
+        add(allocator.create<RvaRet>());
     }
 
 private:

@@ -43,12 +43,16 @@ public:
         ptr = begin;
     }
 
-    // todo: test
-    size_t getFreeSize() const {
-        return end - ptr;
+    size_t getUsedSize() const {
+        return ptr - begin;
     }
 
-    const size_t getSize() const { return end - begin; }
+    // todo: test
+    size_t getFreeSize() const {
+        return end - ptr - 1;
+    }
+
+    const size_t getSize() const { return end - begin - 1; }
 
     const uint8_t* getBlock() const { return begin; }
 

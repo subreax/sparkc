@@ -95,6 +95,21 @@ void printJump(std::ostream& os, const RvaJump* it) {
     os << "jump to " << it->getLabel();
 }
 
+void printLoad(std::ostream& os, const RvaLoad* it) {
+    printType(os, "load");
+    os << *it->fromAddr << " --> " << *it->to;
+}
+
+void printStore(std::ostream& os, const RvaStore* it) {
+    printType(os, "store");
+    os << *it->from << " --> " << *it->toAddr;
+}
+
+void printRet(std::ostream& os, const RvaRet* it) {
+    printType(os, "return");
+    os << "return";
+}
+
 void RvaPrinter::print(std::ostream& os, const std::vector<RvaInstruction*>& instructions) {
     for (const auto* instr : instructions) {
         auto type = instr->getType();
@@ -116,7 +131,19 @@ void RvaPrinter::print(std::ostream& os, const std::vector<RvaInstruction*>& ins
             printJump(os, (const RvaJump*) instr);
             break;
 
-        default: os << "unknown" << "unknown rva type: " << (int) type;
+        case RvaInstruction::Type::Load:
+            printLoad(os, (const RvaLoad*) instr);
+            break;
+
+        case RvaInstruction::Type::Store:
+            printStore(os, (const RvaStore*) instr);
+            break;
+
+        case RvaInstruction::Type::Ret:
+            printRet(os, (const RvaRet*) instr);
+            break;
+
+        default: os << "unknown rva type: " << (int) type;
         }
         os << "\n";
     }
