@@ -5,7 +5,9 @@ class RvaLabel : public RvaInstruction {
 public:
     RvaLabel(const char* value) : RvaInstruction(Type::Label), value(value) {  }
 
-    void emit(RvListing& listing) override {}
+    void emit(RvListing& listing) override {
+        listing.addLabel(value);
+    }
 
     const char* getValue() const { return value; }
 

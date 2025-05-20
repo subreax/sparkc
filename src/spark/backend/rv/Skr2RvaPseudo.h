@@ -43,6 +43,10 @@ public:
                 std::abort();
             }
         }
+
+        auto* resultPseudoReg = allocator.create<RvaPseudoReg>(func->getResultIdentifier());
+        auto* a0Reg = allocator.create<RvaRegister>(RvReg::A0);
+        add(allocator.create<RvaMov>(a0Reg, resultPseudoReg));
         add(allocator.create<RvaEpilogue>(0));
         add(allocator.create<RvaRet>());
     }

@@ -7,6 +7,7 @@
 #include "spark/backend/rv/Skr2RvaPseudo.h"
 #include "spark/backend/rv/RvaPseudoReplacer.h"
 #include "spark/backend/rv/RvaFixer.h"
+#include "spark/backend/rv/asm/RvAssembler.h"
 #include "printer/ast/AstMermaidPrinter.h"
 #include "printer/skr/SkrPrinter.h"
 #include "printer/rva/RvaPrinter.h"
@@ -77,6 +78,12 @@ int main(int argc, char** argv) {
     cout << "== rva fixed ==" << endl;
     RvaPrinter::print(cout, rvaFixed);
     cout << endl;
+
+    uint32_t bin[512];
+    auto sz = RvAssembler::assemble(rvaFixed, bin, sizeof(bin) / 4);
+    if (sz == 0) {
+        cout << "Not enough memory to save binary" << endl;
+    }
 
     printAllocatorStats("ast", astAlloc);
     printAllocatorStats("id", idAlloc);

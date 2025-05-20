@@ -8,6 +8,7 @@ public:
         : instructions(instructions), resultId(resultId), name(name) {  }
 
     const char* getName() const { return name; }
+    const char* getResultIdentifier() const { return resultId; }
     std::vector<SkrInstruction*>& getInstructions() { return instructions; }
 
 private:

@@ -8,7 +8,10 @@ public:
         , toAddr(toAddr)
         , from(from) { }
     
-    void emit(RvListing& listing) override {}
+    void emit(RvListing& listing) override {
+        auto* mem = expectMem(toAddr);
+        listing += Rv32I::sw(mem->getBase(), mem->getOffset(), expectReg(from));
+    }
 
     RvaValue* toAddr;
     RvaValue* from;
