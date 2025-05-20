@@ -1,3 +1,4 @@
 build/**
 ast.md
 idAlloc.bin
+.vscode/**

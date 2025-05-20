@@ -1,33 +1,28 @@
 #pragma once
 #include "LinearAllocator.h"
-#include "StringUtils.h"
+#include "CStringBuilder.h"
 
 class IdentifierGen {
 public:
     IdentifierGen(LinearAllocator& allocator) : allocator(allocator) { }
 
     const char* unique(const char* id) {
-        auto len = generate(id);
-        auto allocatedStr = (char*) allocator.allocate(len + 1);
-        if (allocatedStr == nullptr) {
-            return ".err_out_of_mem";
-        }
+        auto len = CStringBuilder(nameBuf, sizeof(nameBuf))
+            .append(id, MAX_ID_LEN)
+            .append(".")
+            .append(counter)
+            .getLengthWith0();
+        
+        counter++;
 
-        strcpy(allocatedStr, nameBuf);
+        auto allocatedStr = (char*) allocator.allocate(len);
+        CStringBuilder(allocatedStr, len).append(nameBuf);
         return allocatedStr;
     }
 
     static constexpr size_t MAX_ID_LEN = 16;
-    static constexpr const char* ERR_NO_MEM = ".err_out_of_mem";
 
 private:
-    size_t generate(const char* id) {
-        size_t len = StringUtils::copy(nameBuf, id, MAX_ID_LEN);
-        len += sprintf(nameBuf + len, ".%d", counter);
-        counter++;
-        return len;
-    }
-
     char nameBuf[MAX_ID_LEN + 16];
     LinearAllocator& allocator;
     int counter = 0;
