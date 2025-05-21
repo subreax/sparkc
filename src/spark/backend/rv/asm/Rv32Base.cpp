@@ -61,7 +61,7 @@ uint32_t Rv32Base::sType(uint32_t opcode, uint32_t funct3, RvReg rs1, RvReg rs2,
         | ((funct3 & _rv_mask3) << 12)
         | _rv_reg_shl(rs1, 15)
         | _rv_reg_shl(rs2, 20)
-        | (_rv_slice<11, 5>(imm11) << 25);
+        | ((imm11 >> 5) << 25);
 }
 
 uint32_t Rv32Base::jType(uint32_t opcode, RvReg rd, int32_t imm20) {
