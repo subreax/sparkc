@@ -64,12 +64,37 @@ uint32_t Rv32Base::sType(uint32_t opcode, uint32_t funct3, RvReg rs1, RvReg rs2,
         | ((imm11 >> 5) << 25);
 }
 
-uint32_t Rv32Base::jType(uint32_t opcode, RvReg rd, int32_t imm20) {
-    // todo: check imm20
+uint32_t Rv32Base::bType(uint32_t opcode, uint32_t funct3, RvReg rs1, RvReg rs2) {
     return (opcode & _rv_mask7)
-        | _rv_reg_shl(rd, 7)
-        | (_rv_slice<19, 12>(imm20) << 12)
+        | (funct3 & _rv_mask3) << 12
+        | _rv_reg_shl(rs1, 15)
+        | _rv_reg_shl(rs2, 20);
+}
+
+uint32_t Rv32Base::jType(uint32_t opcode, RvReg rd) {
+    return (opcode & _rv_mask7) | _rv_reg_shl(rd, 7);
+}
+
+uint32_t Rv32Base::encodeImmB(int32_t imm12) {
+    // todo: check imm12
+    return _rv_bit(imm12, 11) << 7
+        | _rv_slice<4, 1>(imm12) << 8
+        | _rv_slice<10, 5>(imm12) << 25
+        | _rv_bit(imm12, 12) << 31;
+}
+
+uint32_t Rv32Base::encodeImmJ(int32_t imm20) {
+    // todo: check imm20
+    return (_rv_slice<19, 12>(imm20) << 12)
         | (_rv_bit(imm20, 11) << 20)
         | (_rv_slice<10, 1>(imm20) << 21)
         | (_rv_bit(imm20, 20) << 31);
+}
+
+bool Rv32Base::isBType(uint32_t instr) {
+    return (instr & _rv_mask7) == 0b1100011;
+}
+
+bool Rv32Base::isJType(uint32_t instr) {
+    return (instr & _rv_mask7) == 0b1101111;
 }

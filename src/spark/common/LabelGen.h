@@ -8,7 +8,7 @@ public:
 
     const char* uniqueInternal(const char* id) {
         auto len = CStringBuilder(buf, sizeof(buf))
-            .append(".L")
+            .append(".")
             .append(id, LABEL_MAX_LEN)
             .append("_")
             .append(counter)

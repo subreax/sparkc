@@ -23,7 +23,19 @@ public:
         return Rv32Base::sType(0b0100011, 0x2, rs1, rs2, imm11);
     }
 
+    static uint32_t jal(RvReg rd) {
+        return Rv32Base::jType(0b1101111, rd);
+    }
+
     static uint32_t jalr(RvReg rd, RvReg rs1, int32_t imm11) {
         return Rv32Base::iType(0b1100111, 0, rd, rs1, imm11);
+    }
+
+    static uint32_t beq(RvReg rs1, RvReg rs2) {
+        return Rv32Base::bType(0b1100011, 0, rs1, rs2);
+    }
+
+    static uint32_t bne(RvReg rs1, RvReg rs2) {
+        return Rv32Base::bType(0b1100011, 1, rs1, rs2);
     }
 };

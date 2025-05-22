@@ -72,6 +72,8 @@ private:
         { T_PERCENT, TokenReaders::readPercent },
         { T_PERCENT, TokenReaders::readPercent },
         { T_EQUALS, TokenReaders::readEquals },
+        { T_AMP_AMP, TokenReaders::readAmpAmp },
+        { T_VBAR_VBAR, TokenReaders::readVBarVBar },
         { T_EOF, TokenReaders::readEOF }
     };
 

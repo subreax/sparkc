@@ -57,6 +57,8 @@ public:
     static StringRef readFwdSlash(const char* src) { return readChar(src, '/'); }
     static StringRef readPercent(const char* src) { return readChar(src, '%'); }
     static StringRef readEquals(const char* src) { return readChar(src, '='); }
+    static StringRef readAmpAmp(const char* src) { return readString(src, "&&"); }
+    static StringRef readVBarVBar(const char* src) { return readString(src, "||"); }
     static StringRef readEOF(const char* src) { return readChar(src, '\0'); }
 
 private:
@@ -86,6 +88,21 @@ private:
         } else {
             return StringRef::nullInstance();
         }
+    }
+
+    static StringRef readString(const char* src, const char* what) {
+        size_t len = 0;
+        while (src[len] && what[len]) {
+            if (src[len] != what[len]) {
+                return StringRef::nullInstance();
+            }
+            len++;
+        }
+        
+        if (what[len] != '\0') {
+            return StringRef::nullInstance();
+        }
+        return StringRef(src, len);
     }
 };
 

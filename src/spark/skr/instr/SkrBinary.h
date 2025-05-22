@@ -5,7 +5,7 @@
 
 class SkrBinary : public SkrInstruction {
 public:
-    enum class Operator { Plus, Minus, Mul, Div, Rem };
+    enum class Operator { Plus, Minus, Mul, Div, Rem, And, Or };
 
     SkrBinary(SkrVar* dst, SkrValue* left, Operator op, SkrValue* right)
         : SkrInstruction(Type::Binary)

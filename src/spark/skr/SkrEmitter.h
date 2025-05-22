@@ -102,12 +102,55 @@ private:
     }
 
     SkrValue* emitBinary(const char* funName, AstBinaryExp* exp) {
-        SkrValue* left = emit(funName, exp->getLeft());
-        auto op = binaryOpOf(exp->getOperator());
-        SkrValue* right = emit(funName, exp->getRight());
-        SkrVar* dst = allocator.create<SkrVar>(idGen.unique(funName));
-        out.emplace_back(allocator.create<SkrBinary>(dst, left, op, right));
-        return dst;
+        auto astOp = exp->getOperator();
+        if (astOp == AstBinaryExp::Operator::And) {
+            const char* falseLabel = labelGen.uniqueInternal("false");
+            const char* endLabel = labelGen.uniqueInternal("end");
+
+            SkrVar* result = allocator.create<SkrVar>(idGen.unique("and"));
+            SkrValue* left = emit(funName, exp->getLeft());
+            out.emplace_back(allocator.create<SkrBranch>(left, SkrBranch::Operator::Equals, getSkrConst(0), falseLabel));
+            SkrValue* right = emit(funName, exp->getRight());
+            out.emplace_back(allocator.create<SkrBranch>(right, SkrBranch::Operator::Equals, getSkrConst(0), falseLabel));
+            // true
+            out.emplace_back(allocator.create<SkrCopy>(result, getSkrConst(1)));
+            out.emplace_back(allocator.create<SkrJump>(endLabel));
+
+            // false
+            out.emplace_back(allocator.create<SkrLabel>(falseLabel));
+            out.emplace_back(allocator.create<SkrCopy>(result, getSkrConst(0)));
+
+            out.emplace_back(allocator.create<SkrLabel>(endLabel));
+            return result;
+        }
+        else if (astOp == AstBinaryExp::Operator::Or) {
+            const char* trueLabel = labelGen.uniqueInternal("true");
+            const char* endLabel = labelGen.uniqueInternal("end");
+
+            SkrVar* result = allocator.create<SkrVar>(idGen.unique("or"));
+            SkrValue* left = emit(funName, exp->getLeft());
+            out.emplace_back(allocator.create<SkrBranch>(left, SkrBranch::Operator::NotEquals, getSkrConst(1), trueLabel));
+            SkrValue* right = emit(funName, exp->getRight());
+            out.emplace_back(allocator.create<SkrBranch>(right, SkrBranch::Operator::NotEquals, getSkrConst(1), trueLabel));
+            // false
+            out.emplace_back(allocator.create<SkrCopy>(result, getSkrConst(0)));
+            out.emplace_back(allocator.create<SkrJump>(endLabel));
+
+            // true
+            out.emplace_back(allocator.create<SkrLabel>(trueLabel));
+            out.emplace_back(allocator.create<SkrCopy>(result, getSkrConst(1)));
+
+            out.emplace_back(allocator.create<SkrLabel>(endLabel));
+            return result;
+        }
+        else {
+            SkrValue* left = emit(funName, exp->getLeft());
+            auto op = binaryOpOf(exp->getOperator());
+            SkrValue* right = emit(funName, exp->getRight());
+            SkrVar* dst = allocator.create<SkrVar>(idGen.unique(funName));
+            out.emplace_back(allocator.create<SkrBinary>(dst, left, op, right));
+            return dst;
+        }
     }
 
     SkrBinary::Operator binaryOpOf(AstBinaryExp::Operator astOp) {
@@ -149,10 +192,32 @@ private:
         }
     }
 
+    SkrConst* getSkrZero() {
+        if (skrZero == nullptr) {
+            skrZero = allocator.create<SkrConst>(0);
+        }
+        return skrZero;
+    }
+
+    SkrConst* getSkrOne() {
+        if (skrOne == nullptr) {
+            skrOne = allocator.create<SkrConst>(1);
+        }
+        return skrOne;
+    }
+
+    SkrConst* getSkrConst(int32_t v) {
+        if (v == 0) return getSkrZero();
+        if (v == 1) return getSkrOne();
+        return allocator.create<SkrConst>(v);
+    }
+
     LinearAllocator& allocator;
     IdentifierGen& idGen;
     LabelGen& labelGen;
     std::vector<SkrInstruction*>& out;
     SkrVar* funcResult = nullptr;
     const char* retLabel = nullptr;
+    SkrConst* skrZero = nullptr;
+    SkrConst* skrOne = nullptr;
 };

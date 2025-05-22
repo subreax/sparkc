@@ -8,7 +8,9 @@ public:
         Minus,
         Mul,
         Div,
-        Rem
+        Rem,
+        And,
+        Or
     };
 
     AstBinaryExp(AstExp* left, Operator op, AstExp* right) 
@@ -28,6 +30,8 @@ public:
         case T_ASTERISK:    return Operator::Mul;
         case T_FWD_SLASH:   return Operator::Div;
         case T_PERCENT:     return Operator::Rem;
+        case T_AMP_AMP:     return Operator::And;
+        case T_VBAR_VBAR:   return Operator::Or;
         }
         printf("Unknown binary operator: %s\n", TokenKind_toString(kind));
         std::abort();
@@ -36,9 +40,10 @@ public:
 
     static const char* operatorToString(Operator op) {
         static const char* values[] = {
-            "+", "-", "*", "/", "%"
+            "+", "-", "*", "/", "%", "and", "or"
         };
-        if ((int) op < 5) {
+        auto valuesCount = sizeof(values) / sizeof(const char*);
+        if ((int) op < valuesCount) {
             return values[(int) op];
         }
         return "<unknown>";

@@ -39,6 +39,7 @@ private:
         switch (type) {
         case RvaInstruction::Type::Binary:      replace((RvaBinary*) it); break;
         case RvaInstruction::Type::Move:        replace((RvaMov*) it); break;
+        case RvaInstruction::Type::Branch:      replace((RvaBranch*) it); break;
         }
     }
 
@@ -51,6 +52,11 @@ private:
     void replace(RvaMov* it) {
         replace(&it->from);
         replace(&it->to);
+    }
+
+    void replace(RvaBranch* it) {
+        replace(&it->left);
+        replace(&it->right);
     }
 
     inline void replace(RvaValue** v) {

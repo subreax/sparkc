@@ -17,6 +17,7 @@ public:
             switch (type) {
             case RvaInstruction::Type::Move:        fix((RvaMov*) rva); break;
             case RvaInstruction::Type::Binary:      fix((RvaBinary*) rva); break;
+            case RvaInstruction::Type::Branch:      fix((RvaBranch*) rva); break;
             default:
                 out.emplace_back(rva);
             }
@@ -43,6 +44,12 @@ private:
         if (it->dst->getType() == RvaValue::Type::Memory) {
             out.emplace_back(allocator.create<RvaStore>(it->dst, dstReg));
         }
+    }
+
+    void fix(RvaBranch* it) {
+        auto* left = moveToReg(it->left, RvReg::T0);
+        auto* right = moveToReg(it->right, RvReg::T1);
+        out.emplace_back(allocator.create<RvaBranch>(left, it->op, right, it->label));
     }
 
     RvaRegister* moveToReg(RvaValue* val, RvReg reg) {

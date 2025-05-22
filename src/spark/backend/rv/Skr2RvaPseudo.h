@@ -38,6 +38,10 @@ public:
                 emitLabel((SkrLabel*) skr);
                 break;
 
+            case SkrInstruction::Type::Branch:
+                emitBranch((SkrBranch*) skr);
+                break;
+
             default:
                 printf("Unknown skr type: %d", type);
                 std::abort();
@@ -75,6 +79,15 @@ private:
 
     void emitLabel(SkrLabel* it) {
         add(allocator.create<RvaLabel>(it->getLabel()));
+    }
+
+    void emitBranch(SkrBranch* it) {
+        add(allocator.create<RvaBranch>(
+            toPseudo(it->getLeft()),
+            RvaBranch::mapOperator(it->getOperator()),
+            toPseudo(it->getRight()),
+            it->getLabel()
+        ));
     }
 
     inline void add(RvaInstruction* instr) {

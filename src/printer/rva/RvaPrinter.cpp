@@ -1,6 +1,7 @@
 #include "RvaPrinter.h"
 #include <iomanip>
 #include <cstring>
+#include "../Colored.h"
 
 static constexpr const char* _REG_STR[] = {
     "zero", "ra", "sp", "gp", "tp", "t0", "t1", "t2", "s0", "s1",
@@ -11,6 +12,9 @@ static constexpr const char* _REG_STR[] = {
 
 static constexpr const char* _RVA_BINARY_OP[] = { "+", "-", "*", "/", "%" };
 static constexpr int _RVA_BINARY_OP_SZ = sizeof(_RVA_BINARY_OP) / sizeof(const char*);
+
+static constexpr const char* _RVA_BRANCH_OP[] = { "==", "!=" };
+static constexpr int _RVA_BRANCH_OP_SZ = sizeof(_RVA_BRANCH_OP) / sizeof(const char*);
 
 inline const char* sign(int v) {
     if (v >= 0) {
@@ -39,6 +43,14 @@ std::ostream& operator<<(std::ostream& os, RvaBinary::Operator op) {
     return os;
 }
 
+std::ostream& operator<<(std::ostream& os, RvaBranch::Operator op) {
+    if ((int) op < _RVA_BRANCH_OP_SZ) {
+        os << _RVA_BRANCH_OP[(int) op];
+    } else {
+        os << "unknown_op_" << (int) op;
+    }
+    return os;
+}
 
 std::ostream& operator<<(std::ostream& os, const RvaValue& value) {
     auto type = value.getType();
@@ -87,12 +99,12 @@ void printMove(std::ostream& os, const RvaMov* it) {
 
 void printLabel(std::ostream& os, const RvaLabel* it) {
     printType(os, "label");
-    os << it->getValue() << ":";
+    os << Colored::label(it->getValue()) << ":";
 }
 
 void printJump(std::ostream& os, const RvaJump* it) {
     printType(os, "jump");
-    os << "jump to " << it->getLabel();
+    os << "jump to " << Colored::label(it->getLabel());
 }
 
 void printLoad(std::ostream& os, const RvaLoad* it) {
@@ -118,6 +130,11 @@ void printPrologue(std::ostream& os, const RvaPrologue* it) {
 void printEpilogue(std::ostream& os, const RvaEpilogue* it) {
     printType(os, "epilogue");
     os << "epilogue " << it->getFrameSize();
+}
+
+void printBranch(std::ostream& os, const RvaBranch* it) {
+    printType(os, "branch");
+    os << "branch to " << Colored::label(it->label) << " if " << *it->left << " " << it->op << " " << *it->right;
 }
 
 void RvaPrinter::print(std::ostream& os, const std::vector<RvaInstruction*>& instructions) {
@@ -159,6 +176,10 @@ void RvaPrinter::print(std::ostream& os, const std::vector<RvaInstruction*>& ins
         
         case RvaInstruction::Type::Epilogue:
             printEpilogue(os, (const RvaEpilogue*) instr);
+            break;
+
+        case RvaInstruction::Type::Branch:
+            printBranch(os, (const RvaBranch*) instr);
             break;
 
         default: os << "unknown rva type: " << (int) type;

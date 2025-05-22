@@ -1,4 +1,5 @@
 #include "SkrPrinter.h"
+#include "../Colored.h"
 
 std::ostream& operator<<(std::ostream& os, const SkrValue& skr) {
     if (skr.getType() == SkrValue::Type::Const) {
@@ -14,9 +15,20 @@ std::ostream& operator<<(std::ostream& os, const SkrValue& skr) {
 }
 
 std::ostream& operator<<(std::ostream& os, SkrBinary::Operator op) {
-    static const char* OPS[5] = { "+", "-", "*", "/", "%" };
+    static const char* OPS[7] = { "+", "-", "*", "/", "%", "&&", "||" };
     int iop = (int) op;
-    if (iop < 5) {
+    if (iop < 7) {
+        os << OPS[iop];
+    } else {
+        os << "_unknown_:" << iop;
+    }
+    return os;
+}
+
+std::ostream& operator<<(std::ostream& os, SkrBranch::Operator op) {
+    static const char* OPS[2] = { "==", "!=" };
+    int iop = (int) op;
+    if (iop < 2) {
         os << OPS[iop];
     } else {
         os << "_unknown_:" << iop;
@@ -45,11 +57,15 @@ void SkrPrinter::print(std::ostream& os, SkrInstruction* skr) {
     }
     else if (type == SkrInstruction::Type::Jump) {
         auto* it = (SkrJump*) skr;
-        os << "Jump to " << it->getLabel();
+        os << "Jump to " << Colored::label(it->getLabel());
     }
     else if (type == SkrInstruction::Type::Label) {
         auto* it = (SkrLabel*) skr;
-        os << it->getLabel() << ":";
+        os << Colored::label(it->getLabel()) << ":";
+    }
+    else if (type == SkrInstruction::Type::Branch) {
+        auto* it = (SkrBranch*) skr;
+        os << "branch to " << Colored::label(it->getLabel()) << " if " << *it->getLeft() << " " << it->getOperator() << " " << *it->getRight();
     }
     else {
         os << "unknown skr: " << (int) type;

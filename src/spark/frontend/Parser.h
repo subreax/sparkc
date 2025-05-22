@@ -177,6 +177,12 @@ private:
         case T_PERCENT:
             return 40;
 
+        case T_AMP_AMP:
+            return 30;
+
+        case T_VBAR_VBAR:
+            return 25;
+
         case T_EQUALS:
             return 1;
         

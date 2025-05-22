@@ -11,6 +11,7 @@ public:
         for (RvaInstruction* it : instructions) {
             it->emit(listing);
         }
+        listing.link();
 
         if (bin.size() > cap / 4) {
             return 0;

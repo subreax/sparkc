@@ -1,6 +1,5 @@
 int pixel() {
     int a = 0;
-    int b = 100;
-    int val = 128;
-    return a + (b - a) * val / 255;
+    int b = 1;
+    return a && b;
 }

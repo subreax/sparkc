@@ -16,6 +16,8 @@ static constexpr const char* _TokenKind2String[] = {
     "fwd slash",
     "percent",
     "equals",
+    "&&",
+    "||"
     "<eof>",
     "<bad>"
 };

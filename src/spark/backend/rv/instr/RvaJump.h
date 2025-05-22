@@ -6,8 +6,7 @@ public:
     RvaJump(const char* label) : RvaInstruction(Type::Jump), label(label) {  }
 
     void emit(RvListing& listing) override {
-        printf("Jump not implemented\n");
-        std::abort();
+        listing.addWithLabel(Rv32I::jal(RvReg::ZERO), label);
     }
 
     const char* getLabel() const { return label; }
