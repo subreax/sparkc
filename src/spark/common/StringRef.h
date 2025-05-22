@@ -53,6 +53,8 @@ private:
     size_t length;
 };
 
+bool operator==(const StringRef& r1, const StringRef& r2);
+bool operator!=(const StringRef& r1, const StringRef& r2);
 
 std::string operator+(const std::string& s1, StringRef s2);
 std::string operator+(StringRef s1, const std::string& s2);

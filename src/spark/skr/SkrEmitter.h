@@ -19,8 +19,8 @@ public:
         const char* funcResultId = idGen.unique("result");
         funcResult = allocator.create<SkrVar>(funcResultId);
         retLabel = labelGen.uniqueInternal("return");
-        for (auto* st : func->getStatements()) {
-            emit(func->getName(), st);
+        for (auto* item : func->getBlockItems()) {
+            emit(func->getName(), item);
         }
         removeUselessJumpToRet();
         out.emplace_back(allocator.create<SkrLabel>(retLabel));
@@ -28,6 +28,36 @@ public:
     }
 
 private:
+    void emit(const char* funName, AstBlockItem* blockItem) {
+        auto type = blockItem->getType();
+        if (type == AstBlockItem::Type::Declaration) {
+            emit(funName, ((AstDeclBlockItem*) blockItem)->getDeclaration());
+        }
+        else if (type == AstBlockItem::Type::Statement) {
+            emit(funName, ((AstStatementBlockItem*) blockItem)->getStatement());
+        }
+        else {
+            printf("[SkrEmitter] Unknown AstBlockItem type: %d", blockItem->getType());
+            std::abort();
+        }
+    }
+
+    void emit(const char* funName, AstDeclaration* decl) {
+        if (decl->getType() == AstDeclaration::Type::Var) {
+            auto* it = (AstVarDeclaration*) decl;
+            auto* initializer = it->getInitializer();
+            if (initializer != nullptr) {
+                auto* initRes = emit(funName, initializer);
+                auto* skrVar = allocator.create<SkrVar>(it->getName());
+                out.emplace_back(allocator.create<SkrCopy>(skrVar, initRes));
+            }
+        }
+        else {
+            printf("[SkrEmitter] Unknown AstDeclaration type: %d", decl->getType());
+            std::abort();
+        }
+    }
+
     void emit(const char* funName, AstStatement* st) {
         auto type = st->getType();
         if (type == AstStatement::Type::Return) {
@@ -36,21 +66,36 @@ private:
             out.emplace_back(allocator.create<SkrCopy>(funcResult, retVal));
             out.emplace_back(allocator.create<SkrJump>(retLabel));
         }
+        else if (type == AstStatement::Type::Expression) {
+            auto* it = (AstExpressionStatement*) st;
+            emit(funName, it->getExpression());
+        }
         else {
-            printf("Unknown statement: %d", type);
+            printf("[SkrEmitter] Unknown statement: %d", type);
             std::abort();
         }
     }
 
-    SkrValue* emit(const char* funName, const AstExp* exp) {
-        if (exp->getType() == AstExp::EXP_CONSTANT) {
+    SkrValue* emit(const char* funName, AstExp* exp) {
+        auto type = exp->getType();
+        if (type == AstExp::EXP_CONSTANT) {
             return allocator.create<SkrConst>(((AstConstantExp*) exp)->getValue());
         }
-        else if (exp->getType() == AstExp::EXP_BINARY) {
+        else if (type == AstExp::EXP_BINARY) {
             return emitBinary(funName, (AstBinaryExp*) exp);
         }
+        else if (type == AstExp::EXP_VAR) {
+            return allocator.create<SkrVar>(((AstVar*) exp)->getIdentifier());
+        }
+        else if (type == AstExp::EXP_ASSIGNMENT) {
+            auto* ass = (AstAssignment*) exp;
+            SkrValue* left = emit(funName, ass->getVar());
+            SkrValue* right = emit(funName, ass->getExp());
+            out.emplace_back(allocator.create<SkrCopy>(left, right));
+            return left;
+        }
         else {
-            printf("Unknown AstExp: %d", exp->getType());
+            printf("[SkrEmitter] Unknown AstExp: %d", type);
             std::abort();
             return nullptr;
         }

@@ -2,3 +2,5 @@
 #include "AstExp.h"
 #include "AstConstantExp.h"
 #include "AstBinaryExp.h"
+#include "AstVar.h"
+#include "AstAssignment.h"

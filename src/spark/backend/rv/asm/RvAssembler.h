@@ -19,6 +19,6 @@ public:
         for (uint32_t i = 0; i < bin.size(); i++) {
             out[i] = bin[i];
         }
-        return bin.size();
+        return bin.size() * 4;
     }
 };

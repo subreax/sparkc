@@ -6,7 +6,9 @@ class AstExp {
 public:
     enum Type {
         EXP_CONSTANT,
-        EXP_BINARY
+        EXP_BINARY,
+        EXP_VAR,
+        EXP_ASSIGNMENT
     };
 
     AstExp(Type type) : type(type) {  }

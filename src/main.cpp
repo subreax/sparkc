@@ -19,7 +19,7 @@ void writeMermaidAst(AstProgram* exp, const char* outFile);
 void dump(const LinearAllocator& allocator, const char* outFile);
 void dump(const uint8_t* block, size_t sz, const char* outFile);
 void printAllocatorStats(const char* name, const LinearAllocator& allocator);
-
+string getLine(const string& src, int lineNo);
 
 int main(int argc, char** argv) {
     if (argc == 1) {
@@ -32,14 +32,29 @@ int main(int argc, char** argv) {
 
     LinearAllocator astAlloc(2048);
     LinearAllocator idAlloc(2048, true);
+    LinearAllocator scopeAlloc(2048, true);
 
-    Parser parser(lexer, astAlloc, idAlloc);
+    IdentifierGen idGen(idAlloc);
+    LabelGen labelGen(idAlloc);
+
+    Scope scope(idGen, scopeAlloc);
+    Parser parser(lexer, astAlloc, idAlloc, scope);
     AstProgram* program;
     try {
         program = parser.parseProgram();
     } catch (ParserException& e) {
-        cout << "Failed to parse program" << endl;
-        cout << e.getToken().pos << " " << e.what() << endl;
+        const auto& token = e.getToken();
+        cout << e.what() << endl;
+
+        ostringstream oss;
+        oss << token.pos.line + 1 << " | ";
+        
+        string lineNo = oss.str();
+        cout << lineNo << getLine(source, token.pos.line) << endl;
+        for (int i = 0; i < token.pos.col + lineNo.size(); i++) {
+            cout << " ";
+        }
+        cout << "^" << endl;
         return 1;
     } catch (std::exception& e) {
         cout << "Exception" << endl;
@@ -52,9 +67,6 @@ int main(int argc, char** argv) {
     LinearAllocator skrAlloc(2048);
     LinearAllocator rvaAlloc1(2048);
     LinearAllocator rvaAlloc2(2048);
-
-    IdentifierGen idGen(idAlloc);
-    LabelGen labelGen(idAlloc);
 
     std::vector<SkrInstruction*> skrs;
     SkrEmitter skrEmitter(skrAlloc, idGen, labelGen, skrs);
@@ -84,14 +96,19 @@ int main(int argc, char** argv) {
     if (sz == 0) {
         cout << "Not enough memory to save binary" << endl;
     }
+    else {
+        dump((uint8_t*) bin, sz, "out.bin");
+    }
 
     printAllocatorStats("ast", astAlloc);
+    printAllocatorStats("scope", scopeAlloc);
     printAllocatorStats("id", idAlloc);
     printAllocatorStats("skr", skrAlloc);
     printAllocatorStats("rva1", rvaAlloc1);
     printAllocatorStats("rva2", rvaAlloc2);
 
     dump(idAlloc, "idAlloc.bin");
+    dump(scopeAlloc, "scope.bin");
     return 0;
 }
 
@@ -139,4 +156,23 @@ void dump(const uint8_t* block, size_t sz, const char* outFile) {
 
 void dump(const LinearAllocator& allocator, const char* outFile) {
     dump(allocator.getBlock(), allocator.getFreeSize(), outFile);
+}
+
+
+string getLine(const string& src, int lineNo) {
+    size_t offset = 0;
+    for (int i = 0; i < lineNo; i++) {
+        offset = src.find('\n', offset);
+        if (offset == string::npos) {
+            return "";
+        }
+        offset += 1;
+    }
+
+    size_t nextNL = src.find('\n', offset);
+    if (nextNL != string::npos) {
+        return src.substr(offset, nextNL - offset);
+    } else {
+        return src.substr(offset);
+    }
 }

@@ -1,16 +1,16 @@
 #pragma once
 #include <vector>
-#include "statement/everything.h"
+#include "AstBlockItem.h"
 
 class AstFunction {
 public:
-    AstFunction(const char* name, const std::vector<AstStatement*>& statements)
-        : name(name), statements(statements) {  }
+    AstFunction(const char* name, const std::vector<AstBlockItem*>& blockItems)
+        : name(name), blockItems(blockItems) {  }
 
     const char* getName() const { return name; }
-    const std::vector<AstStatement*>& getStatements() { return statements; }
+    const std::vector<AstBlockItem*>& getBlockItems() { return blockItems; }
 
 private:
     const char* name;
-    std::vector<AstStatement*> statements;
+    std::vector<AstBlockItem*> blockItems;
 };

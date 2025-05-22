@@ -5,7 +5,7 @@
 
 class FrontendException : public std::runtime_error {
 public:
-    enum class Type { UnexpectedToken, WrongConst, WrongExpression, WrongStatement };
+    enum class Type { UnexpectedToken, WrongConst, WrongExpression, WrongStatement, DuplicateDeclaration, UndeclaredVariable };
 
     FrontendException(Type type, const std::string& msg)
         : std::runtime_error("frontend exception")

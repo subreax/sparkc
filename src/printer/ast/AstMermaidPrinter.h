@@ -15,11 +15,31 @@ public:
     }
 
     void toMermaid(std::ostream& os, AstFunction* func, const std::string& parent) {
-        const auto& statements = func->getStatements();
+        const auto& statements = func->getBlockItems();
         auto node = createBlankNode();
         os << joinParentAndChild(parent, addValue(node, "function", func->getName())) << "\n";
         for (const auto& st : statements) {
             toMermaid(os, st, node);
+        }
+    }
+
+    void toMermaid(std::ostream& os, AstBlockItem* blockItem, const std::string& parent) {
+        if (blockItem->getType() == AstBlockItem::Type::Declaration) {
+            toMermaid(os, ((AstDeclBlockItem*) blockItem)->getDeclaration(), parent);
+        }
+        else if (blockItem->getType() == AstBlockItem::Type::Statement) {
+            toMermaid(os, ((AstStatementBlockItem*) blockItem)->getStatement(), parent);
+        }
+    }
+
+    void toMermaid(std::ostream& os, AstDeclaration* decl, const std::string& parent) {
+        if (decl->getType() == AstDeclaration::Type::Var) {
+            auto* it = (AstVarDeclaration*) decl;
+            auto node = createBlankNode();
+            os << joinParentAndChild(parent, addValue(node, "decl", it->getName())) << "\n";
+            if (it->getInitializer() != nullptr) {
+                toMermaid(os, it->getInitializer(), node);
+            }
         }
     }
 
@@ -29,6 +49,12 @@ public:
             auto node = createBlankNode();
             os << joinParentAndChild(parent, addValue(node, "return")) << "\n";
             auto* it = (AstReturnStatement*) st;
+            toMermaid(os, it->getExpression(), node);
+        }
+        else if (type == AstStatement::Type::Expression) {
+            auto node = createBlankNode();
+            os << joinParentAndChild(parent, addValue(node, "expr_st")) << "\n";
+            auto* it = (AstExpressionStatement*) st;
             toMermaid(os, it->getExpression(), node);
         }
     }
@@ -46,6 +72,18 @@ public:
             auto* constant = (AstConstantExp*) exp;
             auto node = addValue(createBlankNode(), "const", std::to_string(constant->getValue()));
             os << joinParentAndChild(parent, node) << "\n";
+        }
+        else if (exp->getType() == AstExp::EXP_VAR) {
+            auto* var = (AstVar*) exp;
+            auto node = addValue(createBlankNode(), "var", var->getIdentifier());
+            os << joinParentAndChild(parent, node) << "\n";
+        }
+        else if (exp->getType() == AstExp::EXP_ASSIGNMENT) {
+            auto* ass = (AstAssignment*) exp;
+            auto node = createBlankNode();
+            os << joinParentAndChild(parent, addValue(node, "=")) << "\n";
+            toMermaid(os, ass->getVar(), node);
+            toMermaid(os, ass->getExp(), node);
         }
     }
 

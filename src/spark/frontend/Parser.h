@@ -2,32 +2,30 @@
 #include <vector>
 #include "../common/LinearAllocator.h"
 #include "Lexer.h"
-#include "ast/exp/everything.h"
 #include "ast/AstProgram.h"
+#include "ast/AstBlockItem.h"
+#include "ast/declaration/AstVarDeclaration.h"
+#include "ast/statement/everything.h"
+#include "ast/exp/everything.h"
+#include "Scope.h"
 
 #include "exceptions/UnexpectedTokenExcepion.h"
 #include "exceptions/ParseConstException.h"
 #include "exceptions/WrongExprException.h"
 #include "exceptions/WrongStatementException.h"
 
-#define PARSER_RET_IF_FAIL(res, type) if ((res).failed()) { return failure<type>(); }
-
-template<typename T>
-struct ParseResult {
-    ParseResult(T* value, bool isOk = true) : value(value), isOk(isOk && value != nullptr) {  }
-
-    inline bool failed() const { return !isOk; }
-
-    T* value;
-    bool isOk;
-};
-
 class Parser {
 public:
-    Parser(Lexer& lexer, LinearAllocator& allocator, LinearAllocator& idAllocator)
+    Parser(
+        Lexer& lexer, 
+        LinearAllocator& allocator, 
+        LinearAllocator& idAllocator,
+        Scope& scope
+    )
         : lexer(lexer)
         , objAlloc(allocator)
         , idAlloc(idAllocator)
+        , scope(scope)
     {
         takeToken();
     }
@@ -50,12 +48,39 @@ public:
         expect(T_OPEN_PAR);
         expect(T_CLOSE_PAR);
         expect(T_OPEN_BRACE);
-        auto* st = parseStatement();
+
+        std::vector<AstBlockItem*> items;
+        while (current.kind != T_CLOSE_BRACE) {
+            items.emplace_back(parseBlockItem());
+        }
         expect(T_CLOSE_BRACE);
 
-        std::vector<AstStatement*> statements;
-        statements.emplace_back(st);
-        return objAlloc.create<AstFunction>(funName, statements);
+        return objAlloc.create<AstFunction>(funName, items);
+    }
+
+    AstBlockItem* parseBlockItem() {
+        auto* decl = tryParseDeclaration();
+        if (decl != nullptr) {
+            return objAlloc.create<AstDeclBlockItem>(decl);
+        }
+        return objAlloc.create<AstStatementBlockItem>(parseStatement());
+    }
+
+    AstDeclaration* tryParseDeclaration() {
+        if (current.kind == T_INT_KEYWORD) {
+            takeToken();
+            const char* varName = scope.declare(takeToken());
+            AstExp* initializer = nullptr;
+            if (current.kind == T_EQUALS) {
+                takeToken();
+                initializer = parseExpression();
+            }
+            expect(T_SEMICOLON);
+            return objAlloc.create<AstVarDeclaration>(varName, initializer);
+        }
+        else {
+            return nullptr;
+        }
     }
 
     AstStatement* parseStatement() {
@@ -66,7 +91,9 @@ public:
             return objAlloc.create<AstReturnStatement>(exp);
         }
         else {
-            throw WrongStatementException(current);
+            AstExp* exp = parseExpression();
+            expect(TokenKind::T_SEMICOLON);
+            return objAlloc.create<AstExpressionStatement>(exp);
         }
     }
 
@@ -75,8 +102,13 @@ public:
         int precedence = getPrecedence(current.kind);
         while (precedence >= prevPrecedence) {
             auto op = takeToken();
-            AstExp* right = parseExpression(precedence + 1);
-            left = objAlloc.create<AstBinaryExp>(left, AstBinaryExp::toBinaryOperator(op.kind), right);
+            if (op.kind != T_EQUALS) {
+                AstExp* right = parseExpression(precedence + 1);
+                left = objAlloc.create<AstBinaryExp>(left, AstBinaryExp::toBinaryOperator(op.kind), right);
+            } else {
+                AstExp* right = parseExpression(precedence);
+                left = objAlloc.create<AstAssignment>(left, right);
+            }
             precedence = getPrecedence(current.kind);
         }
         return left;
@@ -93,7 +125,12 @@ public:
             auto exp = parseExpression();
             expect(T_CLOSE_PAR);
             return exp;
-        } else {
+        } 
+        else if (current.kind == T_IDENTIFIER) {
+            const char* name = scope.resolve(takeToken());
+            return objAlloc.create<AstVar>(name);
+        }
+        else {
             throw WrongExprException(current);
         }
     }
@@ -112,11 +149,6 @@ private:
             throw ParseConstException(token);
         }
         return value;
-    }
-
-    template<typename T>
-    inline ParseResult<T> failure() {
-        return ParseResult<T>(nullptr, false);
     }
 
     Token takeToken() {
@@ -144,6 +176,9 @@ private:
         case T_HYPHEN:
         case T_PERCENT:
             return 40;
+
+        case T_EQUALS:
+            return 1;
         
         default:
             return -1;
@@ -154,4 +189,5 @@ private:
     Lexer& lexer;
     LinearAllocator& objAlloc;
     LinearAllocator& idAlloc;
+    Scope& scope;
 };

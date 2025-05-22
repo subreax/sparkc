@@ -18,7 +18,7 @@ public:
     LinearAllocator(LinearAllocator&&) = delete;
 
     ~LinearAllocator() {
-        free(begin);
+        ::free(begin);
     }
 
 
@@ -39,6 +39,14 @@ public:
         return new(block) T(args...);
     }
 
+    void free(size_t bytes) {
+        if (bytes <= getUsedSize()) {
+            ptr -= bytes;
+        } else {
+            throw std::out_of_range("Failed to free bytes");
+        }
+    }
+
     void reset() {
         ptr = begin;
     }
@@ -54,7 +62,11 @@ public:
 
     const size_t getSize() const { return end - begin - 1; }
 
+    uint8_t* getBlock() { return begin; }
     const uint8_t* getBlock() const { return begin; }
+
+    uint8_t* getPtr() { return ptr; }
+    const uint8_t* getPtr() const { return ptr; }
 
 private:
     uint8_t* begin;
