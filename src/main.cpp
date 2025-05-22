@@ -19,6 +19,7 @@ void writeMermaidAst(AstProgram* exp, const char* outFile);
 void dump(const LinearAllocator& allocator, const char* outFile);
 void dump(const uint8_t* block, size_t sz, const char* outFile);
 void printAllocatorStats(const char* name, const LinearAllocator& allocator);
+void printError(ParserException& e, const string& source);
 string getLine(const string& src, int lineNo);
 
 int main(int argc, char** argv) {
@@ -43,18 +44,7 @@ int main(int argc, char** argv) {
     try {
         program = parser.parseProgram();
     } catch (ParserException& e) {
-        const auto& token = e.getToken();
-        cout << e.what() << endl;
-
-        ostringstream oss;
-        oss << token.pos.line + 1 << " | ";
-        
-        string lineNo = oss.str();
-        cout << lineNo << getLine(source, token.pos.line) << endl;
-        for (int i = 0; i < token.pos.col + lineNo.size(); i++) {
-            cout << " ";
-        }
-        cout << "^" << endl;
+        printError(e, source);
         return 1;
     } catch (std::exception& e) {
         cout << "Exception" << endl;
@@ -158,6 +148,20 @@ void dump(const LinearAllocator& allocator, const char* outFile) {
     dump(allocator.getBlock(), allocator.getFreeSize(), outFile);
 }
 
+void printError(ParserException& e, const string& source) {
+    const auto& token = e.getToken();
+    cout << e.what() << endl;
+
+    ostringstream oss;
+    oss << token.pos.line + 1 << " | ";
+    
+    string lineNo = oss.str();
+    cout << lineNo << getLine(source, token.pos.line) << endl;
+    for (int i = 0; i < token.pos.col + lineNo.size(); i++) {
+        cout << " ";
+    }
+    cout << "^" << endl;
+}
 
 string getLine(const string& src, int lineNo) {
     size_t offset = 0;

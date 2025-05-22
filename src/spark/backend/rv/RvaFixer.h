@@ -53,6 +53,9 @@ private:
 
         if (type == RvaValue::Type::Imm) {
             int32_t immValue = ((RvaImm*) val)->getValue();
+            if (immValue == 0) {
+                return getZeroReg();
+            }
             auto* r = newReg(reg);
             out.emplace_back(allocator.create<RvaMov>(r, val));
             return r;
@@ -73,6 +76,14 @@ private:
         return allocator.create<RvaRegister>(reg);
     }
 
+    RvaRegister* getZeroReg() {
+        if (zeroReg == nullptr) {
+            zeroReg = allocator.create<RvaRegister>(RvReg::ZERO);
+        }
+        return zeroReg;
+    }
+
+    RvaRegister* zeroReg = nullptr;
     const std::vector<RvaInstruction*>& orig;
     std::vector<RvaInstruction*>& out;
     LinearAllocator& allocator;
