@@ -5,21 +5,12 @@
 
 class RvAssembler {
 public:
-    static size_t assemble(const std::vector<RvaInstruction*>& instructions, uint32_t* out, size_t cap) {
-        std::vector<uint32_t> bin;
-        RvListing listing(bin);
+    static size_t assemble(const std::vector<RvaInstruction*>& instructions, uint8_t* out, size_t cap) {
+        RvListing listing(out, cap);
         for (RvaInstruction* it : instructions) {
             it->emit(listing);
         }
         listing.link();
-
-        if (bin.size() > cap / 4) {
-            return 0;
-        }
-
-        for (uint32_t i = 0; i < bin.size(); i++) {
-            out[i] = bin[i];
-        }
-        return bin.size() * 4;
+        return listing.getSize();
     }
 };

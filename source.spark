@@ -1,5 +1,5 @@
 int pixel() {
     int a = 0;
-    int b = 1;
-    return a && b;
+    int b = 0;
+    return a || b;
 }

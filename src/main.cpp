@@ -81,13 +81,13 @@ int main(int argc, char** argv) {
     RvaPrinter::print(cout, rvaFixed);
     cout << endl;
 
-    uint32_t bin[512];
-    auto sz = RvAssembler::assemble(rvaFixed, bin, sizeof(bin) / 4);
+    uint8_t bin[512];
+    auto sz = RvAssembler::assemble(rvaFixed, bin, sizeof(bin));
     if (sz == 0) {
         cout << "Not enough memory to save binary" << endl;
     }
     else {
-        dump((uint8_t*) bin, sz, "out.bin");
+        dump(bin, sz, "out.bin");
     }
 
     printAllocatorStats("ast", astAlloc);

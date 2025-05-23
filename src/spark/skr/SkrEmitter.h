@@ -79,7 +79,8 @@ private:
     SkrValue* emit(const char* funName, AstExp* exp) {
         auto type = exp->getType();
         if (type == AstExp::EXP_CONSTANT) {
-            return allocator.create<SkrConst>(((AstConstantExp*) exp)->getValue());
+            auto* it = (AstConstantExp*) exp;
+            return getSkrConst(it->getValue());
         }
         else if (type == AstExp::EXP_BINARY) {
             return emitBinary(funName, (AstBinaryExp*) exp);
@@ -129,9 +130,9 @@ private:
 
             SkrVar* result = allocator.create<SkrVar>(idGen.unique("or"));
             SkrValue* left = emit(funName, exp->getLeft());
-            out.emplace_back(allocator.create<SkrBranch>(left, SkrBranch::Operator::NotEquals, getSkrConst(1), trueLabel));
+            out.emplace_back(allocator.create<SkrBranch>(left, SkrBranch::Operator::NotEquals, getSkrConst(0), trueLabel));
             SkrValue* right = emit(funName, exp->getRight());
-            out.emplace_back(allocator.create<SkrBranch>(right, SkrBranch::Operator::NotEquals, getSkrConst(1), trueLabel));
+            out.emplace_back(allocator.create<SkrBranch>(right, SkrBranch::Operator::NotEquals, getSkrConst(0), trueLabel));
             // false
             out.emplace_back(allocator.create<SkrCopy>(result, getSkrConst(0)));
             out.emplace_back(allocator.create<SkrJump>(endLabel));
