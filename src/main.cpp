@@ -18,6 +18,7 @@ string readFile(const char* path);
 void writeMermaidAst(AstProgram* exp, const char* outFile);
 void dump(const LinearAllocator& allocator, const char* outFile);
 void dump(const uint8_t* block, size_t sz, const char* outFile);
+void printMemoryUsage(const char* name, size_t used, size_t cap);
 void printAllocatorStats(const char* name, const LinearAllocator& allocator);
 void printError(ParserException& e, const string& source);
 string getLine(const string& src, int lineNo);
@@ -83,12 +84,6 @@ int main(int argc, char** argv) {
 
     uint8_t bin[512];
     auto sz = RvAssembler::assemble(rvaFixed, bin, sizeof(bin));
-    if (sz == 0) {
-        cout << "Not enough memory to save binary" << endl;
-    }
-    else {
-        dump(bin, sz, "out.bin");
-    }
 
     printAllocatorStats("ast", astAlloc);
     printAllocatorStats("scope", scopeAlloc);
@@ -96,19 +91,22 @@ int main(int argc, char** argv) {
     printAllocatorStats("skr", skrAlloc);
     printAllocatorStats("rva1", rvaAlloc1);
     printAllocatorStats("rva2", rvaAlloc2);
+    printMemoryUsage("program", sz, sizeof(bin));
 
     dump(idAlloc, "idAlloc.bin");
     dump(scopeAlloc, "scope.bin");
+    dump(bin, sz, "out.bin");
     return 0;
 }
 
 
+void printMemoryUsage(const char* name, size_t used, size_t cap) {
+    auto percentage = used * 100 / cap;
+    cout << name << ": " << percentage << "% [" << used << "/" << cap << "]" << endl;
+}
 
 void printAllocatorStats(const char* name, const LinearAllocator& allocator) {
-    auto used = allocator.getUsedSize();
-    auto sz = allocator.getSize();
-    auto percentage = used * 100 / sz;
-    cout << "Allocator " << name << ": " << percentage << "% [" << used << "/" << sz << "]" << endl;
+    printMemoryUsage(name, allocator.getUsedSize(), allocator.getCapacity());
 }
 
 string readFile(const char* path) {

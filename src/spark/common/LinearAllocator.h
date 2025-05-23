@@ -60,7 +60,7 @@ public:
         return end - ptr - 1;
     }
 
-    const size_t getSize() const { return end - begin - 1; }
+    const size_t getCapacity() const { return end - begin - 1; }
 
     uint8_t* getBlock() { return begin; }
     const uint8_t* getBlock() const { return begin; }
