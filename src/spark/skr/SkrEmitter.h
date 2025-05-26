@@ -38,20 +38,20 @@ public:
 
 private:
     void emit(const char* funName, AstBlockItem* blockItem) {
-        auto type = blockItem->getType();
-        if (type == AstBlockItem::Type::Declaration) {
+        auto kind = blockItem->kind;
+        if (kind == AstBlockItem::Kind::Declaration) {
             emit(funName, ((AstDeclBlockItem*) blockItem)->getDeclaration());
         }
-        else if (type == AstBlockItem::Type::Statement) {
+        else if (kind == AstBlockItem::Kind::Statement) {
             emit(funName, ((AstStatementBlockItem*) blockItem)->getStatement());
         }
         else {
-            sparkError("SkrEmitter", "Unknown AstBlockItem: %d", blockItem->getType());
+            sparkError("SkrEmitter", "Unknown AstBlockItem: %d", kind);
         }
     }
 
     void emit(const char* funName, AstDeclaration* decl) {
-        if (decl->getType() == AstDeclaration::Type::Var) {
+        if (decl->kind == AstDeclaration::Kind::Var) {
             auto* it = (AstVarDeclaration*) decl;
             auto* initializer = it->getInitializer();
             if (initializer != nullptr) {
@@ -61,51 +61,51 @@ private:
             }
         }
         else {
-            sparkError("SkrEmitter", "Unknown AstDeclaration: %d", decl->getType());
+            sparkError("SkrEmitter", "Unknown AstDeclaration: %d", decl->kind);
         }
     }
 
     void emit(const char* funName, AstStatement* st) {
-        auto type = st->getType();
-        if (type == AstStatement::Type::Return) {
+        auto kind = st->kind;
+        if (kind == AstStatement::Kind::Return) {
             auto* it = (AstReturnStatement*) st;
             auto* retVal = emit(funName, it->getExpression());
             out.emplace_back(allocator.create<SkrCopy>(funcResult, retVal));
             out.emplace_back(allocator.create<SkrJump>(retLabel));
         }
-        else if (type == AstStatement::Type::Expression) {
+        else if (kind == AstStatement::Kind::Expression) {
             auto* it = (AstExpressionStatement*) st;
             emit(funName, it->getExpression());
         }
         else {
-            sparkError("SkrEmitter", "Unknown AstStatement: %d", type);
+            sparkError("SkrEmitter", "Unknown AstStatement: %d", kind);
         }
     }
 
     SkrValue* emit(const char* funName, AstExp* exp) {
-        auto type = exp->getType();
-        if (type == AstExp::EXP_CONSTANT) {
+        auto kind = exp->kind;
+        if (kind == AstExp::Kind::Constant) {
             auto* it = (AstConstantExp*) exp;
             return getSkrConst(it->getValue());
         }
-        else if (type == AstExp::EXP_BINARY) {
+        else if (kind == AstExp::Kind::Binary) {
             return emitBinary(funName, (AstBinaryExp*) exp);
         }
-        else if (type == AstExp::EXP_VAR) {
+        else if (kind == AstExp::Kind::Var) {
             return allocator.create<SkrVar>(((AstVar*) exp)->getIdentifier());
         }
-        else if (type == AstExp::EXP_ASSIGNMENT) {
+        else if (kind == AstExp::Kind::Assignment) {
             auto* ass = (AstAssignment*) exp;
             SkrValue* left = emit(funName, ass->getVar());
             SkrValue* right = emit(funName, ass->getExp());
             out.emplace_back(allocator.create<SkrCopy>(left, right));
             return left;
         }
-        else if (type == AstExp::EXP_FUN_CALL) {
+        else if (kind == AstExp::Kind::FunCall) {
             return emitFunCall(funName, (AstFunCall*) exp);
         }
         else {
-            sparkError("SkrEmitter", "Unknown AstExp: %d", type);
+            sparkError("SkrEmitter", "Unknown AstExp: %d", kind);
             return nullptr;
         }
     }
@@ -192,12 +192,12 @@ private:
         int i = out.size() - 1;
         for (; i >= 0; i--) {
             auto* skr = out[i];
-            auto type = skr->getType();
-            if (type == SkrInstruction::Type::Label) {
+            auto kind = skr->kind;
+            if (kind == SkrInstruction::Kind::Label) {
                 continue;
             }
 
-            if (type == SkrInstruction::Type::Jump) {
+            if (kind == SkrInstruction::Kind::Jump) {
                 auto* jmp = (SkrJump*) skr;
                 if (jmp->getLabel() == retLabel) {
                     out.erase(out.begin() + i);

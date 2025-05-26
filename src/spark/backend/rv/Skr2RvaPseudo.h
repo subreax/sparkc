@@ -43,34 +43,33 @@ public:
         }
 
         for (const auto* skr : func->getInstructions()) {
-            auto type = skr->getType();
-            switch (type) {
-            case SkrInstruction::Type::Binary:
+            switch (skr->kind) {
+            case SkrInstruction::Kind::Binary:
                 emitBinary((SkrBinary*) skr);
                 break;
             
-            case SkrInstruction::Type::Copy:
+            case SkrInstruction::Kind::Copy:
                 emitCopy((SkrCopy*) skr);
                 break;
 
-            case SkrInstruction::Type::Jump:
+            case SkrInstruction::Kind::Jump:
                 emitJump((SkrJump*) skr);
                 break;
 
-            case SkrInstruction::Type::Label:
+            case SkrInstruction::Kind::Label:
                 emitLabel((SkrLabel*) skr);
                 break;
 
-            case SkrInstruction::Type::Branch:
+            case SkrInstruction::Kind::Branch:
                 emitBranch((SkrBranch*) skr);
                 break;
 
-            case SkrInstruction::Type::FunCall:
+            case SkrInstruction::Kind::FunCall:
                 emitFunCall((SkrFunCall*) skr);
                 break;
 
             default:
-                sparkError("Skr2RvaPseudo", "Unknown skr type: %d", type);
+                sparkError("Skr2RvaPseudo", "Unknown skr kind: %d", skr->kind);
             }
         }
 
@@ -136,19 +135,19 @@ private:
     }
 
     inline RvaValue* toPseudo(const SkrValue* value) {
-        auto type = value->getType();
+        auto kind = value->kind;
 
-        switch (type) {
-        case SkrValue::Type::Const: {
+        switch (kind) {
+        case SkrValue::Kind::Const: {
             auto* it = (const SkrConst*) value;
             return allocator.create<RvaImm>(it->getConst());
         }
-        case SkrValue::Type::Var: {
+        case SkrValue::Kind::Var: {
             auto* it = (const SkrVar*) value;
             return allocator.create<RvaPseudoReg>(it->getId());
         }
         default:
-            sparkError("[Skr2RvaPseudo]", "Unknown skr value type: %d", type);
+            sparkError("[Skr2RvaPseudo]", "Unknown Skrvalue kind: %d", kind);
             return nullptr;
         }
     }
@@ -171,7 +170,7 @@ private:
 
     bool hasFunctionCalls(const std::vector<SkrInstruction*>& skrs) const {
         for (SkrInstruction* it : skrs) {
-            if (it->getType() == SkrInstruction::Type::FunCall) {
+            if (it->kind == SkrInstruction::Kind::FunCall) {
                 return true;
             }
         }

@@ -2,14 +2,14 @@
 #include "../Colored.h"
 
 std::ostream& operator<<(std::ostream& os, const SkrValue& skr) {
-    if (skr.getType() == SkrValue::Type::Const) {
+    if (skr.kind == SkrValue::Kind::Const) {
         os << ((SkrConst*) &skr)->getConst();
     } 
-    else if (skr.getType() == SkrValue::Type::Var) {
+    else if (skr.kind == SkrValue::Kind::Var) {
         os << ((SkrVar*) &skr)->getId();
     } 
     else {
-        os << "_unknown_: " << (int) skr.getType();
+        os << "_unknown_: " << (int) skr.kind;
     }
     return os;
 }
@@ -56,28 +56,28 @@ void SkrPrinter::print(std::ostream& os, SkrFunction* func) {
 }
 
 void SkrPrinter::print(std::ostream& os, SkrInstruction* skr) {
-    auto type = skr->getType();
-    if (type == SkrInstruction::Type::Binary) {
+    auto kind = skr->kind;
+    if (kind == SkrInstruction::Kind::Binary) {
         auto* bin = (SkrBinary*) skr;
         os << *bin->getDst() << " = " << *bin->getLeft() << " " << bin->getOperator() << " " << *bin->getRight();
     }
-    else if (type == SkrInstruction::Type::Copy) {
+    else if (kind == SkrInstruction::Kind::Copy) {
         auto* it = (SkrCopy*) skr;
         os << *it->getTo() << " = " << *it->getFrom();
     }
-    else if (type == SkrInstruction::Type::Jump) {
+    else if (kind == SkrInstruction::Kind::Jump) {
         auto* it = (SkrJump*) skr;
         os << "Jump to " << Colored::label(it->getLabel());
     }
-    else if (type == SkrInstruction::Type::Label) {
+    else if (kind == SkrInstruction::Kind::Label) {
         auto* it = (SkrLabel*) skr;
         os << Colored::label(it->getLabel()) << ":";
     }
-    else if (type == SkrInstruction::Type::Branch) {
+    else if (kind == SkrInstruction::Kind::Branch) {
         auto* it = (SkrBranch*) skr;
         os << "branch to " << Colored::label(it->getLabel()) << " if " << *it->getLeft() << " " << it->getOperator() << " " << *it->getRight();
     }
-    else if (type == SkrInstruction::Type::FunCall) {
+    else if (kind == SkrInstruction::Kind::FunCall) {
         auto* it = (SkrFunCall*) skr;
         os << *it->getRetVar() << " = " << Colored::label(it->getName()) << "(";
         auto args = it->getArgs();
@@ -90,7 +90,7 @@ void SkrPrinter::print(std::ostream& os, SkrInstruction* skr) {
         os << ")";
     }
     else {
-        os << "unknown skr: " << (int) type;
+        os << "unknown skr: " << (int) kind;
     }
     os << "\n";
 }

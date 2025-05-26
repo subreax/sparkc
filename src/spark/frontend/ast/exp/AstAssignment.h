@@ -4,7 +4,7 @@
 class AstAssignment : public AstExp {
 public:
     AstAssignment(AstExp* var, AstExp* exp) 
-        : AstExp(EXP_ASSIGNMENT)
+        : AstExp(Kind::Assignment)
         , var(var)
         , exp(exp) {  }
 

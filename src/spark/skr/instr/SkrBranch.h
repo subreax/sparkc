@@ -8,7 +8,7 @@ public:
     enum class Operator { Equals, NotEquals };
 
     SkrBranch(SkrValue* left, Operator op, SkrValue* right, const char* label) 
-        : SkrInstruction(Type::Branch)
+        : SkrInstruction(Kind::Branch)
         , left(left)
         , op(op)
         , right(right)

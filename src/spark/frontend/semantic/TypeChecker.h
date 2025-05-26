@@ -21,18 +21,21 @@ public:
 
 private:
     void typeCheck(AstBlockItem* item) {
-        if (item->getType() == AstBlockItem::Type::Declaration) {
+        if (item->kind == AstBlockItem::Kind::Declaration) {
             auto* declItem = (AstDeclBlockItem*) item;
             typeCheck(declItem->getDeclaration());
         }
-        else if (item->getType() == AstBlockItem::Type::Statement) {
+        else if (item->kind == AstBlockItem::Kind::Statement) {
             auto* stItem = (AstStatementBlockItem*) item;
             typeCheck(stItem->getStatement());
+        }
+        else {
+            sparkError("TypeChecker", "Unknown AstBlockItem: %d", item->kind);
         }
     }
 
     void typeCheck(AstDeclaration* decl) {
-        if (decl->getType() == AstDeclaration::Type::Var) {
+        if (decl->kind == AstDeclaration::Kind::Var) {
             auto* varDecl = (AstVarDeclaration*) decl;
             auto* initExp = varDecl->getInitializer();
             if (initExp != nullptr) {
@@ -42,12 +45,12 @@ private:
     }
 
     void typeCheck(AstStatement* st) {
-        auto type = st->getType();
-        if (type == AstStatement::Type::Expression) {
+        auto kind = st->kind;
+        if (kind == AstStatement::Kind::Expression) {
             auto* expSt = (AstExpressionStatement*) st;
             typeCheck(expSt->getExpression());
         }
-        else if (type == AstStatement::Type::Return) {
+        else if (kind == AstStatement::Kind::Return) {
             auto* retSt = (AstReturnStatement*) st;
             typeCheck(retSt->getExpression());
         }
@@ -58,35 +61,35 @@ private:
     // AstExp
 
     void typeCheck(AstExp* exp) {
-        auto type = exp->getType();
-        switch (type) {
-        case AstExp::EXP_CONSTANT:
+        auto kind = exp->kind;
+        switch (kind) {
+        case AstExp::Kind::Constant:
             break;
             
-        case AstExp::EXP_BINARY:
+        case AstExp::Kind::Binary:
             typeCheck((AstBinaryExp*) exp);
             break;
 
-        case AstExp::EXP_VAR:
+        case AstExp::Kind::Var:
             typeCheck((AstVar*) exp);
             break;
 
-        case AstExp::EXP_ASSIGNMENT:
+        case AstExp::Kind::Assignment:
             typeCheck((AstAssignment*) exp);
             break;
 
-        case AstExp::EXP_FUN_CALL:
+        case AstExp::Kind::FunCall:
             typeCheck((AstFunCall*) exp);
             break;
 
         default:
-            sparkError("TypeChecker", "Unhandled AstExp: %s (%d)", AstExp::typeToString(type), type);
+            sparkError("TypeChecker", "Unhandled AstExp: %s (%d)", AstExp::kindToString(kind), kind);
         }
     }
 
     void typeCheck(AstVar* var) {
-        auto* varType = table.get(var->getIdentifier());
-        if (varType->getKind() == SymbolType::Kind::Function) {
+        auto* type = table.get(var->getIdentifier());
+        if (type->kind == SymbolType::Kind::Function) {
             throw TypeException("Using variable as a function: '" + std::string(var->getIdentifier()) + "'");
         }
     }
@@ -98,7 +101,7 @@ private:
 
     void typeCheck(AstFunCall* call) {
         auto* funType = (SymbolFunctionType*) table.get(call->getFunName());
-        if (funType->getKind() != SymbolType::Kind::Function) {
+        if (funType->kind != SymbolType::Kind::Function) {
             throw TypeException("Function '" + std::string(call->getFunName()) + "' doesn't exist");
         }
 
@@ -109,9 +112,9 @@ private:
     }
 
     void typeCheck(AstAssignment* ass) {
-        auto varType = ass->getVar()->getType();
-        if (varType != AstExp::EXP_VAR) {
-            throw TypeException(std::string("Expressions can only be assigned to variables, not to a ") + AstExp::typeToString(varType));
+        auto kind = ass->getVar()->kind;
+        if (kind != AstExp::Kind::Var) {
+            throw TypeException(std::string("Expressions can only be assigned to variables, not to a ") + AstExp::kindToString(kind));
         }
         typeCheck(ass->getExp());
     }

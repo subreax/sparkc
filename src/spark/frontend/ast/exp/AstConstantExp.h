@@ -3,7 +3,7 @@
 
 class AstConstantExp : public AstExp {
 public:
-    AstConstantExp(int32_t value) : AstExp(EXP_CONSTANT), value(value) {  }
+    AstConstantExp(int32_t value) : AstExp(Kind::Constant), value(value) {  }
 
     int32_t getValue() const { return value; }
 

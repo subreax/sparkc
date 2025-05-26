@@ -3,7 +3,7 @@
 
 class SkrJump : public SkrInstruction {
 public:
-    SkrJump(const char* label) : SkrInstruction(Type::Jump), label(label) {  }
+    SkrJump(const char* label) : SkrInstruction(Kind::Jump), label(label) {  }
 
     const char* getLabel() { return label; }
 

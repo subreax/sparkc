@@ -3,20 +3,17 @@
 
 class SkrValue {
 public:
-    enum class Type { Const, Var };
+    enum class Kind { Const, Var };
 
-    SkrValue(Type type) : type(type) {  }
+    SkrValue(Kind kind) : kind(kind) {  }
 
-    Type getType() const { return type; }
-
-private:
-    Type type;
+    const Kind kind;
 };
 
 
 class SkrConst : public SkrValue {
 public:
-    SkrConst(int32_t c) : SkrValue(Type::Const), c(c) { }
+    SkrConst(int32_t c) : SkrValue(Kind::Const), c(c) { }
 
     int32_t getConst() const { return c; }
 
@@ -27,7 +24,7 @@ private:
 
 class SkrVar : public SkrValue {
 public:
-    SkrVar(const char* id) : SkrValue(Type::Var), id(id) {  }
+    SkrVar(const char* id) : SkrValue(Kind::Var), id(id) {  }
 
     const char* getId() const { return id; }
 

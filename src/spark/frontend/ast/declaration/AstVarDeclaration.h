@@ -5,7 +5,7 @@
 class AstVarDeclaration : public AstDeclaration {
 public:
     AstVarDeclaration(const char* name, AstExp* init = nullptr) 
-        : AstDeclaration(Type::Var)
+        : AstDeclaration(Kind::Var)
         , name(name)
         , init(init) { }
     

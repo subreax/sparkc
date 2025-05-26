@@ -5,7 +5,7 @@
 class SkrCopy : public SkrInstruction {
 public:
     SkrCopy(SkrValue* to, SkrValue* from) 
-        : SkrInstruction(Type::Copy)
+        : SkrInstruction(Kind::Copy)
         , to(to)
         , from(from) {  }
 

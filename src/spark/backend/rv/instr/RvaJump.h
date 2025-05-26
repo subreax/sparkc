@@ -3,7 +3,7 @@
 
 class RvaJump : public RvaInstruction {
 public:
-    RvaJump(const char* label) : RvaInstruction(Type::Jump), label(label) {  }
+    RvaJump(const char* label) : RvaInstruction(Kind::Jump), label(label) {  }
 
     void emit(RvListing& listing) override {
         listing.addWithLabel(Rv32I::jal(RvReg::ZERO), label);

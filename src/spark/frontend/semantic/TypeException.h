@@ -1,14 +1,8 @@
 #pragma once
-#include <stdexcept>
+#include "../../common/SparkRuntimeException.h"
 
-class TypeException : public std::runtime_error {
+class TypeException : public SparkRuntimeException {
 public:
     TypeException(const std::string& msg) 
-        : std::runtime_error("")
-        , msg(msg) {}
-
-    const char* what() const noexcept override { return msg.c_str(); }
-
-private:
-    std::string msg;
+        : SparkRuntimeException(msg) {  }
 };

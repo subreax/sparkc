@@ -4,7 +4,7 @@
 class RvaLoad : public RvaInstruction {
 public:
     RvaLoad(RvaValue* to, RvaValue* fromAddr) 
-        : RvaInstruction(Type::Load)
+        : RvaInstruction(Kind::Load)
         , to(to)
         , fromAddr(fromAddr) {}
 

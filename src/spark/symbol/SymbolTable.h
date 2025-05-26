@@ -14,7 +14,7 @@ public:
             throw DuplicateSymbolDeclarationException(name, type);
         }
 
-        table[name] = type;
+        table.emplace(name, type);
     }
 
     SymbolType* get(const char* name) const {

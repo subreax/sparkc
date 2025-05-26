@@ -5,7 +5,7 @@
 class RvaPrologue : public RvaInstruction {
 public:
     RvaPrologue(int32_t frameSize = 0, bool _saveRa = false) 
-        : RvaInstruction(Type::Prologue)
+        : RvaInstruction(Kind::Prologue)
         , frameSize(frameSize)
         , _saveRa(_saveRa) {  }
 

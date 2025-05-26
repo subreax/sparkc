@@ -4,7 +4,7 @@
 class RvaStore : public RvaInstruction {
 public:
     RvaStore(RvaValue* toAddr, RvaValue* from) 
-        : RvaInstruction(Type::Store)
+        : RvaInstruction(Kind::Store)
         , toAddr(toAddr)
         , from(from) { }
     

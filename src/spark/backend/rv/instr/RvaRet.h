@@ -3,7 +3,7 @@
 
 class RvaRet : public RvaInstruction {
 public:
-    RvaRet() : RvaInstruction(Type::Ret) { }
+    RvaRet() : RvaInstruction(Kind::Ret) { }
 
     void emit(RvListing& listing) override {
         listing += Rv32I::jalr(RvReg::ZERO, RvReg::RA, 0);

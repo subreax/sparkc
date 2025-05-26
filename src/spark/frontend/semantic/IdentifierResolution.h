@@ -37,16 +37,15 @@ private:
     }
 
     void resolve(AstBlockItem* item) {
-        auto type = item->getType();
-        if (type == AstBlockItem::Type::Declaration) {
+        auto kind = item->kind;
+        if (kind == AstBlockItem::Kind::Declaration) {
             auto* declItem = (AstDeclBlockItem*) item;
             resolve(declItem->getDeclaration());
         }
     }
 
     void resolve(AstDeclaration* decl) {
-        auto type = decl->getType();
-        if (type == AstDeclaration::Type::Var) {
+        if (decl->kind == AstDeclaration::Kind::Var) {
             auto* varDecl = (AstVarDeclaration*) decl;
             table.declare(varDecl->getName(), SymbolIntType::getInstance());
         }

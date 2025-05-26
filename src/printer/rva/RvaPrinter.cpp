@@ -53,28 +53,27 @@ std::ostream& operator<<(std::ostream& os, RvaBranch::Operator op) {
 }
 
 std::ostream& operator<<(std::ostream& os, const RvaValue& value) {
-    auto type = value.getType();
-    switch (type)
-    {
-    case RvaValue::Type::Imm:
+    switch (value.kind) {
+    case RvaValue::Kind::Imm:
         os << ((const RvaImm*) &value)->getValue();
         break;
 
-    case RvaValue::Type::PseudoReg:
+    case RvaValue::Kind::PseudoReg:
         os << "p(" << ((const RvaPseudoReg*) &value)->getId() << ")";
         break;
     
-    case RvaValue::Type::Register:
+    case RvaValue::Kind::Register:
         os << ((const RvaRegister*) &value)->getReg();
         break;
 
-    case RvaValue::Type::Memory: {
+    case RvaValue::Kind::Memory: {
         auto* it = (const RvaMemory*) &value;
         os << "[" << it->getBase() << sign(it->getOffset()) << it->getOffset() << "]";
     }
         break;
 
     default:
+        sparkError("RvaPrinter", "Unknown RvaValue");
         break;
     }
     return os;
@@ -150,54 +149,52 @@ void printCall(std::ostream& os, const RvaCall* it) {
 
 void RvaPrinter::print(std::ostream& os, const std::vector<RvaInstruction*>& instructions) {
     for (const auto* instr : instructions) {
-        auto type = instr->getType();
-
-        switch (type) {
-        case RvaInstruction::Type::Binary:
+        switch (instr->kind) {
+        case RvaInstruction::Kind::Binary:
             printBinary(os, (const RvaBinary*) instr);
             break;
         
-        case RvaInstruction::Type::Move:
+        case RvaInstruction::Kind::Move:
             printMove(os, (const RvaMov*) instr);
             break;
 
-        case RvaInstruction::Type::Label:
+        case RvaInstruction::Kind::Label:
             printLabel(os, (const RvaLabel*) instr);
             break;
 
-        case RvaInstruction::Type::Jump:
+        case RvaInstruction::Kind::Jump:
             printJump(os, (const RvaJump*) instr);
             break;
 
-        case RvaInstruction::Type::Load:
+        case RvaInstruction::Kind::Load:
             printLoad(os, (const RvaLoad*) instr);
             break;
 
-        case RvaInstruction::Type::Store:
+        case RvaInstruction::Kind::Store:
             printStore(os, (const RvaStore*) instr);
             break;
 
-        case RvaInstruction::Type::Ret:
+        case RvaInstruction::Kind::Ret:
             printRet(os, (const RvaRet*) instr);
             break;
 
-        case RvaInstruction::Type::Prologue:
+        case RvaInstruction::Kind::Prologue:
             printPrologue(os, (const RvaPrologue*) instr);
             break;
         
-        case RvaInstruction::Type::Epilogue:
+        case RvaInstruction::Kind::Epilogue:
             printEpilogue(os, (const RvaEpilogue*) instr);
             break;
 
-        case RvaInstruction::Type::Branch:
+        case RvaInstruction::Kind::Branch:
             printBranch(os, (const RvaBranch*) instr);
             break;
 
-        case RvaInstruction::Type::Call:
+        case RvaInstruction::Kind::Call:
             printCall(os, (const RvaCall*) instr);
             break;
 
-        default: os << "unknown rva type: " << (int) type;
+        default: os << "unknown rva kind: " << (int) instr->kind;
         }
         os << "\n";
     }

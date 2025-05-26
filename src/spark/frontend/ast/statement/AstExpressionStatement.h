@@ -5,7 +5,7 @@
 class AstExpressionStatement : public AstStatement {
 public:
     AstExpressionStatement(AstExp* exp) 
-        : AstStatement(Type::Expression)
+        : AstStatement(Kind::Expression)
         , exp(exp) {}
 
     AstExp* getExpression() { return exp; }

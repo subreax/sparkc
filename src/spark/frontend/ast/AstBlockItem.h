@@ -4,19 +4,17 @@
 
 class AstBlockItem {
 public:
-    enum class Type { Declaration, Statement };
+    enum class Kind { Declaration, Statement };
 
-    AstBlockItem(Type type) : type(type) { }
-    Type getType() const { return type; }
+    AstBlockItem(Kind kind) : kind(kind) {  }
 
-private:
-    const Type type;
+    const Kind kind;
 };
 
 
 class AstDeclBlockItem : public AstBlockItem {
 public:
-    AstDeclBlockItem(AstDeclaration* decl) : AstBlockItem(Type::Declaration), decl(decl) {  }
+    AstDeclBlockItem(AstDeclaration* decl) : AstBlockItem(Kind::Declaration), decl(decl) {  }
 
     AstDeclaration* getDeclaration() { return decl; }
     
@@ -27,7 +25,7 @@ private:
 
 class AstStatementBlockItem : public AstBlockItem {
 public:
-    AstStatementBlockItem(AstStatement* statement) : AstBlockItem(Type::Statement), statement(statement) { }
+    AstStatementBlockItem(AstStatement* statement) : AstBlockItem(Kind::Statement), statement(statement) { }
 
     AstStatement* getStatement() { return statement; }
 

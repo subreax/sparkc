@@ -4,7 +4,7 @@
 class RvaEpilogue : public RvaInstruction {
 public:
     RvaEpilogue(int32_t frameSize = 0, bool _loadRa = false) 
-        : RvaInstruction(Type::Epilogue)
+        : RvaInstruction(Kind::Epilogue)
         , frameSize(frameSize)
         , _loadRa(_loadRa) {  }
 

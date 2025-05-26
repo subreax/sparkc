@@ -4,12 +4,12 @@
 class RvaMov : public RvaInstruction {
 public:
     RvaMov(RvaValue* to, RvaValue* from) 
-        : RvaInstruction(Type::Move)
+        : RvaInstruction(Kind::Move)
         , to(to)
         , from(from) {}
 
     void emit(RvListing& listing) override {
-        if (from->getType() == RvaValue::Type::Imm) {
+        if (from->kind == RvaValue::Kind::Imm) {
             int32_t value = ((RvaImm*) from)->getValue();
             listing += Rv32I::addi(expectReg(to), RvReg::ZERO, value); // todo: lui if needed
         } else {

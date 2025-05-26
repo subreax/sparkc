@@ -14,7 +14,7 @@ public:
     };
 
     RvaBinary(RvaValue* dst, RvaValue* left, Operator op, RvaValue* right)
-        : RvaInstruction(Type::Binary)
+        : RvaInstruction(Kind::Binary)
         , dst(dst)
         , left(left)
         , op(op)

@@ -3,7 +3,7 @@
 
 class RvaLabel : public RvaInstruction {
 public:
-    RvaLabel(const char* value) : RvaInstruction(Type::Label), value(value) {  }
+    RvaLabel(const char* value) : RvaInstruction(Kind::Label), value(value) {  }
 
     void emit(RvListing& listing) override {
         listing.addLabel(value);

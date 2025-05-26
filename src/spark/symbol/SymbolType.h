@@ -7,10 +7,7 @@ public:
 
     SymbolType(Kind kind) : kind(kind) {  }
 
-    Kind getKind() const { return kind; }
-
-private:
-    Kind kind;
+    const Kind kind;
 };
 
 

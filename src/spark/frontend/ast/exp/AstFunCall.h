@@ -6,7 +6,7 @@
 class AstFunCall : public AstExp {
 public:
     AstFunCall(const char* funName, const BoundArray<AstExp*>& args)
-        : AstExp(EXP_FUN_CALL)
+        : AstExp(Kind::FunCall)
         , funName(funName)
         , args(args) {  }
 

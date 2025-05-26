@@ -8,35 +8,32 @@
 
 class RvaInstruction {
 public:
-    enum class Type {
+    enum class Kind {
         Prologue, Epilogue, Binary, Move, Load, Store, Jump, Label, Ret, Branch, Call
     };
 
-    RvaInstruction(Type type) : type(type) { }
+    RvaInstruction(Kind kind) : kind(kind) { }
     virtual ~RvaInstruction() = default;
-
-    Type getType() const { return type; }
 
     virtual void emit(RvListing& listing) = 0;
 
+    const Kind kind;
+
 protected:
     static RvReg expectReg(RvaValue* val) {
-        if (val->getType() == RvaValue::Type::Register) {
+        if (val->kind == RvaValue::Kind::Register) {
             return ((RvaRegister*) val)->getReg();
         }
-        sparkError("RvaInstruction", "Expected RvaRegister, but found %d", val->getType());
+        sparkError("RvaInstruction", "Expected RvaRegister, but found %d", val->kind);
         return RvReg::ZERO;
     }
 
     static RvaMemory* expectMem(RvaValue* val) {
-        if (val->getType() == RvaValue::Type::Memory) {
+        if (val->kind == RvaValue::Kind::Memory) {
             return (RvaMemory*) val;
         }
-        sparkError("RvaInstruction", "Expected RvaMemory, but found %d", val->getType());
+        sparkError("RvaInstruction", "Expected RvaMemory, but found %d", val->kind);
         return nullptr;
     }
-
-private:
-    Type type;
 };
 

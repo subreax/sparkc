@@ -1,31 +1,22 @@
 #pragma once
 #include <cstdint>
 #include "../../lexer/Token.h"
+#include "../../../common/Error.h"
 
 class AstExp {
 public:
-    enum Type {
-        EXP_CONSTANT,
-        EXP_BINARY,
-        EXP_VAR,
-        EXP_ASSIGNMENT,
-        EXP_FUN_CALL
-    };
+    enum class Kind { Constant, Binary, Var, Assignment, FunCall, _Count };
 
-    AstExp(Type type) : type(type) {  }
-    Type getType() const { return type; }
+    AstExp(Kind kind) : kind(kind) {  }
 
-    static const char* typeToString(Type type) {
-        switch (type) {
-        case EXP_CONSTANT: return "const";
-        case EXP_BINARY: return "binary";
-        case EXP_VAR: return "var";
-        case EXP_ASSIGNMENT: return "assignment";
-        case EXP_FUN_CALL: return "fun_call";
-        default: return "<unknown type>";
+    static const char* kindToString(Kind kind) {
+        static const char* names[] = { "const", "binary", "var", "assignment", "fun_call" };
+        if (kind < Kind::_Count) {
+            return names[(int) kind];
         }
+        sparkError("AstExp", "Failed to convert AstExp::Kind to string");
+        return "";
     }
 
-private:
-    Type type;
+    const Kind kind;
 };

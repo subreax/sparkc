@@ -2,12 +2,9 @@
 
 class AstDeclaration {
 public:
-    enum class Type { Var };
+    enum class Kind { Var };
 
-    AstDeclaration(Type type) : type(type) {  }
+    AstDeclaration(Kind kind) : kind(kind) {  }
 
-    Type getType() const { return type; }
-
-private:
-    const Type type;
+    const Kind kind;
 };

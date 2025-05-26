@@ -6,7 +6,7 @@
 class SkrFunCall : public SkrInstruction {
 public:
     SkrFunCall(const char* name, BoundArray<SkrValue*> args, SkrVar* retVar)
-        : SkrInstruction(Type::FunCall)
+        : SkrInstruction(Kind::FunCall)
         , name(name)
         , retVar(retVar)
         , args(args) {  }

@@ -8,7 +8,7 @@ public:
     enum class Operator { Equals, NotEquals };
 
     RvaBranch(RvaValue* left, Operator op, RvaValue* right, const char* label) 
-        : RvaInstruction(Type::Branch)
+        : RvaInstruction(Kind::Branch)
         , left(left)
         , op(op)
         , right(right)

@@ -2,14 +2,11 @@
 
 class AstStatement {
 public:
-    enum class Type {
+    enum class Kind {
         Return, Expression
     };
 
-    AstStatement(Type type) : type(type) {  }
+    AstStatement(Kind kind) : kind(kind) {  }
 
-    Type getType() const { return type; }
-
-private:
-    Type type;
+    const Kind kind;
 };

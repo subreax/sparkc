@@ -31,16 +31,16 @@ public:
     }
 
     void toMermaid(std::ostream& os, AstBlockItem* blockItem, const std::string& parent) {
-        if (blockItem->getType() == AstBlockItem::Type::Declaration) {
+        if (blockItem->kind == AstBlockItem::Kind::Declaration) {
             toMermaid(os, ((AstDeclBlockItem*) blockItem)->getDeclaration(), parent);
         }
-        else if (blockItem->getType() == AstBlockItem::Type::Statement) {
+        else if (blockItem->kind == AstBlockItem::Kind::Statement) {
             toMermaid(os, ((AstStatementBlockItem*) blockItem)->getStatement(), parent);
         }
     }
 
     void toMermaid(std::ostream& os, AstDeclaration* decl, const std::string& parent) {
-        if (decl->getType() == AstDeclaration::Type::Var) {
+        if (decl->kind == AstDeclaration::Kind::Var) {
             auto* it = (AstVarDeclaration*) decl;
             auto node = createBlankNode();
             os << joinParentAndChild(parent, addValue(node, "decl", it->getName()));
@@ -51,14 +51,14 @@ public:
     }
 
     void toMermaid(std::ostream& os, AstStatement* st, const std::string& parent) {
-        auto type = st->getType();
-        if (type == AstStatement::Type::Return) {
+        auto kind = st->kind;
+        if (kind == AstStatement::Kind::Return) {
             auto node = createBlankNode();
             os << joinParentAndChild(parent, addValue(node, "return"));
             auto* it = (AstReturnStatement*) st;
             toMermaid(os, it->getExpression(), node);
         }
-        else if (type == AstStatement::Type::Expression) {
+        else if (kind == AstStatement::Kind::Expression) {
             auto node = createBlankNode();
             os << joinParentAndChild(parent, addValue(node, "expr_st"));
             auto* it = (AstExpressionStatement*) st;
@@ -67,37 +67,37 @@ public:
     }
 
     void toMermaid(std::ostream& os, AstExp* exp, const std::string& parent) {
-        auto type = exp->getType();
-        const char* typeStr = AstExp::typeToString(type);
-        if (type == AstExp::EXP_BINARY) {
+        auto kind = exp->kind;
+        const char* kindStr = AstExp::kindToString(kind);
+        if (kind == AstExp::Kind::Binary) {
             auto* bin = (AstBinaryExp*) exp;
             auto op = AstBinaryExp::operatorToString(bin->getOperator());
             auto node = createBlankNode();
-            os << joinParentAndChild(parent, addValue(node, typeStr, op));
+            os << joinParentAndChild(parent, addValue(node, kindStr, op));
             toMermaid(os, bin->getLeft(), node);
             toMermaid(os, bin->getRight(), node);
         }
-        else if (type == AstExp::EXP_CONSTANT) {
+        else if (kind == AstExp::Kind::Constant) {
             auto* constant = (AstConstantExp*) exp;
-            auto node = addValue(createBlankNode(), typeStr, std::to_string(constant->getValue()));
+            auto node = addValue(createBlankNode(), kindStr, std::to_string(constant->getValue()));
             os << joinParentAndChild(parent, node);
         }
-        else if (type == AstExp::EXP_VAR) {
+        else if (kind == AstExp::Kind::Var) {
             auto* var = (AstVar*) exp;
-            auto node = addValue(createBlankNode(), typeStr, var->getIdentifier());
+            auto node = addValue(createBlankNode(), kindStr, var->getIdentifier());
             os << joinParentAndChild(parent, node);
         }
-        else if (type == AstExp::EXP_ASSIGNMENT) {
+        else if (kind == AstExp::Kind::Assignment) {
             auto* ass = (AstAssignment*) exp;
             auto node = createBlankNode();
             os << joinParentAndChild(parent, addValue(node, "="));
             toMermaid(os, ass->getVar(), node);
             toMermaid(os, ass->getExp(), node);
         }
-        else if (type == AstExp::EXP_FUN_CALL) {
+        else if (kind == AstExp::Kind::FunCall) {
             auto* call = (AstFunCall*) exp;
             auto node = createBlankNode();
-            os << joinParentAndChild(parent, addValue(node, typeStr, call->getFunName()));
+            os << joinParentAndChild(parent, addValue(node, kindStr, call->getFunName()));
             const auto& args = call->getArgs();
             for (size_t i = 0; i < args.size(); i++) {
                 toMermaid(os, args[i], node);
@@ -121,11 +121,11 @@ private:
         return buf;
     }
 
-    std::string addValue(const std::string& blank, const std::string& type, const std::string& value = "") {
+    std::string addValue(const std::string& blank, const std::string& kind, const std::string& value = "") {
         if (value.empty()) {
-            return blank + "(\"" + type + "\")";
+            return blank + "(\"" + kind + "\")";
         } else {
-            return blank + "(\"" + type + "\n" + bslashIfNeeded(value) + value + "\")";
+            return blank + "(\"" + kind + "\n" + bslashIfNeeded(value) + value + "\")";
         }
     }
 

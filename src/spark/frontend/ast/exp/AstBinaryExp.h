@@ -15,7 +15,7 @@ public:
     };
 
     AstBinaryExp(AstExp* left, Operator op, AstExp* right) 
-        : AstExp(EXP_BINARY) 
+        : AstExp(Kind::Binary) 
         , left(left)
         , op(op)
         , right(right) {  }

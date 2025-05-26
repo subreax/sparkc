@@ -18,42 +18,42 @@ public:
 
     void fix() {
         for (RvaInstruction* rva : orig) {
-            auto type = rva->getType();
-            switch (type) {
-            case RvaInstruction::Type::Move:        fix((RvaMov*) rva); break;
-            case RvaInstruction::Type::Binary:      fix((RvaBinary*) rva); break;
-            case RvaInstruction::Type::Branch:      fix((RvaBranch*) rva); break;
+            auto kind = rva->kind;
+            switch (kind) {
+            case RvaInstruction::Kind::Move:        fix((RvaMov*) rva); break;
+            case RvaInstruction::Kind::Binary:      fix((RvaBinary*) rva); break;
+            case RvaInstruction::Kind::Branch:      fix((RvaBranch*) rva); break;
 
-            case RvaInstruction::Type::Call:        clone((RvaCall*) rva); break;
-            case RvaInstruction::Type::Epilogue:    clone((RvaEpilogue*) rva); break;
-            case RvaInstruction::Type::Prologue:    clone((RvaPrologue*) rva); break;
-            case RvaInstruction::Type::Jump:        clone((RvaJump*) rva); break;
-            case RvaInstruction::Type::Label:       clone((RvaLabel*) rva); break;
-            case RvaInstruction::Type::Ret:         add(allocator.create<RvaRet>()); break;
+            case RvaInstruction::Kind::Call:        clone((RvaCall*) rva); break;
+            case RvaInstruction::Kind::Epilogue:    clone((RvaEpilogue*) rva); break;
+            case RvaInstruction::Kind::Prologue:    clone((RvaPrologue*) rva); break;
+            case RvaInstruction::Kind::Jump:        clone((RvaJump*) rva); break;
+            case RvaInstruction::Kind::Label:       clone((RvaLabel*) rva); break;
+            case RvaInstruction::Kind::Ret:         add(allocator.create<RvaRet>()); break;
             
             default:
-                sparkError("RvaFixer", "Unknown RvaInstruction: %d", type);
+                sparkError("RvaFixer", "Unknown RvaInstruction: %d", kind);
             }
         }
     }
 
 private:
     void fix(RvaMov* it) {
-        auto fromType = it->from->getType();
-        auto toType = it->to->getType();
+        auto fromKind = it->from->kind;
+        auto toKind = it->to->kind;
 
-        if (toType == RvaValue::Type::Register) {
-            if (fromType == RvaValue::Type::Register || fromType == RvaValue::Type::Imm) {
+        if (toKind == RvaValue::Kind::Register) {
+            if (fromKind == RvaValue::Kind::Register || fromKind == RvaValue::Kind::Imm) {
                 add(allocator.create<RvaMov>(clone(it->to), clone(it->from)));
             }
-            else if (fromType == RvaValue::Type::Memory) {
+            else if (fromKind == RvaValue::Kind::Memory) {
                 add(allocator.create<RvaLoad>(clone(it->to), clone(it->from)));
             }
             else {
-                sparkError("RvaFixer", "Failed to fix RvaMov: unknown 'from' param: %d", fromType);
+                sparkError("RvaFixer", "Failed to fix RvaMov: unknown 'from' param: %d", fromKind);
             }
         }
-        else if (toType == RvaValue::Type::Memory) {
+        else if (toKind == RvaValue::Kind::Memory) {
             auto* regFrom = moveToReg(it->from, RvReg::T0);
             add(allocator.create<RvaStore>(clone(it->to), regFrom));
         }
@@ -67,7 +67,7 @@ private:
         auto* leftReg = moveToReg(it->left, RvReg::T1);
         auto* rightReg = moveToReg(it->right, RvReg::T2);
         add(allocator.create<RvaBinary>(dstReg, leftReg, it->op, rightReg));
-        if (it->dst->getType() == RvaValue::Type::Memory) {
+        if (it->dst->kind == RvaValue::Kind::Memory) {
             add(allocator.create<RvaStore>(clone(it->dst), dstReg));
         }
     }
@@ -79,12 +79,12 @@ private:
     }
 
     RvaRegister* moveToReg(RvaValue* val, RvReg reg) {
-        auto type = val->getType();
-        if (type == RvaValue::Type::Register) {
+        auto kind = val->kind;
+        if (kind == RvaValue::Kind::Register) {
             return (RvaRegister*) clone(val);
         }
 
-        if (type == RvaValue::Type::Imm) {
+        if (kind == RvaValue::Kind::Imm) {
             int32_t immValue = ((RvaImm*) val)->getValue();
             if (immValue == 0) {
                 return getZeroReg();
@@ -94,14 +94,14 @@ private:
             return r;
         }
 
-        if (type == RvaValue::Type::Memory) {
+        if (kind == RvaValue::Kind::Memory) {
             auto* mem = (RvaMemory*) clone(val);
             auto* r = newReg(reg);
             add(allocator.create<RvaLoad>(r, mem));
             return r;
         }
 
-        sparkError("RvaFixer", "Unknown RvaValue: %d", type);
+        sparkError("RvaFixer", "Unknown RvaValue: %d", kind);
         return nullptr;
     }
 
@@ -126,9 +126,8 @@ private:
     }
 
     RvaValue* clone(RvaValue* v) {
-        auto type = v->getType();
-        switch (type) {
-        case RvaValue::Type::Imm: {
+        switch (v->kind) {
+        case RvaValue::Kind::Imm: {
             auto imm = ((RvaImm*) v)->getValue();
             if (imm == 0) {
                 return getZeroReg();
@@ -136,14 +135,14 @@ private:
                 return allocator.create<RvaImm>(imm);
             }
         }
-        case RvaValue::Type::Register: return allocator.create<RvaRegister>(((RvaRegister*) v)->getReg());
-        case RvaValue::Type::Memory: {
+        case RvaValue::Kind::Register: return allocator.create<RvaRegister>(((RvaRegister*) v)->getReg());
+        case RvaValue::Kind::Memory: {
             auto* mem = (RvaMemory*) v;
             return allocator.create<RvaMemory>(mem->getBase(), mem->getOffset());
         }
 
         default:
-            sparkError("RvaFixer", "Failed to clone RvaValue: unknown type %d", type);
+            sparkError("RvaFixer", "Failed to clone RvaValue: unknown kind %d", v->kind);
             return nullptr;
         }
     }

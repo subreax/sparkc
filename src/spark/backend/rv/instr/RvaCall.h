@@ -4,7 +4,7 @@
 class RvaCall : public RvaInstruction {
 public:
     RvaCall(const char* funName) 
-        : RvaInstruction(Type::Call) 
+        : RvaInstruction(Kind::Call) 
         , funName(funName) {  }
 
     void emit(RvListing& listing) override {

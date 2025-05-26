@@ -19,14 +19,14 @@ public:
         if (rvas.size() > 1) {
             auto frameSize = frame.getSizeAligned16();
             auto* prologue = (RvaPrologue*) rvas[1];
-            if (prologue->getType() == RvaInstruction::Type::Prologue) {
+            if (prologue->kind == RvaInstruction::Kind::Prologue) {
                 prologue->setFrameSize(frameSize);
             } else {
                 sparkError("RvaPseudoReplacer", "Can't find prologue");
             }
 
             auto* epilogue = (RvaEpilogue*) rvas[rvas.size() - 2];
-            if (epilogue->getType() == RvaInstruction::Type::Epilogue) {
+            if (epilogue->kind == RvaInstruction::Kind::Epilogue) {
                 epilogue->setFrameSize(frameSize);
             } else {
                 sparkError("RvaPseudoReplacer", "Can't find epilogue");
@@ -36,11 +36,10 @@ public:
 
 private:
     void replace(RvaInstruction* it) {
-        auto type = it->getType();
-        switch (type) {
-        case RvaInstruction::Type::Binary:      replace((RvaBinary*) it); break;
-        case RvaInstruction::Type::Move:        replace((RvaMov*) it); break;
-        case RvaInstruction::Type::Branch:      replace((RvaBranch*) it); break;
+        switch (it->kind) {
+        case RvaInstruction::Kind::Binary:      replace((RvaBinary*) it); break;
+        case RvaInstruction::Kind::Move:        replace((RvaMov*) it); break;
+        case RvaInstruction::Kind::Branch:      replace((RvaBranch*) it); break;
         }
     }
 
@@ -61,7 +60,7 @@ private:
     }
 
     inline void replace(RvaValue** v) {
-        if ((*v)->getType() == RvaValue::Type::PseudoReg) {
+        if ((*v)->kind == RvaValue::Kind::PseudoReg) {
             auto* pseudo = (RvaPseudoReg*) *v;
             *v = frame.getOrPush(pseudo->getId());
         }
