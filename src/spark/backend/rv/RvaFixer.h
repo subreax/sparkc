@@ -2,6 +2,7 @@
 #include <vector>
 #include "instr/everything.h"
 #include "../../common/LinearAllocator.h"
+#include "../../common/Error.h"
 #include "RvReg.h"
 
 class RvaFixer {
@@ -31,8 +32,7 @@ public:
             case RvaInstruction::Type::Ret:         add(allocator.create<RvaRet>()); break;
             
             default:
-                printf("[RvaFixer] Unknown RvaInstruction: %d\n", type);
-                std::abort();
+                sparkError("RvaFixer", "Unknown RvaInstruction: %d", type);
             }
         }
     }
@@ -50,8 +50,7 @@ private:
                 add(allocator.create<RvaLoad>(clone(it->to), clone(it->from)));
             }
             else {
-                printf("[RvaFixer] Unexpected mov from param: %d\n", fromType);
-                std::abort();
+                sparkError("RvaFixer", "Failed to fix RvaMov: unknown 'from' param: %d", fromType);
             }
         }
         else if (toType == RvaValue::Type::Memory) {
@@ -102,8 +101,8 @@ private:
             return r;
         }
 
-        printf("[RvaFixer] Unknown RvaValue: %d\n", type);
-        std::abort();
+        sparkError("RvaFixer", "Unknown RvaValue: %d", type);
+        return nullptr;
     }
 
     void clone(RvaCall* call) {
@@ -144,8 +143,7 @@ private:
         }
 
         default:
-            printf("[RvaFixer] Failed to clone RvaValue with type %d\n", type);
-            std::abort();
+            sparkError("RvaFixer", "Failed to clone RvaValue: unknown type %d", type);
             return nullptr;
         }
     }

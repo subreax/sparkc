@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <cstring>
 #include "Rv32Base.h"
+#include "../../../common/Error.h"
 #include "../../../common/NoMemoryException.h"
 #include "../../../common/LabelGen.h"
 
@@ -48,8 +49,7 @@ public:
                 instr |= Rv32Base::encodeImmJ(calculateOffsetToLabel(u.offset, u.label));
             }
             else {
-                printf("Can't link instruction %08x\n", instr);
-                std::abort();
+                sparkError("RvListing", "Can't link instruction: %08x", instr);
             }
             write_u32(instr, u.offset);
         }
@@ -94,8 +94,7 @@ private:
                 return l.offset;
             }
         }
-        printf("Label not found: %s\n", label);
-        std::abort();
+        sparkError("RvListing", "Label not found: %s", label);
         return 0;
     }
 

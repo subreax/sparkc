@@ -1,5 +1,6 @@
 #pragma once
-#include "../../common/symbol/SymbolTable.h"
+#include "../../symbol/SymbolTable.h"
+#include "../../common/Error.h"
 #include "../ast/AstProgram.h"
 #include "../ast/declaration/AstVarDeclaration.h"
 #include "../ast/statement/everything.h"
@@ -52,40 +53,67 @@ private:
         }
     }
 
+
+
+    // AstExp
+
     void typeCheck(AstExp* exp) {
         auto type = exp->getType();
-        if (type == AstExp::EXP_VAR) {
-            auto* var = (AstVar*) exp;
-            auto* varType = table.get(var->getIdentifier());
-            if (varType->getKind() == SymbolType::Kind::Function) {
-                throw TypeException("Using variable as a function: '" + std::string(var->getIdentifier()) + "'");
-            }
-        }
-        else if (type == AstExp::EXP_FUN_CALL) {
-            auto* call = (AstFunCall*) exp;
-            auto* funType = (SymbolFunctionType*) table.get(call->getFunName());
-            if (funType->getKind() != SymbolType::Kind::Function) {
-                throw TypeException("Function '" + std::string(call->getFunName()) + "' doesn't exist");
-            }
+        switch (type) {
+        case AstExp::EXP_CONSTANT:
+            break;
+            
+        case AstExp::EXP_BINARY:
+            typeCheck((AstBinaryExp*) exp);
+            break;
 
-            auto funParamsCount = funType->getParams().size();
-            if (call->getArgs().size() != funParamsCount) {
-                throw TypeException("Function '" + std::string(call->getFunName()) + "' called with wrong number of arguments");
-            }
+        case AstExp::EXP_VAR:
+            typeCheck((AstVar*) exp);
+            break;
+
+        case AstExp::EXP_ASSIGNMENT:
+            typeCheck((AstAssignment*) exp);
+            break;
+
+        case AstExp::EXP_FUN_CALL:
+            typeCheck((AstFunCall*) exp);
+            break;
+
+        default:
+            sparkError("TypeChecker", "Unhandled AstExp: %s (%d)", AstExp::typeToString(type), type);
         }
-        else if (type == AstExp::EXP_BINARY) {
-            auto* bin = (AstBinaryExp*) exp;
-            typeCheck(bin->getLeft());
-            typeCheck(bin->getRight());
+    }
+
+    void typeCheck(AstVar* var) {
+        auto* varType = table.get(var->getIdentifier());
+        if (varType->getKind() == SymbolType::Kind::Function) {
+            throw TypeException("Using variable as a function: '" + std::string(var->getIdentifier()) + "'");
         }
-        else if (type == AstExp::EXP_ASSIGNMENT) {
-            auto* ass = (AstAssignment*) exp;
-            auto varType = ass->getVar()->getType();
-            if (varType != AstExp::EXP_VAR) {
-                throw TypeException("Expressions can only be assigned to variables, not " + std::to_string(varType));
-            }
-            typeCheck(ass->getExp());
+    }
+    
+    void typeCheck(AstBinaryExp* bin) {
+        typeCheck(bin->getLeft());
+        typeCheck(bin->getRight());
+    }
+
+    void typeCheck(AstFunCall* call) {
+        auto* funType = (SymbolFunctionType*) table.get(call->getFunName());
+        if (funType->getKind() != SymbolType::Kind::Function) {
+            throw TypeException("Function '" + std::string(call->getFunName()) + "' doesn't exist");
         }
+
+        auto funParamsCount = funType->getParams().size();
+        if (call->getArgs().size() != funParamsCount) {
+            throw TypeException("Function '" + std::string(call->getFunName()) + "' called with wrong number of arguments");
+        }
+    }
+
+    void typeCheck(AstAssignment* ass) {
+        auto varType = ass->getVar()->getType();
+        if (varType != AstExp::EXP_VAR) {
+            throw TypeException(std::string("Expressions can only be assigned to variables, not to a ") + AstExp::typeToString(varType));
+        }
+        typeCheck(ass->getExp());
     }
 
     SymbolTable& table;

@@ -1,11 +1,11 @@
 #pragma once
 #include <sstream>
-#include "ParserException.h"
+#include "ParseException.h"
 
-class DuplicateDeclarationException : public ParserException {
+class DuplicateDeclarationException : public ParseException {
 public:
     DuplicateDeclarationException(const Token& token) 
-        : ParserException(Type::DuplicateDeclaration, token, buildMessage(token)) {  }
+        : ParseException(Kind::DuplicateDeclaration, token, buildMessage(token)) {  }
 
 private:
     static std::string buildMessage(const Token& token) {

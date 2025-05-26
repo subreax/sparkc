@@ -1,5 +1,6 @@
 #pragma once
 #include "AstExp.h"
+#include "../../../common/Error.h"
 
 class AstBinaryExp : public AstExp {
 public:
@@ -32,9 +33,9 @@ public:
         case T_PERCENT:     return Operator::Rem;
         case T_AMP_AMP:     return Operator::And;
         case T_VBAR_VBAR:   return Operator::Or;
+        default: 
+            sparkError("AstBinaryExp", "Unknown operator: %s", TokenKind_toString(kind));
         }
-        printf("Unknown binary operator: %s\n", TokenKind_toString(kind));
-        std::abort();
         return Operator::Plus;
     }
 

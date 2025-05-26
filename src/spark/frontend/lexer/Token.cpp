@@ -29,7 +29,7 @@ const char* TokenKind_toString(TokenKind kind) {
     if (kind < _TokenKinds2StringCount) {
         return _TokenKind2String[kind];
     } else {
-        return "KIND_iS_OUT_OF_RANGE";
+        return "<unknown>";
     }
 }
 

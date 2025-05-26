@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include "../../common/LinearAllocator.h"
+#include "../../common/Error.h"
 #include "../../skr/instr/everything.h"
 #include "../../skr/SkrFunction.h"
 #include "instr/everything.h"
@@ -69,8 +70,7 @@ public:
                 break;
 
             default:
-                printf("Unknown skr type: %d", type);
-                std::abort();
+                sparkError("Skr2RvaPseudo", "Unknown skr type: %d", type);
             }
         }
 
@@ -148,8 +148,8 @@ private:
             return allocator.create<RvaPseudoReg>(it->getId());
         }
         default:
-            printf("Unknown skr value type: %d", type);
-            std::abort();
+            sparkError("[Skr2RvaPseudo]", "Unknown skr value type: %d", type);
+            return nullptr;
         }
     }
 
@@ -165,8 +165,7 @@ private:
         if (idx < 8) {
             return (RvReg) ((int) RvReg::A0 + idx);
         }
-        printf("Arg reg should be in range [0; 7]\n");
-        std::abort();
+        sparkError("Skr2RvaPseudo", "getArgReg(idx): idx should be in range [0; 7]");
         return RvReg::ZERO;
     }
 

@@ -1,6 +1,7 @@
 #pragma once
 #include "RvaInstruction.h"
 #include "../../../skr/instr/SkrBinary.h"
+#include "../../../common/Error.h"
 
 class RvaBinary : public RvaInstruction {
 public:
@@ -42,8 +43,7 @@ public:
             break;
 
         default:
-            printf("Unknown RvaBinary operator: %d\n", op);
-            std::abort();
+            sparkError("RvaBinary", "Unknown operator: %d", op);
         }
     }
 

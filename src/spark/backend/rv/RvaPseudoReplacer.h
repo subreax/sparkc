@@ -2,6 +2,7 @@
 #include <vector>
 #include "instr/everything.h"
 #include "StackFrame.h"
+#include "../../common/Error.h"
 
 class RvaPseudoReplacer {
 public:
@@ -21,14 +22,14 @@ public:
             if (prologue->getType() == RvaInstruction::Type::Prologue) {
                 prologue->setFrameSize(frameSize);
             } else {
-                printf("[RvaPseudoReplacer] Can't find prologue\n");
+                sparkError("RvaPseudoReplacer", "Can't find prologue");
             }
 
             auto* epilogue = (RvaEpilogue*) rvas[rvas.size() - 2];
             if (epilogue->getType() == RvaInstruction::Type::Epilogue) {
                 epilogue->setFrameSize(frameSize);
             } else {
-                printf("[RvaPseudoReplacer] Can't find epilogue\n");
+                sparkError("RvaPseudoReplacer", "Can't find epilogue");
             }
         }
     }

@@ -1,10 +1,10 @@
 #pragma once
 #include <map>
-#include "../LinearAllocator.h"
-#include "../CStringLessThan.h"
+#include "../common/LinearAllocator.h"
+#include "../common/CStringLessThan.h"
 #include "SymbolType.h"
-#include "DuplicateSymbolDeclarationException.h"
-#include "UndeclaredSymbolException.h"
+#include "except/DuplicateSymbolDeclarationException.h"
+#include "except/UndeclaredSymbolException.h"
 
 class SymbolTable {
 public:

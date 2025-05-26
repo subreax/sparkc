@@ -1,5 +1,6 @@
 #pragma once
 #include "RvaInstruction.h"
+#include "../../../common/Error.h"
 #include "../../../skr/instr/SkrBranch.h"
 
 class RvaBranch : public RvaInstruction {
@@ -21,8 +22,7 @@ public:
             listing.addWithLabel(Rv32I::bne(expectReg(left), expectReg(right)), label);
         }
         else {
-            printf("[RvaBranch] Unknown RvaBranch::Operator: %d\n", op);
-            std::abort();
+            sparkError("RvaBranch", "Unknown operator: %d", op);
         }
     }
 

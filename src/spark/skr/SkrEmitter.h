@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include "../common/Error.h"
 #include "../common/LinearAllocator.h"
 #include "../common/IdentifierGen.h"
 #include "../common/LabelGen.h"
@@ -45,8 +46,7 @@ private:
             emit(funName, ((AstStatementBlockItem*) blockItem)->getStatement());
         }
         else {
-            printf("[SkrEmitter] Unknown AstBlockItem type: %d", blockItem->getType());
-            std::abort();
+            sparkError("SkrEmitter", "Unknown AstBlockItem: %d", blockItem->getType());
         }
     }
 
@@ -61,8 +61,7 @@ private:
             }
         }
         else {
-            printf("[SkrEmitter] Unknown AstDeclaration type: %d", decl->getType());
-            std::abort();
+            sparkError("SkrEmitter", "Unknown AstDeclaration: %d", decl->getType());
         }
     }
 
@@ -79,8 +78,7 @@ private:
             emit(funName, it->getExpression());
         }
         else {
-            printf("[SkrEmitter] Unknown statement: %d\n", type);
-            std::abort();
+            sparkError("SkrEmitter", "Unknown AstStatement: %d", type);
         }
     }
 
@@ -107,8 +105,7 @@ private:
             return emitFunCall(funName, (AstFunCall*) exp);
         }
         else {
-            printf("[SkrEmitter] Unknown AstExp: %d\n", type);
-            std::abort();
+            sparkError("SkrEmitter", "Unknown AstExp: %d", type);
             return nullptr;
         }
     }
@@ -171,7 +168,7 @@ private:
         for (size_t i = 0; i < astArgs.size(); i++) {
             skrArgs[i] = emit(funName, astArgs[i]);
         }
-        auto* result = allocator.create<SkrVar>(idGen.unique("call_res"));
+        auto* result = allocator.create<SkrVar>(idGen.unique(call->getFunName(), "res"));
         auto* skrCall = allocator.create<SkrFunCall>(call->getFunName(), skrArgs, result);
         out.emplace_back(skrCall);
         return result;
@@ -186,8 +183,7 @@ private:
         case AstBinaryExp::Operator::Div: return SkrBinary::Operator::Div;
         case AstBinaryExp::Operator::Rem: return SkrBinary::Operator::Rem;
         default:
-            printf("Can't map AstBinaryExp::Operator to SkrBinary::Operator");
-            std::abort();
+            sparkError("SkrBinary", "Can't map AstBinaryExp::Operator to SkrBinary::Operator: %d", astOp);
             return SkrBinary::Operator::Plus;
         }
     }

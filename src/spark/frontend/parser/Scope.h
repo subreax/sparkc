@@ -1,11 +1,10 @@
 #pragma once
 #include <map>
-#include "Token.h"
-#include "../common/IdentifierGen.h"
-#include "../common/Stack.h"
-#include "../common/symbol/SymbolTable.h"
-#include "exceptions/DuplicateDeclarationException.h"
-#include "exceptions/UndeclaredVariableException.h"
+#include "../lexer/Token.h"
+#include "../../common/IdentifierGen.h"
+#include "../../common/Stack.h"
+#include "except/DuplicateDeclarationException.h"
+#include "except/UndeclaredVariableException.h"
 
 class ScopeItem {
 public:

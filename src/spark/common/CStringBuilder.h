@@ -2,6 +2,7 @@
 #include <cstring>
 #include <cstdint>
 #include <cstdlib>
+#include "StringRef.h"
 
 class CStringBuilder {
 public:
@@ -20,6 +21,10 @@ public:
         }
         buf[len] = 0;
         return *this;
+    }
+
+    CStringBuilder& append(StringRef ref) {
+        return append(ref.getReference(), ref.getLength());
     }
 
     CStringBuilder& append(int32_t i) {

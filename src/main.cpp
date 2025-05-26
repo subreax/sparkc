@@ -1,8 +1,8 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#include "spark/frontend/Lexer.h"
-#include "spark/frontend/Parser.h"
+#include "spark/frontend/lexer/Lexer.h"
+#include "spark/frontend/parser/Parser.h"
 #include "spark/frontend/semantic/Semantic.h"
 #include "spark/skr/SkrEmitter.h"
 #include "spark/backend/rv/Skr2RvaPseudo.h"
@@ -21,7 +21,7 @@ void dump(const LinearAllocator& allocator, const char* outFile);
 void dump(const uint8_t* block, size_t sz, const char* outFile);
 void printMemoryUsage(const char* name, size_t used, size_t cap);
 void printAllocatorStats(const char* name, const LinearAllocator& allocator);
-void printError(ParserException& e, const string& source);
+void printError(ParseException& e, const string& source);
 string getLine(const string& src, int lineNo);
 
 int main(int argc, char** argv) {
@@ -43,12 +43,12 @@ int main(int argc, char** argv) {
 
     Scope scope(idGen, scopeAlloc);
     SymbolTable symbolTable;
-    Parser parser(lexer, astAlloc, idAlloc, scope);
+    Parser parser(lexer, astAlloc, idGen, scope);
     AstProgram* program;
     try {
         program = parser.parseProgram();
         Semantic(symbolTable, typeAlloc).process(program);
-    } catch (ParserException& e) {
+    } catch (ParseException& e) {
         printError(e, source);
         return 1;
     } catch (std::exception& e) {
@@ -60,7 +60,7 @@ int main(int argc, char** argv) {
 
     LinearAllocator skrAlloc(2048);
     LinearAllocator rvaAlloc1(2048);
-    LinearAllocator rvaAlloc2(4096);
+    LinearAllocator rvaAlloc2(2048);
 
     std::vector<SkrFunction*> skrFunctions;
     std::vector<SkrInstruction*> skrsBuf;
@@ -183,7 +183,7 @@ void dump(const LinearAllocator& allocator, const char* outFile) {
     dump(allocator.getBlock(), allocator.getFreeSize(), outFile);
 }
 
-void printError(ParserException& e, const string& source) {
+void printError(ParseException& e, const string& source) {
     const auto& token = e.getToken();
     cout << e.what() << endl;
 

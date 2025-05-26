@@ -1,5 +1,5 @@
 #pragma once
-#include "../BoundArray.h"
+#include "../common/BoundArray.h"
 
 class SymbolType {
 public:

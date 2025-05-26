@@ -1,12 +1,11 @@
 #pragma once
-#include "ParserException.h"
+#include "ParseException.h"
 #include <sstream>
-#include "../Token.h"
 
-class UnexpectedTokenException : public ParserException {
+class UnexpectedTokenException : public ParseException {
 public:
     UnexpectedTokenException(TokenKind expected, const Token& actual) 
-        : ParserException(Type::UnexpectedToken, actual, buildErrorMessage(expected, actual))
+        : ParseException(Kind::UnexpectedToken, actual, buildErrorMessage(expected, actual))
         , expected(expected)
         , actual(actual) { }
 

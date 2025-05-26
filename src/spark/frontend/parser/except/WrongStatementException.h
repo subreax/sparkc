@@ -1,11 +1,11 @@
 #pragma once
-#include "ParserException.h"
+#include "ParseException.h"
 
-class WrongStatementException : public ParserException {
+class WrongStatementException : public ParseException {
 public:
     WrongStatementException(const Token& token)
-        : ParserException(
-            Type::WrongStatement,
+        : ParseException(
+            Kind::WrongStatement,
             token, 
             "Failed to parse statement: wtf '" + token.value.toString() + "'"
         ) {}

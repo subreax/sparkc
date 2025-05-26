@@ -2,7 +2,7 @@
 #include "../ast/AstProgram.h"
 #include "../ast/exp/everything.h"
 #include "../ast/declaration/AstVarDeclaration.h"
-#include "../../common/symbol/SymbolTable.h"
+#include "../../symbol/SymbolTable.h"
 
 class IdentifierResolution {
 public:
@@ -39,7 +39,8 @@ private:
     void resolve(AstBlockItem* item) {
         auto type = item->getType();
         if (type == AstBlockItem::Type::Declaration) {
-            resolve((AstDeclaration*) item);
+            auto* declItem = (AstDeclBlockItem*) item;
+            resolve(declItem->getDeclaration());
         }
     }
 

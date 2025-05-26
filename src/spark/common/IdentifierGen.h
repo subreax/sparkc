@@ -11,6 +11,30 @@ public:
         return unique(id, strlen(id));
     }
 
+    const char* unique(const char* id, const char* suffix) {
+        char buf[MAX_ID_LEN + 2];
+        CStringBuilder(buf, sizeof(buf))
+            .append(id, MAX_ID_LEN - 4)
+            .append("_")
+            .append(suffix);
+
+        return unique(buf);
+    }
+
+    const char* unique(StringRef ref) {
+        return unique(ref.getReference(), ref.getLength());
+    }
+
+    const char* copy(StringRef ref) {
+        auto len = std::min(ref.getLength() + 1, sizeof(nameBuf));
+        auto allocatedStr = (char*) allocator.allocate(len);
+        CStringBuilder(allocatedStr, len).append(ref);
+        return allocatedStr;
+    }
+
+    static constexpr size_t MAX_ID_LEN = 24;
+
+private:
     const char* unique(const char* id, size_t idLen) {
         size_t len = CStringBuilder(nameBuf, sizeof(nameBuf))
             .append(id, std::min(idLen, MAX_ID_LEN))
@@ -25,13 +49,6 @@ public:
         return allocatedStr;
     }
 
-    const char* unique(StringRef ref) {
-        return unique(ref.getReference(), ref.getLength());
-    }
-
-    static constexpr size_t MAX_ID_LEN = 16;
-
-private:
     char nameBuf[MAX_ID_LEN + 16];
     LinearAllocator& allocator;
     int counter = 0;

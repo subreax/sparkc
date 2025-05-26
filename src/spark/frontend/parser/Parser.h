@@ -1,30 +1,23 @@
 #pragma once
 #include <vector>
-#include "../common/LinearAllocator.h"
-#include "Lexer.h"
-#include "ast/AstProgram.h"
-#include "ast/AstBlockItem.h"
-#include "ast/declaration/AstVarDeclaration.h"
-#include "ast/statement/everything.h"
-#include "ast/exp/everything.h"
+#include "../../common/LinearAllocator.h"
+#include "../../common/IdentifierGen.h"
+#include "../lexer/Lexer.h"
+#include "../ast/everything.h"
 #include "Scope.h"
-
-#include "exceptions/UnexpectedTokenExcepion.h"
-#include "exceptions/ParseConstException.h"
-#include "exceptions/WrongExprException.h"
-#include "exceptions/WrongStatementException.h"
+#include "except/everything.h"
 
 class Parser {
 public:
     Parser(
         Lexer& lexer, 
         LinearAllocator& allocator, 
-        LinearAllocator& idAllocator,
+        IdentifierGen& idGen,
         Scope& scope
     )
         : lexer(lexer)
         , objAlloc(allocator)
-        , idAlloc(idAllocator)
+        , idGen(idGen)
         , scope(scope)
     {
         takeToken();
@@ -42,10 +35,7 @@ public:
     AstFunction* parseFunction() {
         expect(T_INT_KEYWORD);
         Token idToken = expect(T_IDENTIFIER);
-
-        auto idLen = idToken.value.getLength() + 1;
-        char* funName = (char*) idAlloc.allocate(idLen);
-        idToken.value.copyTo(funName, idLen);
+        const char* funName = idGen.copy(idToken.value);
 
         scope.openScope();
 
@@ -90,7 +80,7 @@ public:
     AstDeclaration* tryParseDeclaration() {
         if (current.kind == T_INT_KEYWORD) {
             takeToken();
-            const char* varName = scope.declare(takeToken());
+            const char* varName = scope.declare(expect(T_IDENTIFIER));
             AstExp* initializer = nullptr;
             if (current.kind == T_EQUALS) {
                 takeToken();
@@ -155,9 +145,9 @@ public:
                 parseFunArgs(args);
                 expect(T_CLOSE_PAR);
 
-                const char* name = copyToNewCString(nameToken.value, idAlloc);
+                const char* funName = idGen.copy(nameToken.value);
                 BoundArray<AstExp*> argsBA = copyToBoundArray(args);
-                return objAlloc.create<AstFunCall>(name, argsBA);
+                return objAlloc.create<AstFunCall>(funName, argsBA);
             }
             else {
                 return objAlloc.create<AstVar>(scope.resolve(nameToken));
@@ -175,13 +165,6 @@ public:
                 takeToken();
             }
         }
-    }
-
-    char* copyToNewCString(StringRef ref, LinearAllocator& allocator) {
-        auto len = ref.getLength() + 1;
-        char* str = (char*) allocator.allocate(len);
-        ref.copyTo(str, len);
-        return str;
     }
 
     template<typename T>
@@ -254,6 +237,6 @@ private:
     Token current;
     Lexer& lexer;
     LinearAllocator& objAlloc;
-    LinearAllocator& idAlloc;
+    IdentifierGen& idGen;
     Scope& scope;
 };

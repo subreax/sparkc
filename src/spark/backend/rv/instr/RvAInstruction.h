@@ -3,6 +3,7 @@
 #include "../asm/RvListing.h"
 #include "../asm/Rv32I.h"
 #include "../asm/Rv32M.h"
+#include "../../../common/Error.h"
 #include <cstdio>
 
 class RvaInstruction {
@@ -23,16 +24,16 @@ protected:
         if (val->getType() == RvaValue::Type::Register) {
             return ((RvaRegister*) val)->getReg();
         }
-        printf("RvaRegister expected\n");
-        std::abort();
+        sparkError("RvaInstruction", "Expected RvaRegister, but found %d", val->getType());
+        return RvReg::ZERO;
     }
 
     static RvaMemory* expectMem(RvaValue* val) {
         if (val->getType() == RvaValue::Type::Memory) {
             return (RvaMemory*) val;
         }
-        printf("RvaMemory expected\n");
-        std::abort();
+        sparkError("RvaInstruction", "Expected RvaMemory, but found %d", val->getType());
+        return nullptr;
     }
 
 private:
