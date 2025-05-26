@@ -4,9 +4,18 @@
 #include <cstring>
 #include "Rv32Base.h"
 #include "../../../common/NoMemoryException.h"
+#include "../../../common/LabelGen.h"
 
 class RvListing {
 public:
+    struct Label {
+        Label() = default;
+        Label(int32_t offset, const char* value) : offset(offset), value(value) {  }
+
+        int32_t offset = 0;
+        const char* value = nullptr;
+    };
+
     RvListing(uint8_t* out, size_t cap) : out(out), cap(cap) {  }
 
     void add(uint32_t instr) {
@@ -48,6 +57,14 @@ public:
 
     size_t getSize() const { return offset; }
 
+    void getExternalLabels(std::vector<Label>& out) {
+        for (auto& label : labels) {
+            if (LabelGen::isExternal(label.value)) {
+                out.emplace_back(label);
+            }
+        }
+    }
+
 private:
     struct Unresolved {
         Unresolved() = default;
@@ -57,14 +74,6 @@ private:
 
         int32_t offset = 0;
         const char* label = nullptr;
-    };
-
-    struct Label {
-        Label() = default;
-        Label(int32_t offset, const char* value) : offset(offset), value(value) {  }
-
-        int32_t offset = 0;
-        const char* value = nullptr;
     };
 
     void write_u32(uint32_t instr, int32_t offset) {

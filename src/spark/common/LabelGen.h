@@ -27,6 +27,10 @@ public:
         return id != nullptr && *id == '.';
     }
 
+    static bool isExternal(const char* id) {
+        return !isInternal(id);
+    }
+
 private:
     LinearAllocator& allocator;
     int counter = 0;

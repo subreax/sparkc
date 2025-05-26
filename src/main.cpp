@@ -96,8 +96,16 @@ int main(int argc, char** argv) {
     cout << endl;
 
     uint8_t bin[512];
-    auto sz = RvAssembler::assemble(rvaFixed, bin, sizeof(bin));
+    std::vector<RvListing::Label> externalLabels;
+    auto sz = RvAssembler::assemble(rvaFixed, bin, sizeof(bin), externalLabels);
 
+    cout << "== external labels ==" << endl;
+    for (auto& label : externalLabels) {
+        cout << label.value << ": " << label.offset << endl;
+    }
+    cout << endl;
+
+    cout << "== memory stats ==" << endl;
     printAllocatorStats("symbol", typeAlloc);
     printAllocatorStats("ast", astAlloc);
     printAllocatorStats("id", idAlloc);
