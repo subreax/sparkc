@@ -1,11 +1,11 @@
 int pixel(int a) {
-    return lerp(0, 100, a);
+    return testArgs(a, 1, 2, 3, 4, 5, 6, 7, 8, 9);
 }
 
 int lerp(int a, int b, int val) {
     return a + (b - a) * val / 255;
 }
 
-int ret1234(int x) {
-    return 1234;
+int testArgs(int _0, int _1, int _2, int _3, int _4, int _5, int _6, int _7, int _8, int _9) {
+    return _9 + _7;
 }

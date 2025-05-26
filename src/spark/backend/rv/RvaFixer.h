@@ -69,7 +69,7 @@ private:
         auto* rightReg = moveToReg(it->right, RvReg::T2);
         add(allocator.create<RvaBinary>(dstReg, leftReg, it->op, rightReg));
         if (it->dst->getType() == RvaValue::Type::Memory) {
-            add(allocator.create<RvaStore>(it->dst, dstReg));
+            add(allocator.create<RvaStore>(clone(it->dst), dstReg));
         }
     }
 

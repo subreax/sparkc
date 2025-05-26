@@ -60,7 +60,7 @@ int main(int argc, char** argv) {
 
     LinearAllocator skrAlloc(2048);
     LinearAllocator rvaAlloc1(2048);
-    LinearAllocator rvaAlloc2(2048);
+    LinearAllocator rvaAlloc2(4096);
 
     std::vector<SkrFunction*> skrFunctions;
     std::vector<SkrInstruction*> skrsBuf;

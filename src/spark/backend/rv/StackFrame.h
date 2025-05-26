@@ -34,13 +34,14 @@ public:
     }
 
     RvaMemory* pushArg() {
-        RvaMemory* mem = allocate(4);
+        occupy(4);
+        auto* mem = rvaAlloc.create<RvaMemory>(RvReg::SP, argsSize);
         argsSize += 4;
         return mem;
     }
 
     void bindParam(const char* param) {
-        var2stack[param] = rvaAlloc.create<RvaMemory>(RvReg::S0, boundParamsOffset);
+        var2stack.emplace(param, rvaAlloc.create<RvaMemory>(RvReg::S0, boundParamsOffset));
         boundParamsOffset += 4;
     }
 
