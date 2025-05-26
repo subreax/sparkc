@@ -4,21 +4,43 @@
 #include "../../skr/instr/everything.h"
 #include "../../skr/SkrFunction.h"
 #include "instr/everything.h"
+#include "StackFrame.h"
 
 class Skr2RvaPseudo {
 public:
-    static void emit(LinearAllocator& allocator, SkrFunction* func, std::vector<RvaInstruction*>& out) {
-        Skr2RvaPseudo(allocator, func, out).emit();
+    static void emit(LinearAllocator& allocator, StackFrame& frame, SkrFunction* func, std::vector<RvaInstruction*>& out) {
+        Skr2RvaPseudo(allocator, frame, out).emit(func);
     }
 
-    Skr2RvaPseudo(LinearAllocator& allocator, SkrFunction* func, std::vector<RvaInstruction*>& out) 
+    Skr2RvaPseudo(LinearAllocator& allocator, StackFrame& frame, std::vector<RvaInstruction*>& out) 
         : allocator(allocator)
-        , func(func)
+        , frame(frame)
         , out(out) {  }
 
-    void emit() {
+    void emit(SkrFunction* func) {
+        auto* prologue = allocator.create<RvaPrologue>();
+        auto* epilogue = allocator.create<RvaEpilogue>();
+        bool shouldSaveRa = hasFunctionCalls(func->getInstructions());
+        if (shouldSaveRa) {
+            frame.occupy(4);
+            prologue->saveRa();
+            epilogue->loadRa();
+        }
+
         add(allocator.create<RvaLabel>(func->getName()));
-        add(allocator.create<RvaPrologue>(0));
+        add(prologue);
+
+        auto params = func->getParams();
+        for (size_t i = 0; i < params.size(); i++) {
+            if (i < 8) {
+                auto* to = frame.getOrPush(params[i]->getId());
+                auto* from = allocator.create<RvaRegister>(getArgReg(i));
+                add(allocator.create<RvaMov>(to, from));
+            } else {
+                frame.bindParam(params[i]->getId());
+            }
+        }
+
         for (const auto* skr : func->getInstructions()) {
             auto type = skr->getType();
             switch (type) {
@@ -42,6 +64,10 @@ public:
                 emitBranch((SkrBranch*) skr);
                 break;
 
+            case SkrInstruction::Type::FunCall:
+                emitFunCall((SkrFunCall*) skr);
+                break;
+
             default:
                 printf("Unknown skr type: %d", type);
                 std::abort();
@@ -51,7 +77,7 @@ public:
         auto* resultPseudoReg = allocator.create<RvaPseudoReg>(func->getResultIdentifier());
         auto* a0Reg = allocator.create<RvaRegister>(RvReg::A0);
         add(allocator.create<RvaMov>(a0Reg, resultPseudoReg));
-        add(allocator.create<RvaEpilogue>(0));
+        add(epilogue);
         add(allocator.create<RvaRet>());
     }
 
@@ -90,20 +116,35 @@ private:
         ));
     }
 
+    void emitFunCall(SkrFunCall* it) {
+        const auto& skrArgs = it->getArgs();
+        for (size_t i = 0; i < skrArgs.size(); i++) {
+            auto* to = getArgDst(i);
+            auto* from = toPseudo(skrArgs[i]);
+            out.emplace_back(allocator.create<RvaMov>(to, from));
+        }
+
+        auto* retVal = toPseudo(it->getRetVar());
+        out.emplace_back(allocator.create<RvaCall>(it->getName()));
+        out.emplace_back(allocator.create<RvaMov>(retVal, allocator.create<RvaRegister>(RvReg::A0)));
+
+        frame.popArgs();
+    }
+
     inline void add(RvaInstruction* instr) {
         out.emplace_back(instr);
     }
 
-    inline RvaValue* toPseudo(SkrValue* value) {
+    inline RvaValue* toPseudo(const SkrValue* value) {
         auto type = value->getType();
 
         switch (type) {
         case SkrValue::Type::Const: {
-            auto* it = (SkrConst*) value;
+            auto* it = (const SkrConst*) value;
             return allocator.create<RvaImm>(it->getConst());
         }
         case SkrValue::Type::Var: {
-            auto* it = (SkrVar*) value;
+            auto* it = (const SkrVar*) value;
             return allocator.create<RvaPseudoReg>(it->getId());
         }
         default:
@@ -112,7 +153,33 @@ private:
         }
     }
 
+    RvaValue* getArgDst(int argIndex) {
+        if (argIndex < 8) {
+            return allocator.create<RvaRegister>(getArgReg(argIndex));
+        } else {
+            return frame.pushArg();
+        }
+    }
+
+    RvReg getArgReg(int idx) {
+        if (idx < 8) {
+            return (RvReg) ((int) RvReg::A0 + idx);
+        }
+        printf("Arg reg should be in range [0; 7]\n");
+        std::abort();
+        return RvReg::ZERO;
+    }
+
+    bool hasFunctionCalls(const std::vector<SkrInstruction*>& skrs) const {
+        for (SkrInstruction* it : skrs) {
+            if (it->getType() == SkrInstruction::Type::FunCall) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     LinearAllocator& allocator;
-    SkrFunction* func;
+    StackFrame& frame;
     std::vector<RvaInstruction*>& out;
 };

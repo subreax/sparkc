@@ -74,6 +74,7 @@ private:
         { T_EQUALS, TokenReaders::readEquals },
         { T_AMP_AMP, TokenReaders::readAmpAmp },
         { T_VBAR_VBAR, TokenReaders::readVBarVBar },
+        { T_COMMA, TokenReaders::readComma },
         { T_EOF, TokenReaders::readEOF }
     };
 

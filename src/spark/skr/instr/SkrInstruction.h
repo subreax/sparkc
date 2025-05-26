@@ -3,7 +3,7 @@
 class SkrInstruction {
 public:
     enum class Type {
-        Binary, Copy, Jump, Label, Branch
+        Binary, Copy, Jump, Label, Branch, FunCall
     };
 
     SkrInstruction(Type type) : type(type) {  }

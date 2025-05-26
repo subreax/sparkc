@@ -16,6 +16,14 @@ public:
         , out(out) {  }
 
     SkrFunction* emit(AstFunction* func) {
+        const auto& astParams = func->getParams();
+        auto skrParams = BoundArray<SkrVar*>::create(astParams.size(), allocator);
+        for (size_t i = 0; i < astParams.size(); i++) {
+            auto* astParam = astParams[i];
+            auto* skrParam = allocator.create<SkrVar>(astParam->getIdentifier());
+            skrParams[i] = skrParam;
+        }
+
         const char* funcResultId = idGen.unique("result");
         funcResult = allocator.create<SkrVar>(funcResultId);
         retLabel = labelGen.uniqueInternal("return");
@@ -24,7 +32,7 @@ public:
         }
         removeUselessJumpToRet();
         out.emplace_back(allocator.create<SkrLabel>(retLabel));
-        return allocator.create<SkrFunction>(func->getName(), funcResultId, out);
+        return allocator.create<SkrFunction>(func->getName(), skrParams, out, funcResultId);
     }
 
 private:
@@ -71,7 +79,7 @@ private:
             emit(funName, it->getExpression());
         }
         else {
-            printf("[SkrEmitter] Unknown statement: %d", type);
+            printf("[SkrEmitter] Unknown statement: %d\n", type);
             std::abort();
         }
     }
@@ -95,8 +103,11 @@ private:
             out.emplace_back(allocator.create<SkrCopy>(left, right));
             return left;
         }
+        else if (type == AstExp::EXP_FUN_CALL) {
+            return emitFunCall(funName, (AstFunCall*) exp);
+        }
         else {
-            printf("[SkrEmitter] Unknown AstExp: %d", type);
+            printf("[SkrEmitter] Unknown AstExp: %d\n", type);
             std::abort();
             return nullptr;
         }
@@ -152,6 +163,18 @@ private:
             out.emplace_back(allocator.create<SkrBinary>(dst, left, op, right));
             return dst;
         }
+    }
+
+    SkrValue* emitFunCall(const char* funName, AstFunCall* call) {
+        auto astArgs = call->getArgs();
+        auto skrArgs = BoundArray<SkrValue*>::create(astArgs.size(), allocator);
+        for (size_t i = 0; i < astArgs.size(); i++) {
+            skrArgs[i] = emit(funName, astArgs[i]);
+        }
+        auto* result = allocator.create<SkrVar>(idGen.unique("call_res"));
+        auto* skrCall = allocator.create<SkrFunCall>(call->getFunName(), skrArgs, result);
+        out.emplace_back(skrCall);
+        return result;
     }
 
     SkrBinary::Operator binaryOpOf(AstBinaryExp::Operator astOp) {

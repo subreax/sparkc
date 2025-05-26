@@ -1,5 +1,6 @@
 #pragma once
 #include <memory>
+#include <cstring>
 #include "NoMemoryException.h"
 
 class LinearAllocator {

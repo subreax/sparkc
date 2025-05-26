@@ -3,18 +3,23 @@
 #include <functional>
 #include "RvaValue.h"
 #include "../../common/LinearAllocator.h"
+#include "../../common/CStringLessThan.h"
 
 class StackFrame {
 public:
     StackFrame(LinearAllocator& rvaAlloc) : rvaAlloc(rvaAlloc) {  }
 
-    int allocate(int bytes) {
-        if (size == 0) {
-            size = 4; // s0
+    void occupy(int bytes) {
+        if (localSize == 0) {
+            localSize = 4; // s0
         }
 
-        size += bytes;
-        return -size;
+        localSize += bytes;
+    }
+
+    RvaMemory* allocate(int bytes) {
+        occupy(bytes);
+        return rvaAlloc.create<RvaMemory>(RvReg::S0, -localSize);
     }
 
     RvaMemory* getOrPush(const char* id) {
@@ -22,17 +27,37 @@ public:
         if (it != var2stack.end()) {
             return it->second;
         } else {
-            auto* rvaMem = rvaAlloc.create<RvaMemory>(RvReg::S0, allocate(4));
+            auto* rvaMem = allocate(4);
             var2stack.emplace(id, rvaMem);
             return rvaMem;
         }
     }
 
-    int getSize() const { return size; }
-    int getSizeAligned16() const { return ((size + 15) / 16) * 16; }
+    RvaMemory* pushArg() {
+        RvaMemory* mem = allocate(4);
+        argsSize += 4;
+        return mem;
+    }
+
+    void bindParam(const char* param) {
+        var2stack[param] = rvaAlloc.create<RvaMemory>(RvReg::S0, boundParamsOffset);
+        boundParamsOffset += 4;
+    }
+
+    void popArgs() {
+        maxSize = std::max(maxSize, localSize);
+        localSize -= argsSize;
+        argsSize = 0;
+    }
+
+    int getSize() const { return localSize; }
+    int getSizeAligned16() const { return ((localSize + 15) / 16) * 16; }
 
 private:
-    std::map<const char*, RvaMemory*> var2stack;
+    std::map<const char*, RvaMemory*, CStringLessThan> var2stack;
     LinearAllocator& rvaAlloc;
-    int size = 0;
+    int localSize = 0;
+    int argsSize = 0;
+    int maxSize = 0;
+    int boundParamsOffset = 0;
 };

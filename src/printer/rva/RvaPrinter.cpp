@@ -125,16 +125,27 @@ void printRet(std::ostream& os, const RvaRet* it) {
 void printPrologue(std::ostream& os, const RvaPrologue* it) {
     printType(os, "prologue");
     os << "prologue " << it->getFrameSize();
+    if (it->willSaveRa()) {
+        os << " (+RA)";
+    }
 }
 
 void printEpilogue(std::ostream& os, const RvaEpilogue* it) {
     printType(os, "epilogue");
     os << "epilogue " << it->getFrameSize();
+    if (it->willLoadRa()) {
+        os << " (+RA)";
+    }
 }
 
 void printBranch(std::ostream& os, const RvaBranch* it) {
     printType(os, "branch");
     os << "branch to " << Colored::label(it->label) << " if " << *it->left << " " << it->op << " " << *it->right;
+}
+
+void printCall(std::ostream& os, const RvaCall* it) {
+    printType(os, "call");
+    os << "call " << Colored::label(it->getFunName());
 }
 
 void RvaPrinter::print(std::ostream& os, const std::vector<RvaInstruction*>& instructions) {
@@ -180,6 +191,10 @@ void RvaPrinter::print(std::ostream& os, const std::vector<RvaInstruction*>& ins
 
         case RvaInstruction::Type::Branch:
             printBranch(os, (const RvaBranch*) instr);
+            break;
+
+        case RvaInstruction::Type::Call:
+            printCall(os, (const RvaCall*) instr);
             break;
 
         default: os << "unknown rva type: " << (int) type;

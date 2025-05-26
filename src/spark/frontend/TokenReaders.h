@@ -59,6 +59,7 @@ public:
     static StringRef readEquals(const char* src) { return readChar(src, '='); }
     static StringRef readAmpAmp(const char* src) { return readString(src, "&&"); }
     static StringRef readVBarVBar(const char* src) { return readString(src, "||"); }
+    static StringRef readComma(const char* src) { return readChar(src, ','); }
     static StringRef readEOF(const char* src) { return readChar(src, '\0'); }
 
 private:
@@ -72,14 +73,17 @@ private:
     }
 
     static bool startsWith(const char* str, const char* beginning) {
-        while (*str && *beginning) {
-            if (*str != *beginning) {
+        size_t i = 0;
+        while (str[i] && beginning[i]) {
+            if (str[i] != beginning[i]) {
                 return false;
             }
-            ++str;
-            ++beginning;
+            i++;
         }
-        return true;
+        if (beginning[i] == '\0') {
+            return true;
+        }
+        return false;
     }
 
     static StringRef readChar(const char* src, char c) {

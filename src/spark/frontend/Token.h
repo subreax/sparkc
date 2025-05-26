@@ -20,6 +20,7 @@ enum TokenKind {
     T_EQUALS,//
     T_AMP_AMP,//
     T_VBAR_VBAR,//
+    T_COMMA,//
     T_EOF,//
     T_BAD
 };

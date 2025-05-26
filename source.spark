@@ -1,5 +1,7 @@
-int pixel() {
-    int a = 0;
-    int b = 0;
-    return a || b;
+int main(int a) {
+    return lerp(0, 100, a);
+}
+
+int lerp(int a, int b, int val) {
+    return a + (b - a) * val / 255;
 }

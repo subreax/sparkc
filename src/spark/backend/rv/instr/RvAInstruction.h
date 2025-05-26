@@ -8,7 +8,7 @@
 class RvaInstruction {
 public:
     enum class Type {
-        Prologue, Epilogue, Binary, Move, Load, Store, Jump, Label, Ret, Branch
+        Prologue, Epilogue, Binary, Move, Load, Store, Jump, Label, Ret, Branch, Call
     };
 
     RvaInstruction(Type type) : type(type) { }

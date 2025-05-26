@@ -23,6 +23,10 @@ public:
 
     static constexpr int LABEL_MAX_LEN = 24;
 
+    static bool isInternal(const char* id) {
+        return id != nullptr && *id == '.';
+    }
+
 private:
     LinearAllocator& allocator;
     int counter = 0;

@@ -8,7 +8,8 @@ public:
         EXP_CONSTANT,
         EXP_BINARY,
         EXP_VAR,
-        EXP_ASSIGNMENT
+        EXP_ASSIGNMENT,
+        EXP_FUN_CALL
     };
 
     AstExp(Type type) : type(type) {  }

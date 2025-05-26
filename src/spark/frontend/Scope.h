@@ -3,9 +3,9 @@
 #include "Token.h"
 #include "../common/IdentifierGen.h"
 #include "../common/Stack.h"
+#include "../common/symbol/SymbolTable.h"
 #include "exceptions/DuplicateDeclarationException.h"
 #include "exceptions/UndeclaredVariableException.h"
-
 
 class ScopeItem {
 public:

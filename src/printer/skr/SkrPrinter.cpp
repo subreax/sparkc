@@ -37,7 +37,17 @@ std::ostream& operator<<(std::ostream& os, SkrBranch::Operator op) {
 }
 
 void SkrPrinter::print(std::ostream& os, SkrFunction* func) {
-    os << "fun " << func->getName() << "(): int" << "\n";
+    os << "fun " << Colored::label(func->getName()) << "(";
+    auto params = func->getParams();
+    for (size_t i = 0; i < params.size(); i++) {
+        os << *params[i] << ": int";
+        if (i != params.size() - 1) {
+            os << ", ";
+        }
+    }
+    os << "): int \n";
+
+
     const auto& skrs = func->getInstructions();
     for (auto* skr : skrs) {
         os << "    ";
@@ -66,6 +76,18 @@ void SkrPrinter::print(std::ostream& os, SkrInstruction* skr) {
     else if (type == SkrInstruction::Type::Branch) {
         auto* it = (SkrBranch*) skr;
         os << "branch to " << Colored::label(it->getLabel()) << " if " << *it->getLeft() << " " << it->getOperator() << " " << *it->getRight();
+    }
+    else if (type == SkrInstruction::Type::FunCall) {
+        auto* it = (SkrFunCall*) skr;
+        os << *it->getRetVar() << " = " << Colored::label(it->getName()) << "(";
+        auto args = it->getArgs();
+        for (size_t i = 0; i < args.size(); i++) {
+            os << *args[i];
+            if (i != args.size() - 1) {
+                os << ", ";
+            }
+        }
+        os << ")";
     }
     else {
         os << "unknown skr: " << (int) type;

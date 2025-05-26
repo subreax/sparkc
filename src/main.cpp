@@ -3,6 +3,7 @@
 #include <sstream>
 #include "spark/frontend/Lexer.h"
 #include "spark/frontend/Parser.h"
+#include "spark/frontend/semantic/Semantic.h"
 #include "spark/skr/SkrEmitter.h"
 #include "spark/backend/rv/Skr2RvaPseudo.h"
 #include "spark/backend/rv/RvaPseudoReplacer.h"
@@ -35,20 +36,22 @@ int main(int argc, char** argv) {
     LinearAllocator astAlloc(2048);
     LinearAllocator idAlloc(2048, true);
     LinearAllocator scopeAlloc(2048, true);
+    LinearAllocator typeAlloc(2048);
 
     IdentifierGen idGen(idAlloc);
     LabelGen labelGen(idAlloc);
 
     Scope scope(idGen, scopeAlloc);
+    SymbolTable symbolTable;
     Parser parser(lexer, astAlloc, idAlloc, scope);
     AstProgram* program;
     try {
         program = parser.parseProgram();
+        Semantic(symbolTable, typeAlloc).process(program);
     } catch (ParserException& e) {
         printError(e, source);
         return 1;
     } catch (std::exception& e) {
-        cout << "Exception" << endl;
         cout << e.what() << endl;
         return 2;
     }
@@ -59,24 +62,34 @@ int main(int argc, char** argv) {
     LinearAllocator rvaAlloc1(2048);
     LinearAllocator rvaAlloc2(2048);
 
-    std::vector<SkrInstruction*> skrs;
-    SkrEmitter skrEmitter(skrAlloc, idGen, labelGen, skrs);
-    SkrFunction* func = skrEmitter.emit(program->functions.front());
+    std::vector<SkrFunction*> skrFunctions;
+    std::vector<SkrInstruction*> skrsBuf;
+    for (AstFunction* astFunc : program->functions) {
+        SkrFunction* func = SkrEmitter(skrAlloc, idGen, labelGen, skrsBuf).emit(astFunc);
+        skrFunctions.emplace_back(func);
+        skrsBuf.clear();
+    }
 
     cout << "== skr ==" << endl;
-    SkrPrinter::print(cout, func);
+    for (auto* skrFunc : skrFunctions) {
+        SkrPrinter::print(cout, skrFunc);
+        cout << endl;
+    }
     cout << endl;
 
+    size_t rva1Peak = 0;
     std::vector<RvaInstruction*> rva;
-    StackFrame frame(rvaAlloc1);
-    Skr2RvaPseudo::emit(rvaAlloc1, func, rva);
-    RvaPseudoReplacer::replace(frame, rva);
     std::vector<RvaInstruction*> rvaFixed;
-    RvaFixer(rva, rvaFixed, rvaAlloc2).fix();
+    for (auto* skrFunc : skrFunctions) {
+        StackFrame frame(rvaAlloc1);
+        Skr2RvaPseudo::emit(rvaAlloc1, frame, skrFunc, rva);
+        RvaPseudoReplacer::replace(frame, rva);
+        RvaFixer::fix(rva, rvaFixed, rvaAlloc2);
 
-    cout << "== rva ==" << endl;
-    RvaPrinter::print(cout, rva);
-    cout << endl;
+        rva1Peak = max(rva1Peak, rvaAlloc1.getUsedSize());
+        rvaAlloc1.reset();
+        rva.clear();
+    }
 
     cout << "== rva fixed ==" << endl;
     RvaPrinter::print(cout, rvaFixed);
@@ -85,11 +98,11 @@ int main(int argc, char** argv) {
     uint8_t bin[512];
     auto sz = RvAssembler::assemble(rvaFixed, bin, sizeof(bin));
 
+    printAllocatorStats("symbol", typeAlloc);
     printAllocatorStats("ast", astAlloc);
-    printAllocatorStats("scope", scopeAlloc);
     printAllocatorStats("id", idAlloc);
     printAllocatorStats("skr", skrAlloc);
-    printAllocatorStats("rva1", rvaAlloc1);
+    printMemoryUsage("rva1 peak", rva1Peak, rvaAlloc1.getCapacity());
     printAllocatorStats("rva2", rvaAlloc2);
     printMemoryUsage("program", sz, sizeof(bin));
 
@@ -102,7 +115,23 @@ int main(int argc, char** argv) {
 
 void printMemoryUsage(const char* name, size_t used, size_t cap) {
     auto percentage = used * 100 / cap;
-    cout << name << ": " << percentage << "% [" << used << "/" << cap << "]" << endl;
+    printf("%-13s", name);
+    
+    char buf[8];
+    snprintf(buf, sizeof(buf), "%3d %% ", percentage);
+    printf("%5s ", buf);
+
+    const int w = 30;
+    cout << "[";
+    for (int i = 0; i < w; i++) {
+        if (i * 100 / (w - 1) < percentage) {
+            cout << "#";
+        }
+        else {
+            cout << " ";
+        }
+    }
+    cout << "] " << used << " / " << cap << endl;
 }
 
 void printAllocatorStats(const char* name, const LinearAllocator& allocator) {
@@ -127,7 +156,7 @@ void writeMermaidAst(AstProgram* prog, const char* outFile) {
 
     ofstream astOut(outFile);
     astOut << "```mermaid\n";
-    astOut << "flowchart TB\n";
+    astOut << "flowchart LR\n";
     astOut << oss.str();
     astOut << "```";
     astOut.close();

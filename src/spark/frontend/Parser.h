@@ -32,8 +32,10 @@ public:
 
     AstProgram* parseProgram() {
         auto* prog = objAlloc.create<AstProgram>();
-        auto func = parseFunction();
-        prog->functions.emplace_back(func);
+        while (hasNext()) {
+            auto func = parseFunction();
+            prog->functions.emplace_back(func);
+        }
         return prog;
     }
 
@@ -45,17 +47,36 @@ public:
         char* funName = (char*) idAlloc.allocate(idLen);
         idToken.value.copyTo(funName, idLen);
 
+        scope.openScope();
+
         expect(T_OPEN_PAR);
-        expect(T_CLOSE_PAR);
+        std::vector<AstFunParam*> params;
+        while (current.kind != T_CLOSE_PAR) {
+            params.emplace_back(parseFunParam());
+            if (current.kind == T_COMMA) {
+                takeToken();
+            }
+        }
+        takeToken();
         expect(T_OPEN_BRACE);
 
+        scope.openScope();
         std::vector<AstBlockItem*> items;
         while (current.kind != T_CLOSE_BRACE) {
             items.emplace_back(parseBlockItem());
         }
+        scope.closeScope();
+
         expect(T_CLOSE_BRACE);
 
-        return objAlloc.create<AstFunction>(funName, items);
+        scope.closeScope();
+        return objAlloc.create<AstFunction>(funName, params, items);
+    }
+
+    AstFunParam* parseFunParam() {
+        expect(T_INT_KEYWORD);
+        auto id = scope.declare(expect(T_IDENTIFIER));
+        return objAlloc.create<AstFunParam>(id);
     }
 
     AstBlockItem* parseBlockItem() {
@@ -125,15 +146,54 @@ public:
             auto exp = parseExpression();
             expect(T_CLOSE_PAR);
             return exp;
-        } 
+        }
         else if (current.kind == T_IDENTIFIER) {
-            const char* name = scope.resolve(takeToken());
-            return objAlloc.create<AstVar>(name);
+            auto nameToken = takeToken();
+            if (current.kind == T_OPEN_PAR) {
+                takeToken();
+                std::vector<AstExp*> args;
+                parseFunArgs(args);
+                expect(T_CLOSE_PAR);
+
+                const char* name = copyToNewCString(nameToken.value, idAlloc);
+                BoundArray<AstExp*> argsBA = copyToBoundArray(args);
+                return objAlloc.create<AstFunCall>(name, argsBA);
+            }
+            else {
+                return objAlloc.create<AstVar>(scope.resolve(nameToken));
+            }
         }
         else {
             throw WrongExprException(current);
         }
     }
+
+    void parseFunArgs(std::vector<AstExp*>& outArgs) {
+        while (current.kind != T_CLOSE_PAR) {
+            outArgs.emplace_back(parseExpression());
+            if (current.kind == T_COMMA) {
+                takeToken();
+            }
+        }
+    }
+
+    char* copyToNewCString(StringRef ref, LinearAllocator& allocator) {
+        auto len = ref.getLength() + 1;
+        char* str = (char*) allocator.allocate(len);
+        ref.copyTo(str, len);
+        return str;
+    }
+
+    template<typename T>
+    BoundArray<T> copyToBoundArray(const std::vector<T>& v) {
+        BoundArray<T> arr = BoundArray<T>::create(v.size(), objAlloc);
+        for (size_t i = 0; i < v.size(); i++) {
+            arr[i] = v[i];
+        }
+        return arr;
+    }
+
+    bool hasNext() const { return current.kind != T_EOF; }
 
 private:
     int32_t parseInt(const Token& token) {
