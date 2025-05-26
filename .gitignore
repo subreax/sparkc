@@ -1,5 +1,3 @@
 build/**
-ast.md
-idAlloc.bin
-out.bin
+out/**
 .vscode/**

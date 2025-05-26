@@ -1,2 +1,2 @@
 @echo off
-build\tests.exe
+out\tests.exe

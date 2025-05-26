@@ -1,2 +1,4 @@
 @echo off
-build\src\sparkc source.spark
+cd out
+sparkc ../source.spark
+cd ..
