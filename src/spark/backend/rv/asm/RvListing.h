@@ -4,7 +4,7 @@
 #include <cstring>
 #include "Rv32Base.h"
 #include "../../../common/Error.h"
-#include "../../../common/NoMemoryException.h"
+#include "../../../common/alloc/NoMemoryException.h"
 #include "../../../common/LabelGen.h"
 
 class RvListing {

@@ -14,7 +14,8 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(Catch2)
 
 add_executable(tests 
-  tests/asm/test_rv32base.cpp 
+  tests/asm/test_rv32base.cpp
+  tests/alloc/test_linearalloc.cpp
   src/spark/backend/rv/asm/Rv32Base.cpp
 )
 target_include_directories(tests PUBLIC src/spark/)

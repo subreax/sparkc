@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include "StringRef.h"
+#include "alloc/MemBlock.h"
 
 class CStringBuilder {
 public:
@@ -10,6 +11,9 @@ public:
         : buf(buf)
         , capacity(capacity - 1) // null-terminator
         {  }
+    
+    CStringBuilder(MemBlock block) 
+        : CStringBuilder((char*) block.mem, block.sz) {  }
 
     CStringBuilder& append(const char* str, size_t maxChars = SIZE_MAX) {
         size_t i = 0;
@@ -35,6 +39,8 @@ public:
 
     size_t getLengthWithout0() const { return len; }
     size_t getLengthWith0() const { return len + 1; }
+
+    char* getString() { return buf; }
 
 private:
     char* buf;

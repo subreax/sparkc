@@ -1,6 +1,6 @@
 #pragma once
 #include <vector>
-#include "../../common/LinearAllocator.h"
+#include "../../common/alloc/LinearAllocator.h"
 #include "../../common/Error.h"
 #include "../../skr/instr/everything.h"
 #include "../../skr/SkrFunction.h"

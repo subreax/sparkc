@@ -2,5 +2,7 @@
 #include "AstFunction.h"
 
 struct AstProgram {
-    std::vector<AstFunction*> functions;
+    AstProgram(BoundArray<AstFunction*> functions) : functions(functions) {  }
+
+    BoundArray<AstFunction*> functions;
 };

@@ -1,5 +1,5 @@
 #pragma once
-#include "SparkRuntimeException.h"
+#include "../SparkRuntimeException.h"
 
 class NoMemoryException : public SparkRuntimeException {
 public:

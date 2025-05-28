@@ -1,7 +1,7 @@
 #pragma once
 #include <vector>
 #include "instr/everything.h"
-#include "../../common/LinearAllocator.h"
+#include "../../common/alloc/LinearAllocator.h"
 #include "../../common/Error.h"
 #include "RvReg.h"
 

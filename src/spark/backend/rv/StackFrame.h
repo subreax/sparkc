@@ -1,9 +1,9 @@
 #pragma once
-#include <map>
+#include <unordered_map>
 #include <functional>
 #include "RvaValue.h"
-#include "../../common/LinearAllocator.h"
-#include "../../common/CStringLessThan.h"
+#include "../../common/StringRef.h"
+#include "../../common/alloc/LinearAllocator.h"
 
 class StackFrame {
 public:
@@ -23,12 +23,13 @@ public:
     }
 
     RvaMemory* getOrPush(const char* id) {
-        auto it = var2stack.find(id);
+        StringRef idRef(id, StringRef::lengthOf(id));
+        auto it = var2stack.find(idRef);
         if (it != var2stack.end()) {
             return it->second;
         } else {
             auto* rvaMem = allocate(4);
-            var2stack.emplace(id, rvaMem);
+            var2stack[idRef] = rvaMem;
             return rvaMem;
         }
     }
@@ -41,7 +42,8 @@ public:
     }
 
     void bindParam(const char* param) {
-        var2stack.emplace(param, rvaAlloc.create<RvaMemory>(RvReg::S0, boundParamsOffset));
+        StringRef paramRef(param, StringRef::lengthOf(param));
+        var2stack[paramRef] = rvaAlloc.create<RvaMemory>(RvReg::S0, boundParamsOffset);
         boundParamsOffset += 4;
     }
 
@@ -55,7 +57,7 @@ public:
     int getSizeAligned16() const { return ((localSize + 15) / 16) * 16; }
 
 private:
-    std::map<const char*, RvaMemory*, CStringLessThan> var2stack;
+    std::unordered_map<StringRef, RvaMemory*> var2stack;
     LinearAllocator& rvaAlloc;
     int localSize = 0;
     int argsSize = 0;

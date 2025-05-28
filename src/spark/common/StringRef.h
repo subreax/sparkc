@@ -1,6 +1,7 @@
 #pragma once
 #include <algorithm>
 #include <string>
+#include <cstring>
 
 class StringRef {
 public:
@@ -9,6 +10,10 @@ public:
 
     static StringRef nullInstance() {
         return StringRef(nullptr, 0);
+    }
+
+    static size_t lengthOf(const char* str, size_t maxLen = 1024) {
+        return strnlen(str, maxLen);
     }
 
     size_t copyTo(char* out, size_t capacity) const {
@@ -59,16 +64,17 @@ bool operator!=(const StringRef& r1, const StringRef& r2);
 std::string operator+(const std::string& s1, StringRef s2);
 std::string operator+(StringRef s1, const std::string& s2);
 
-// capacity = 10
-// len = 10
-// count = min(9, 10) = 9
 
-
-// capacity = 11
-// len = 10
-// count = min(10, 10) = 10
-
-
-// capacity = 5
-// len = 10
-// count = min(4, 10) = 4
+template <>
+struct std::hash<StringRef> {
+    // FNV hash
+    // http://www.isthe.com/chongo/tech/comp/fnv/
+    std::size_t operator()(const StringRef& k) const {
+        std::size_t hash = 2166136261u;
+        const unsigned char* str = (const unsigned char*) k.getReference();
+        for (size_t i = 0; i < k.getLength(); i++) {
+            hash = (hash ^ str[i]) * 16777619;
+        }
+        return hash;
+    }
+};

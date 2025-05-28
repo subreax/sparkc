@@ -1,7 +1,7 @@
 #pragma once
 #include <vector>
 #include "../common/Error.h"
-#include "../common/LinearAllocator.h"
+#include "../common/alloc/LinearAllocator.h"
 #include "../common/IdentifierGen.h"
 #include "../common/LabelGen.h"
 #include "../frontend/ast/exp/everything.h"

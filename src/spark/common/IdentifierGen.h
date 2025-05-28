@@ -1,11 +1,11 @@
 #pragma once
-#include "LinearAllocator.h"
+#include "alloc/Allocator.h"
 #include "CStringBuilder.h"
 #include "StringRef.h"
 
 class IdentifierGen {
 public:
-    IdentifierGen(LinearAllocator& allocator) : allocator(allocator) { }
+    IdentifierGen(Allocator& allocator) : allocator(allocator) { }
 
     const char* unique(const char* id) {
         return unique(id, strlen(id));
@@ -27,9 +27,9 @@ public:
 
     const char* copy(StringRef ref) {
         auto len = std::min(ref.getLength() + 1, sizeof(nameBuf));
-        auto allocatedStr = (char*) allocator.allocate(len);
-        CStringBuilder(allocatedStr, len).append(ref);
-        return allocatedStr;
+        return CStringBuilder(allocator.allocate(len))
+            .append(ref)
+            .getString();
     }
 
     static constexpr size_t MAX_ID_LEN = 24;
@@ -44,12 +44,12 @@ private:
         
         counter++;
 
-        auto allocatedStr = (char*) allocator.allocate(len);
-        CStringBuilder(allocatedStr, len).append(nameBuf);
-        return allocatedStr;
+        return CStringBuilder(allocator.allocate(len))
+            .append(nameBuf)
+            .getString();
     }
 
     char nameBuf[MAX_ID_LEN + 16];
-    LinearAllocator& allocator;
+    Allocator& allocator;
     int counter = 0;
 };

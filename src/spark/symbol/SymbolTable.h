@@ -1,7 +1,6 @@
 #pragma once
-#include <map>
-#include "../common/LinearAllocator.h"
-#include "../common/CStringLessThan.h"
+#include <unordered_map>
+#include "../common/StringRef.h"
 #include "SymbolType.h"
 #include "except/DuplicateSymbolDeclarationException.h"
 #include "except/UndeclaredSymbolException.h"
@@ -9,16 +8,18 @@
 class SymbolTable {
 public:
     void declare(const char* name, SymbolType* type) {
-        auto it = table.find(name);
+        StringRef name1(name, StringRef::lengthOf(name));
+        auto it = table.find(name1);
         if (it != table.end()) {
             throw DuplicateSymbolDeclarationException(name, type);
         }
 
-        table.emplace(name, type);
+        table.emplace(name1, type);
     }
 
     SymbolType* get(const char* name) const {
-        auto it = table.find(name);
+        StringRef name1(name, StringRef::lengthOf(name));
+        auto it = table.find(name1);
         if (it == table.end()) {
             throw UndeclaredSymbolException(name);
         }
@@ -26,5 +27,5 @@ public:
     }
 
 private:
-    std::map<const char*, SymbolType*, CStringLessThan> table;
+    std::unordered_map<StringRef, SymbolType*> table;
 };

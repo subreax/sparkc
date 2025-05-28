@@ -1,5 +1,5 @@
 #pragma once
-#include "LinearAllocator.h"
+#include "alloc/LinearAllocator.h"
 #include <stdexcept>
 
 template<typename T>
@@ -13,7 +13,7 @@ public:
     size_t getSize() const { return sz; }
 
     void push(const T& value) {
-        T* ptr = (T*) allocator.allocate(sizeof(T));
+        T* ptr = (T*) allocator.allocate(sizeof(T)).mem;
         *ptr = value;
         sz++;
     }

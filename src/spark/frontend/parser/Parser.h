@@ -1,6 +1,6 @@
 #pragma once
 #include <vector>
-#include "../../common/LinearAllocator.h"
+#include "../../common/alloc/Allocator.h"
 #include "../../common/IdentifierGen.h"
 #include "../lexer/Lexer.h"
 #include "../ast/everything.h"
@@ -11,12 +11,12 @@ class Parser {
 public:
     Parser(
         Lexer& lexer, 
-        LinearAllocator& allocator, 
+        Allocator& allocator, 
         IdentifierGen& idGen,
         Scope& scope
     )
         : lexer(lexer)
-        , objAlloc(allocator)
+        , allocator(allocator)
         , idGen(idGen)
         , scope(scope)
     {
@@ -24,11 +24,13 @@ public:
     }
 
     AstProgram* parseProgram() {
-        auto* prog = objAlloc.create<AstProgram>();
+        std::vector<AstFunction*> functions;
         while (hasNext()) {
             auto func = parseFunction();
-            prog->functions.emplace_back(func);
+            functions.emplace_back(func);
         }
+        auto arrFunctions = BoundArray<AstFunction*>::fromVector(functions, allocator);
+        auto* prog = allocator.create<AstProgram>(arrFunctions);
         return prog;
     }
 
@@ -60,21 +62,24 @@ public:
         expect(T_CLOSE_BRACE);
 
         scope.closeScope();
-        return objAlloc.create<AstFunction>(funName, params, items);
+
+        auto paramsBa = BoundArray<AstFunParam*>::fromVector(params, allocator);
+        auto itemsBa = BoundArray<AstBlockItem*>::fromVector(items, allocator);
+        return allocator.create<AstFunction>(funName, paramsBa, itemsBa);
     }
 
     AstFunParam* parseFunParam() {
         expect(T_INT_KEYWORD);
         auto id = scope.declare(expect(T_IDENTIFIER));
-        return objAlloc.create<AstFunParam>(id);
+        return allocator.create<AstFunParam>(id);
     }
 
     AstBlockItem* parseBlockItem() {
         auto* decl = tryParseDeclaration();
         if (decl != nullptr) {
-            return objAlloc.create<AstDeclBlockItem>(decl);
+            return allocator.create<AstDeclBlockItem>(decl);
         }
-        return objAlloc.create<AstStatementBlockItem>(parseStatement());
+        return allocator.create<AstStatementBlockItem>(parseStatement());
     }
 
     AstDeclaration* tryParseDeclaration() {
@@ -87,7 +92,7 @@ public:
                 initializer = parseExpression();
             }
             expect(T_SEMICOLON);
-            return objAlloc.create<AstVarDeclaration>(varName, initializer);
+            return allocator.create<AstVarDeclaration>(varName, initializer);
         }
         else {
             return nullptr;
@@ -99,12 +104,12 @@ public:
             takeToken();
             AstExp* exp = parseExpression();
             expect(T_SEMICOLON);
-            return objAlloc.create<AstReturnStatement>(exp);
+            return allocator.create<AstReturnStatement>(exp);
         }
         else {
             AstExp* exp = parseExpression();
             expect(TokenKind::T_SEMICOLON);
-            return objAlloc.create<AstExpressionStatement>(exp);
+            return allocator.create<AstExpressionStatement>(exp);
         }
     }
 
@@ -115,10 +120,10 @@ public:
             auto op = takeToken();
             if (op.kind != T_EQUALS) {
                 AstExp* right = parseExpression(precedence + 1);
-                left = objAlloc.create<AstBinaryExp>(left, AstBinaryExp::toBinaryOperator(op.kind), right);
+                left = allocator.create<AstBinaryExp>(left, AstBinaryExp::toBinaryOperator(op.kind), right);
             } else {
                 AstExp* right = parseExpression(precedence);
-                left = objAlloc.create<AstAssignment>(left, right);
+                left = allocator.create<AstAssignment>(left, right);
             }
             precedence = getPrecedence(current.kind);
         }
@@ -129,7 +134,7 @@ public:
         if (current.kind == T_INT_CONSTANT) {
             auto token = takeToken();
             int32_t value = parseInt(token);
-            return objAlloc.create<AstConstantExp>(value);
+            return allocator.create<AstConstantExp>(value);
         }
         else if (current.kind == T_OPEN_PAR) {
             takeToken();
@@ -146,11 +151,11 @@ public:
                 expect(T_CLOSE_PAR);
 
                 const char* funName = idGen.copy(nameToken.value);
-                BoundArray<AstExp*> argsBA = copyToBoundArray(args);
-                return objAlloc.create<AstFunCall>(funName, argsBA);
+                auto argsBA = BoundArray<AstExp*>::fromVector(args, allocator);
+                return allocator.create<AstFunCall>(funName, argsBA);
             }
             else {
-                return objAlloc.create<AstVar>(scope.resolve(nameToken));
+                return allocator.create<AstVar>(scope.resolve(nameToken));
             }
         }
         else {
@@ -165,15 +170,6 @@ public:
                 takeToken();
             }
         }
-    }
-
-    template<typename T>
-    BoundArray<T> copyToBoundArray(const std::vector<T>& v) {
-        BoundArray<T> arr = BoundArray<T>::create(v.size(), objAlloc);
-        for (size_t i = 0; i < v.size(); i++) {
-            arr[i] = v[i];
-        }
-        return arr;
     }
 
     bool hasNext() const { return current.kind != T_EOF; }
@@ -236,7 +232,7 @@ private:
 
     Token current;
     Lexer& lexer;
-    LinearAllocator& objAlloc;
+    Allocator& allocator;
     IdentifierGen& idGen;
     Scope& scope;
 };

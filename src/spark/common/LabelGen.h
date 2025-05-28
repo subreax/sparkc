@@ -1,10 +1,10 @@
 #pragma once
-#include "LinearAllocator.h"
+#include "alloc/Allocator.h"
 #include "CStringBuilder.h"
 
 class LabelGen {
 public:
-    LabelGen(LinearAllocator& allocator) : allocator(allocator) {  }
+    LabelGen(Allocator& allocator) : allocator(allocator) {  }
 
     const char* uniqueInternal(const char* id) {
         auto len = CStringBuilder(buf, sizeof(buf))
@@ -16,9 +16,9 @@ public:
 
         counter++;
 
-        char* generated = (char*) allocator.allocate(len);
-        CStringBuilder(generated, len).append(buf);
-        return generated;
+        return CStringBuilder(allocator.allocate(len))
+            .append(buf)
+            .getString();
     }
 
     static constexpr int LABEL_MAX_LEN = 24;
@@ -32,7 +32,7 @@ public:
     }
 
 private:
-    LinearAllocator& allocator;
+    Allocator& allocator;
     int counter = 0;
     char buf[LABEL_MAX_LEN + 16];
 };
