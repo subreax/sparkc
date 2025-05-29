@@ -7,14 +7,15 @@
 
 class RvaFixer {
 public:
+    static void fix(const std::vector<RvaInstruction*>& orig, std::vector<RvaInstruction*>& out, LinearAllocator& rvaAllocator) {
+        RvaFixer(orig, out, rvaAllocator).fix();
+    }
+
+private:
     RvaFixer(const std::vector<RvaInstruction*>& orig, std::vector<RvaInstruction*>& out, LinearAllocator& rvaAllocator)
         : orig(orig)
         , out(out)
         , allocator(rvaAllocator) { }
-
-    static void fix(const std::vector<RvaInstruction*>& orig, std::vector<RvaInstruction*>& out, LinearAllocator& rvaAllocator) {
-        RvaFixer(orig, out, rvaAllocator).fix();
-    }
 
     void fix() {
         for (RvaInstruction* rva : orig) {
@@ -37,7 +38,6 @@ public:
         }
     }
 
-private:
     void fix(RvaMov* it) {
         auto fromKind = it->from->kind;
         auto toKind = it->to->kind;

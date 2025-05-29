@@ -10,13 +10,20 @@
 
 class SkrEmitter {
 public:
-    SkrEmitter(LinearAllocator& allocator, IdentifierGen& idGen, LabelGen& labelGen, std::vector<SkrInstruction*>& out) 
+    static SkrFunction* emit(AstFunction* func, Allocator& allocator, IdentifierGen& idGen, LabelGen& labelGen, std::vector<SkrInstruction*>& buf) {
+        return SkrEmitter(allocator, idGen, labelGen, buf).emit(func);
+    }
+
+private:
+    SkrEmitter(Allocator& allocator, IdentifierGen& idGen, LabelGen& labelGen, std::vector<SkrInstruction*>& out) 
         : allocator(allocator)
         , idGen(idGen)
         , labelGen(labelGen)
         , out(out) {  }
 
     SkrFunction* emit(AstFunction* func) {
+        funName = func->getName();
+
         const auto& astParams = func->getParams();
         auto skrParams = BoundArray<SkrVar*>::create(astParams.size(), allocator);
         for (size_t i = 0; i < astParams.size(); i++) {
@@ -25,37 +32,38 @@ public:
             skrParams[i] = skrParam;
         }
 
-        const char* funcResultId = idGen.unique("result");
+        const char* funcResultId = idGen.unique("retval");
         funcResult = allocator.create<SkrVar>(funcResultId);
-        retLabel = labelGen.uniqueInternal("return");
+        retLabel = labelGen.uniqueInternal("ret");
         for (auto* item : func->getBlockItems()) {
-            emit(func->getName(), item);
+            emit(item);
         }
         removeUselessJumpToRet();
         out.emplace_back(allocator.create<SkrLabel>(retLabel));
-        return allocator.create<SkrFunction>(func->getName(), skrParams, out, funcResultId);
+
+        auto baInstructions = BoundArray<SkrInstruction*>::fromVector(out, allocator);
+        return allocator.create<SkrFunction>(func->getName(), skrParams, baInstructions, funcResultId);
     }
 
-private:
-    void emit(const char* funName, AstBlockItem* blockItem) {
+    void emit(AstBlockItem* blockItem) {
         auto kind = blockItem->kind;
         if (kind == AstBlockItem::Kind::Declaration) {
-            emit(funName, ((AstDeclBlockItem*) blockItem)->getDeclaration());
+            emit(((AstDeclBlockItem*) blockItem)->getDeclaration());
         }
         else if (kind == AstBlockItem::Kind::Statement) {
-            emit(funName, ((AstStatementBlockItem*) blockItem)->getStatement());
+            emit(((AstStatementBlockItem*) blockItem)->getStatement());
         }
         else {
             sparkError("SkrEmitter", "Unknown AstBlockItem: %d", kind);
         }
     }
 
-    void emit(const char* funName, AstDeclaration* decl) {
+    void emit(AstDeclaration* decl) {
         if (decl->kind == AstDeclaration::Kind::Var) {
             auto* it = (AstVarDeclaration*) decl;
             auto* initializer = it->getInitializer();
             if (initializer != nullptr) {
-                auto* initRes = emit(funName, initializer);
+                auto* initRes = emit(initializer);
                 auto* skrVar = allocator.create<SkrVar>(it->getName());
                 out.emplace_back(allocator.create<SkrCopy>(skrVar, initRes));
             }
@@ -65,44 +73,44 @@ private:
         }
     }
 
-    void emit(const char* funName, AstStatement* st) {
+    void emit(AstStatement* st) {
         auto kind = st->kind;
         if (kind == AstStatement::Kind::Return) {
             auto* it = (AstReturnStatement*) st;
-            auto* retVal = emit(funName, it->getExpression());
+            auto* retVal = emit(it->getExpression());
             out.emplace_back(allocator.create<SkrCopy>(funcResult, retVal));
             out.emplace_back(allocator.create<SkrJump>(retLabel));
         }
         else if (kind == AstStatement::Kind::Expression) {
             auto* it = (AstExpressionStatement*) st;
-            emit(funName, it->getExpression());
+            emit(it->getExpression());
         }
         else {
             sparkError("SkrEmitter", "Unknown AstStatement: %d", kind);
         }
     }
 
-    SkrValue* emit(const char* funName, AstExp* exp) {
+    SkrValue* emit(AstExp* exp) {
         auto kind = exp->kind;
         if (kind == AstExp::Kind::Constant) {
             auto* it = (AstConstantExp*) exp;
             return getSkrConst(it->getValue());
         }
         else if (kind == AstExp::Kind::Binary) {
-            return emitBinary(funName, (AstBinaryExp*) exp);
+            return emitBinary((AstBinaryExp*) exp);
         }
         else if (kind == AstExp::Kind::Var) {
             return allocator.create<SkrVar>(((AstVar*) exp)->getIdentifier());
         }
         else if (kind == AstExp::Kind::Assignment) {
             auto* ass = (AstAssignment*) exp;
-            SkrValue* left = emit(funName, ass->getVar());
-            SkrValue* right = emit(funName, ass->getExp());
+            SkrValue* left = emit(ass->getVar());
+            SkrValue* right = emit(ass->getExp());
             out.emplace_back(allocator.create<SkrCopy>(left, right));
             return left;
         }
         else if (kind == AstExp::Kind::FunCall) {
-            return emitFunCall(funName, (AstFunCall*) exp);
+            return emitFunCall((AstFunCall*) exp);
         }
         else {
             sparkError("SkrEmitter", "Unknown AstExp: %d", kind);
@@ -110,16 +118,16 @@ private:
         }
     }
 
-    SkrValue* emitBinary(const char* funName, AstBinaryExp* exp) {
+    SkrValue* emitBinary(AstBinaryExp* exp) {
         auto astOp = exp->getOperator();
         if (astOp == AstBinaryExp::Operator::And) {
-            const char* falseLabel = labelGen.uniqueInternal("false");
-            const char* endLabel = labelGen.uniqueInternal("end");
+            const char* falseLabel = labelGen.uniqueInternal("and_false");
+            const char* endLabel = labelGen.uniqueInternal("and_end");
 
             SkrVar* result = allocator.create<SkrVar>(idGen.unique("and"));
-            SkrValue* left = emit(funName, exp->getLeft());
+            SkrValue* left = emit(exp->getLeft());
             out.emplace_back(allocator.create<SkrBranch>(left, SkrBranch::Operator::Equals, getSkrConst(0), falseLabel));
-            SkrValue* right = emit(funName, exp->getRight());
+            SkrValue* right = emit(exp->getRight());
             out.emplace_back(allocator.create<SkrBranch>(right, SkrBranch::Operator::Equals, getSkrConst(0), falseLabel));
             // true
             out.emplace_back(allocator.create<SkrCopy>(result, getSkrConst(1)));
@@ -133,13 +141,13 @@ private:
             return result;
         }
         else if (astOp == AstBinaryExp::Operator::Or) {
-            const char* trueLabel = labelGen.uniqueInternal("true");
-            const char* endLabel = labelGen.uniqueInternal("end");
+            const char* trueLabel = labelGen.uniqueInternal("or_true");
+            const char* endLabel = labelGen.uniqueInternal("or_end");
 
             SkrVar* result = allocator.create<SkrVar>(idGen.unique("or"));
-            SkrValue* left = emit(funName, exp->getLeft());
+            SkrValue* left = emit(exp->getLeft());
             out.emplace_back(allocator.create<SkrBranch>(left, SkrBranch::Operator::NotEquals, getSkrConst(0), trueLabel));
-            SkrValue* right = emit(funName, exp->getRight());
+            SkrValue* right = emit(exp->getRight());
             out.emplace_back(allocator.create<SkrBranch>(right, SkrBranch::Operator::NotEquals, getSkrConst(0), trueLabel));
             // false
             out.emplace_back(allocator.create<SkrCopy>(result, getSkrConst(0)));
@@ -153,22 +161,22 @@ private:
             return result;
         }
         else {
-            SkrValue* left = emit(funName, exp->getLeft());
+            SkrValue* left = emit(exp->getLeft());
             auto op = binaryOpOf(exp->getOperator());
-            SkrValue* right = emit(funName, exp->getRight());
+            SkrValue* right = emit(exp->getRight());
             SkrVar* dst = allocator.create<SkrVar>(idGen.unique(funName));
             out.emplace_back(allocator.create<SkrBinary>(dst, left, op, right));
             return dst;
         }
     }
 
-    SkrValue* emitFunCall(const char* funName, AstFunCall* call) {
+    SkrValue* emitFunCall(AstFunCall* call) {
         auto astArgs = call->getArgs();
         auto skrArgs = BoundArray<SkrValue*>::create(astArgs.size(), allocator);
         for (size_t i = 0; i < astArgs.size(); i++) {
-            skrArgs[i] = emit(funName, astArgs[i]);
+            skrArgs[i] = emit(astArgs[i]);
         }
-        auto* result = allocator.create<SkrVar>(idGen.unique(call->getFunName(), "res"));
+        auto* result = allocator.create<SkrVar>(idGen.unique(call->getFunName(), "v"));
         auto* skrCall = allocator.create<SkrFunCall>(call->getFunName(), skrArgs, result);
         out.emplace_back(skrCall);
         return result;
@@ -232,11 +240,12 @@ private:
         return allocator.create<SkrConst>(v);
     }
 
-    LinearAllocator& allocator;
+    Allocator& allocator;
     IdentifierGen& idGen;
     LabelGen& labelGen;
     std::vector<SkrInstruction*>& out;
     SkrVar* funcResult = nullptr;
+    const char* funName = nullptr;
     const char* retLabel = nullptr;
     SkrConst* skrZero = nullptr;
     SkrConst* skrOne = nullptr;

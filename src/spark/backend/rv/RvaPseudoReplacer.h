@@ -6,10 +6,11 @@
 
 class RvaPseudoReplacer {
 public:
-    static void replace(StackFrame& frame, std::vector<RvaInstruction*>& rvas) {
+    static void replace(std::vector<RvaInstruction*>& rvas, StackFrame& frame) {
         RvaPseudoReplacer(frame).replace(rvas);
     }
 
+private:
     RvaPseudoReplacer(StackFrame& frame) : frame(frame) {  }
 
     void replace(std::vector<RvaInstruction*>& rvas) {
@@ -34,7 +35,6 @@ public:
         }
     }
 
-private:
     void replace(RvaInstruction* it) {
         switch (it->kind) {
         case RvaInstruction::Kind::Binary:      replace((RvaBinary*) it); break;

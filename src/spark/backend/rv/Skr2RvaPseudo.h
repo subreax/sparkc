@@ -1,6 +1,6 @@
 #pragma once
 #include <vector>
-#include "../../common/alloc/LinearAllocator.h"
+#include "../../common/alloc/Allocator.h"
 #include "../../common/Error.h"
 #include "../../skr/instr/everything.h"
 #include "../../skr/SkrFunction.h"
@@ -9,11 +9,12 @@
 
 class Skr2RvaPseudo {
 public:
-    static void emit(LinearAllocator& allocator, StackFrame& frame, SkrFunction* func, std::vector<RvaInstruction*>& out) {
-        Skr2RvaPseudo(allocator, frame, out).emit(func);
+    static void emit(SkrFunction* func, Allocator& allocator, StackFrame& frame, std::vector<RvaInstruction*>& buf) {
+        Skr2RvaPseudo(allocator, frame, buf).emit(func);
     }
 
-    Skr2RvaPseudo(LinearAllocator& allocator, StackFrame& frame, std::vector<RvaInstruction*>& out) 
+private:
+    Skr2RvaPseudo(Allocator& allocator, StackFrame& frame, std::vector<RvaInstruction*>& out) 
         : allocator(allocator)
         , frame(frame)
         , out(out) {  }
@@ -80,7 +81,6 @@ public:
         add(allocator.create<RvaRet>());
     }
 
-private:
     void emitBinary(SkrBinary* it) {
         auto* instr = allocator.create<RvaBinary>(
             toPseudo(it->getDst()),
@@ -168,7 +168,7 @@ private:
         return RvReg::ZERO;
     }
 
-    bool hasFunctionCalls(const std::vector<SkrInstruction*>& skrs) const {
+    bool hasFunctionCalls(const BoundArray<SkrInstruction*>& skrs) const {
         for (SkrInstruction* it : skrs) {
             if (it->kind == SkrInstruction::Kind::FunCall) {
                 return true;
@@ -177,7 +177,7 @@ private:
         return false;
     }
 
-    LinearAllocator& allocator;
+    Allocator& allocator;
     StackFrame& frame;
     std::vector<RvaInstruction*>& out;
 };
