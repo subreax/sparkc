@@ -16,9 +16,7 @@ public:
         }
 
         for (auto* func : program->functions) {
-            for (AstBlockItem* item : func->getBlockItems()) {
-                resolve(item);
-            }
+            resolve(func->getBlock());
         }
     }
 
@@ -36,11 +34,21 @@ private:
         table.declare(func->getName(), funcType);
     }
 
+    void resolve(const AstBlock* block) {
+        for (AstBlockItem* item : block->getItems()) {
+            resolve(item);
+        }
+    }
+
     void resolve(AstBlockItem* item) {
         auto kind = item->kind;
         if (kind == AstBlockItem::Kind::Declaration) {
             auto* declItem = (AstDeclBlockItem*) item;
             resolve(declItem->getDeclaration());
+        }
+        else if (kind == AstBlockItem::Kind::Statement) {
+            auto* stItem = (AstStatementBlockItem*) item;
+            resolve(stItem->getStatement());
         }
     }
 
@@ -48,6 +56,21 @@ private:
         if (decl->kind == AstDeclaration::Kind::Var) {
             auto* varDecl = (AstVarDeclaration*) decl;
             table.declare(varDecl->getName(), SymbolIntType::getInstance());
+        }
+    }
+
+    void resolve(AstStatement* st) {
+        if (st->kind == AstStatement::Kind::If) {
+            auto* it = (AstIfStatement*) st;
+            resolve(it->getTrueBranch());
+            auto* falseBranch = it->getFalseBranch();
+            if (falseBranch != nullptr) {
+                resolve(falseBranch);
+            }
+        }
+        else if (st->kind == AstStatement::Kind::Compound) {
+            auto* it = (AstCompoundStatement*) st;
+            resolve(it->getBlock());
         }
     }
 

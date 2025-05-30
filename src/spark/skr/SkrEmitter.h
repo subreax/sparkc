@@ -35,14 +35,18 @@ private:
         const char* funcResultId = idGen.unique("retval");
         funcResult = allocator.create<SkrVar>(funcResultId);
         retLabel = labelGen.uniqueInternal("ret");
-        for (auto* item : func->getBlockItems()) {
-            emit(item);
-        }
+        emit(func->getBlock());
         removeUselessJumpToRet();
         out.emplace_back(allocator.create<SkrLabel>(retLabel));
 
         auto baInstructions = BoundArray<SkrInstruction*>::fromVector(out, allocator);
         return allocator.create<SkrFunction>(func->getName(), skrParams, baInstructions, funcResultId);
+    }
+
+    void emit(const AstBlock* block) {
+        for (auto* item : block->getItems()) {
+            emit(item);
+        }
     }
 
     void emit(AstBlockItem* blockItem) {
@@ -96,6 +100,10 @@ private:
             if (falseBranch != nullptr) {
                 emit(falseBranch);
             }
+        }
+        else if (kind == AstStatement::Kind::Compound) {
+            auto* it = (AstCompoundStatement*) st;
+            emit(it->getBlock());
         }
         else {
             sparkError("SkrEmitter", "Unknown AstStatement: %d", kind);

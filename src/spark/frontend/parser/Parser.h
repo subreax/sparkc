@@ -50,28 +50,35 @@ public:
             }
         }
         takeToken();
-        expect(T_OPEN_BRACE);
 
-        scope.openScope();
-        std::vector<AstBlockItem*> items;
-        while (current.kind != T_CLOSE_BRACE) {
-            items.emplace_back(parseBlockItem());
-        }
-        scope.closeScope();
-
-        expect(T_CLOSE_BRACE);
+        AstBlock* block = parseBlock();
 
         scope.closeScope();
 
         auto paramsBa = BoundArray<AstFunParam*>::fromVector(params, allocator);
-        auto itemsBa = BoundArray<AstBlockItem*>::fromVector(items, allocator);
-        return allocator.create<AstFunction>(funName, paramsBa, itemsBa);
+        return allocator.create<AstFunction>(funName, paramsBa, block);
     }
 
     AstFunParam* parseFunParam() {
         expect(T_INT_KEYWORD);
         auto id = scope.declare(expect(T_IDENTIFIER));
         return allocator.create<AstFunParam>(id);
+    }
+
+    AstBlock* parseBlock() {
+        expect(T_OPEN_BRACE);
+        scope.openScope();
+
+        std::vector<AstBlockItem*> items;
+        while (current.kind != T_CLOSE_BRACE) {
+            items.emplace_back(parseBlockItem());
+        }
+        
+        scope.closeScope();
+        expect(T_CLOSE_BRACE);
+
+        auto itemsBa = BoundArray<AstBlockItem*>::fromVector(items, allocator);
+        return allocator.create<AstBlock>(itemsBa);
     }
 
     AstBlockItem* parseBlockItem() {
@@ -106,7 +113,7 @@ public:
             expect(T_SEMICOLON);
             return allocator.create<AstReturnStatement>(exp);
         }
-        else if (current.kind = T_IF_KEYWORD) {
+        else if (current.kind == T_IF_KEYWORD) {
             takeToken();
             expect(T_OPEN_PAR);
             AstExp* cond = parseExpression();
@@ -118,6 +125,10 @@ public:
                 ifFalse = parseStatement();
             }
             return allocator.create<AstIfStatement>(cond, ifTrue, ifFalse);
+        }
+        else if (current.kind == T_OPEN_BRACE) {
+            AstBlock* block = parseBlock();
+            return allocator.create<AstCompoundStatement>(block);
         }
         else {
             AstExp* exp = parseExpression();

@@ -41,7 +41,13 @@ public:
         for (auto* param : func->getParams()) {
             connect(node, toMermaid(param));
         }
-        for (auto* item : func->getBlockItems()) {
+        connect(node, toMermaid(func->getBlock()));
+        return node.id;
+    }
+
+    std::string toMermaid(const AstBlock* block) {
+        auto node = Node(*this, "block");
+        for (auto* item : block->getItems()) {
             connect(node, toMermaid(item));
         }
         return node.id;
@@ -103,6 +109,10 @@ public:
                 connect(node, toMermaid(it->getFalseBranch()), "false");
             }
             return node.id;
+        }
+        else if (kind == AstStatement::Kind::Compound) {
+            auto* it = (AstCompoundStatement*) st;
+            return toMermaid(it->getBlock());
         }
         else {
             sparkError("AstMermaidPrinter", "Unknown AstStatement");

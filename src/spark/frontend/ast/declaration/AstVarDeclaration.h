@@ -7,6 +7,7 @@ public:
     AstVarDeclaration(const char* name, SymbolType* type, AstExp* init = nullptr)
         : AstDeclaration(Kind::Var)
         , name(name)
+        , type(type)
         , init(init) { }
 
     const char* getName() const { return name; }
@@ -15,6 +16,6 @@ public:
 
 private:
     const char* name;
-    AstExp* init;
     SymbolType* type;
+    AstExp* init;
 };

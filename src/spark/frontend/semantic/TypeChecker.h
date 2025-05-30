@@ -13,13 +13,17 @@ public:
 
     void typeCheck(AstProgram* prog) {
         for (auto* func : prog->functions) {
-            for (auto* item : func->getBlockItems()) {
-                typeCheck(item);
-            }
+            typeCheck(func->getBlock());
         }
     }
 
 private:
+    void typeCheck(const AstBlock* block) {
+        for (auto* item : block->getItems()) {
+            typeCheck(item);
+        }
+    }
+
     void typeCheck(AstBlockItem* item) {
         if (item->kind == AstBlockItem::Kind::Declaration) {
             auto* declItem = (AstDeclBlockItem*) item;
@@ -62,6 +66,9 @@ private:
             if (falseBranch != nullptr) {
                 typeCheck(falseBranch);
             }
+        }
+        else if (kind == AstStatement::Kind::Compound) {
+            typeCheck(((AstCompoundStatement*) st)->getBlock());
         }
     }
 
