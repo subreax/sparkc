@@ -92,7 +92,7 @@ public:
                 initializer = parseExpression();
             }
             expect(T_SEMICOLON);
-            return allocator.create<AstVarDeclaration>(varName, initializer);
+            return allocator.create<AstVarDeclaration>(varName, SymbolIntType::getInstance(), initializer);
         }
         else {
             return nullptr;

@@ -2,12 +2,15 @@
 #include <cstdint>
 #include "../../lexer/Token.h"
 #include "../../../common/Error.h"
+#include "../../../symbol/SymbolType.h"
 
 class AstExp {
 public:
     enum class Kind { Constant, Binary, Var, Assignment, FunCall, _Count };
 
-    AstExp(Kind kind) : kind(kind) {  }
+    AstExp(Kind kind, SymbolType* type = nullptr)
+        : kind(kind)
+        , type(type) {  }
 
     static const char* kindToString(Kind kind) {
         static const char* names[] = { "const", "binary", "var", "assignment", "fun_call" };
@@ -19,4 +22,5 @@ public:
     }
 
     const Kind kind;
+    SymbolType* type = nullptr;
 };

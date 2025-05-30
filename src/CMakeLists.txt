@@ -7,4 +7,5 @@ add_executable(sparkc
     spark/backend/rv/asm/Rv32Base.cpp
     printer/skr/SkrPrinter.cpp
     printer/rva/RvaPrinter.cpp
+    printer/ast/AstMermaidPrinter.cpp
 )

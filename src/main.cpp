@@ -158,9 +158,9 @@ string readFile(const char* path) {
 }
 
 void writeMermaidAst(AstProgram* prog, const char* outFile) {
-    AstMermaidPrinter conv;
     std::ostringstream oss;
-    conv.toMermaid(oss, prog);
+    AstMermaidPrinter conv(oss);
+    conv.toMermaid(prog);
 
     ofstream astOut(outFile);
     astOut << "```mermaid\n";

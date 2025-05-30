@@ -9,6 +9,7 @@ public:
         , exp(exp) { }
 
     AstExp* getExpression() { return exp; }
+    SymbolType* getType() { return exp->type; }
 
 private:
     AstExp* exp;
