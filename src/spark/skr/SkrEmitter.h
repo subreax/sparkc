@@ -85,8 +85,35 @@ private:
             auto* it = (AstExpressionStatement*) st;
             emit(it->getExpression());
         }
+        else if (kind == AstStatement::Kind::If) {
+            auto* it = (AstIfStatement*) st;
+            auto* ifFalseLabel = labelGen.uniqueInternal("false");
+            emitBranch(it->getCondition(), ifFalseLabel);
+            emit(it->getTrueBranch());
+            out.emplace_back(allocator.create<SkrLabel>(ifFalseLabel));
+            
+            auto* falseBranch = it->getFalseBranch();
+            if (falseBranch != nullptr) {
+                emit(falseBranch);
+            }
+        }
         else {
             sparkError("SkrEmitter", "Unknown AstStatement: %d", kind);
+        }
+    }
+
+    void emitBranch(AstExp* exp, const char* ifFalseLabel) {
+        if (isLogicalBin(exp)) {
+            AstBinaryExp* binExp = (AstBinaryExp*) exp;
+            auto* left = emit(binExp->getLeft());
+            auto invertedOp = invertedBranchOpOf(binExp->getOperator());
+            auto* right = emit(binExp->getRight());
+            auto* branch = allocator.create<SkrBranch>(left, invertedOp, right, ifFalseLabel);
+            out.emplace_back(branch);
+        } else {
+            auto* res = emit(exp);
+            auto* branch = allocator.create<SkrBranch>(res, SkrBranch::Operator::Equals, getSkrConst(0), ifFalseLabel);
+            out.emplace_back(branch);
         }
     }
 
@@ -199,6 +226,56 @@ private:
         default:
             sparkError("SkrBinary", "Can't map AstBinaryExp::Operator to SkrBinary::Operator: %d", astOp);
             return SkrBinary::Operator::Plus;
+        }
+    }
+
+    SkrBranch::Operator branchOpOf(AstBinaryExp::Operator astOp) {
+        switch (astOp)
+        {
+        case AstBinaryExp::Operator::Equals: return SkrBranch::Operator::Equals;
+        case AstBinaryExp::Operator::NotEquals: return SkrBranch::Operator::NotEquals;
+        case AstBinaryExp::Operator::LessThan: return SkrBranch::Operator::LessThan;
+        case AstBinaryExp::Operator::LessOrEqual: return SkrBranch::Operator::LessOrEqual;
+        case AstBinaryExp::Operator::GreaterThan: return SkrBranch::Operator::GreaterThan;
+        case AstBinaryExp::Operator::GreaterOrEqual: return SkrBranch::Operator::GreaterOrEqual;
+        default:
+            sparkError("SkrBinary", "Can't map AstBinaryExp::Operator to SkrBranch::Operator: %d", astOp);
+        }
+    }
+
+    SkrBranch::Operator invertedBranchOpOf(AstBinaryExp::Operator astOp) {
+        switch (astOp)
+        {
+        case AstBinaryExp::Operator::Equals: return SkrBranch::Operator::NotEquals;
+        case AstBinaryExp::Operator::NotEquals: return SkrBranch::Operator::Equals;
+        case AstBinaryExp::Operator::LessThan: return SkrBranch::Operator::GreaterOrEqual;
+        case AstBinaryExp::Operator::LessOrEqual: return SkrBranch::Operator::GreaterThan;
+        case AstBinaryExp::Operator::GreaterThan: return SkrBranch::Operator::LessOrEqual;
+        case AstBinaryExp::Operator::GreaterOrEqual: return SkrBranch::Operator::LessThan;
+        default:
+            sparkError("SkrBinary", "Can't map inv AstBinaryExp::Operator to SkrBranch::Operator: %d", astOp);
+            return SkrBranch::Operator::Equals;
+        }
+    }
+
+    bool isLogicalBin(AstExp* exp) {
+        if (exp->kind != AstExp::Kind::Binary) {
+            return false;
+        }
+
+        auto* binExp = (AstBinaryExp*) exp;
+        auto op = binExp->getOperator();
+        switch (binExp->getOperator()) {
+        case AstBinaryExp::Operator::Equals:
+        case AstBinaryExp::Operator::NotEquals:
+        case AstBinaryExp::Operator::LessThan:
+        case AstBinaryExp::Operator::LessOrEqual:
+        case AstBinaryExp::Operator::GreaterThan:
+        case AstBinaryExp::Operator::GreaterOrEqual:
+            return true;
+        
+        default:
+            return false;
         }
     }
 

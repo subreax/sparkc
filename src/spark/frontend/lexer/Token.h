@@ -5,6 +5,8 @@
 enum TokenKind {
     T_INT_KEYWORD, //
     T_RETURN_KEYWORD,//
+    T_IF_KEYWORD,//
+    T_ELSE_KEYWORD,//
     T_IDENTIFIER,//
     T_OPEN_PAR,//
     T_CLOSE_PAR,//
@@ -20,12 +22,12 @@ enum TokenKind {
     T_EQUALS,//
     T_AMP_AMP,//
     T_VBAR_VBAR,//
-    T_EQUALS_EQUALS,
-    T_NOT_EQUALS,
-    T_LESS_THAN,
-    T_LESS_OR_EQ,
-    T_GREATER_THAN,
-    T_GREATER_OR_EQ,
+    T_EQUALS_EQUALS,//
+    T_NOT_EQUALS,//
+    T_LESS_THAN,//
+    T_LESS_OR_EQ,//
+    T_GREATER_THAN,//
+    T_GREATER_OR_EQ,//
     T_COMMA,//
     T_EOF,//
     T_BAD

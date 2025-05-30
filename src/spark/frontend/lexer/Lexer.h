@@ -58,6 +58,8 @@ private:
     static constexpr TokenReaderWithKind readers[] = {
         { T_INT_KEYWORD, TokenReaders::readIntKeyword },
         { T_RETURN_KEYWORD, TokenReaders::readReturnKeyword },
+        { T_IF_KEYWORD, TokenReaders::readIfKeyword },
+        { T_ELSE_KEYWORD, TokenReaders::readElseKeyword },
         { T_IDENTIFIER, TokenReaders::readIdentifier },
         { T_INT_CONSTANT, TokenReaders::readIntConstant },
         { T_OPEN_PAR, TokenReaders::readOpenPar },

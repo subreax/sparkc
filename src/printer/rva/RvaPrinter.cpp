@@ -13,7 +13,7 @@ static constexpr const char* _REG_STR[] = {
 static constexpr const char* _RVA_BINARY_OP[] = { "+", "-", "*", "/", "%", "==", "!=", "<", "<=", ">", ">=" };
 static constexpr int _RVA_BINARY_OP_SZ = sizeof(_RVA_BINARY_OP) / sizeof(const char*);
 
-static constexpr const char* _RVA_BRANCH_OP[] = { "==", "!=" };
+static constexpr const char* _RVA_BRANCH_OP[] = { "==", "!=", "<", "<=", ">", ">=" };
 static constexpr int _RVA_BRANCH_OP_SZ = sizeof(_RVA_BRANCH_OP) / sizeof(const char*);
 
 inline const char* sign(int v) {

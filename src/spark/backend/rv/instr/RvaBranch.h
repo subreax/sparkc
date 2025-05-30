@@ -5,7 +5,7 @@
 
 class RvaBranch : public RvaInstruction {
 public:
-    enum class Operator { Equals, NotEquals };
+    enum class Operator { Equals, NotEquals, LessThan, LessOrEqual, GreaterThan, GreaterOrEqual };
 
     RvaBranch(RvaValue* left, Operator op, RvaValue* right, const char* label) 
         : RvaInstruction(Kind::Branch)
@@ -15,11 +15,25 @@ public:
         , label(label) {  }
 
     void emit(RvListing& listing) override {
+        auto L = expectReg(left);
+        auto R = expectReg(right);
         if (op == Operator::Equals) {
-            listing.addWithLabel(Rv32I::beq(expectReg(left), expectReg(right)), label);
+            listing.addWithLabel(Rv32I::beq(L, R), label);
         }
         else if (op == Operator::NotEquals) {
-            listing.addWithLabel(Rv32I::bne(expectReg(left), expectReg(right)), label);
+            listing.addWithLabel(Rv32I::bne(L, R), label);
+        }
+        else if (op == Operator::LessThan) {
+            listing.addWithLabel(Rv32I::blt(L, R), label);
+        }
+        else if (op == Operator::LessOrEqual) {
+            listing.addWithLabel(Rv32I::bge(R, L), label);
+        }
+        else if (op == Operator::GreaterThan) {
+            listing.addWithLabel(Rv32I::blt(R, L), label);
+        }
+        else if (op == Operator::GreaterOrEqual) {
+            listing.addWithLabel(Rv32I::bge(L, R), label);
         }
         else {
             sparkError("RvaBranch", "Unknown operator: %d", op);

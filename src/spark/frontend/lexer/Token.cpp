@@ -3,6 +3,8 @@
 static constexpr const char* _TokenKind2String[] = {
     "int",
     "return",
+    "if",
+    "else",
     "<identifier>",
     "open par",
     "close par",

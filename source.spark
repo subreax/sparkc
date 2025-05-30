@@ -1,3 +1,8 @@
 int pixel(int a) {
-    return a != 5;
+    if (a < 0) 
+        return 1;
+    else if (a == 0)
+        return 2;
+    else 
+        return 3;
 }

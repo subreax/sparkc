@@ -106,6 +106,19 @@ public:
             expect(T_SEMICOLON);
             return allocator.create<AstReturnStatement>(exp);
         }
+        else if (current.kind = T_IF_KEYWORD) {
+            takeToken();
+            expect(T_OPEN_PAR);
+            AstExp* cond = parseExpression();
+            expect(T_CLOSE_PAR);
+            AstStatement* ifTrue = parseStatement();
+            AstStatement* ifFalse = nullptr;
+            if (current.kind == T_ELSE_KEYWORD) {
+                takeToken();
+                ifFalse = parseStatement();
+            }
+            return allocator.create<AstIfStatement>(cond, ifTrue, ifFalse);
+        }
         else {
             AstExp* exp = parseExpression();
             expect(TokenKind::T_SEMICOLON);

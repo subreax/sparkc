@@ -55,6 +55,14 @@ public:
         return Rv32Base::bType(0b1100011, 1, rs1, rs2);
     }
 
+    static uint32_t blt(RvReg rs1, RvReg rs2) {
+        return Rv32Base::bType(0b1100011, 0x4, rs1, rs2);
+    }
+
+    static uint32_t bge(RvReg rs1, RvReg rs2) {
+        return Rv32Base::bType(0b1100011, 0x5, rs1, rs2);
+    }
+
     // pseudo
 
     static uint32_t seqz(RvReg rd, RvReg rs) {

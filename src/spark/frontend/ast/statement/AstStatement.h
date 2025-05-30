@@ -3,7 +3,7 @@
 class AstStatement {
 public:
     enum class Kind {
-        Return, Expression
+        Return, Expression, If
     };
 
     AstStatement(Kind kind) : kind(kind) {  }

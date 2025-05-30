@@ -8,13 +8,10 @@ using TokenReader = StringRef(*)(const char*);
 
 class TokenReaders {
 public:
-    static StringRef readIntKeyword(const char* src) {
-        return readKeyword(src, "int");
-    }
-
-    static StringRef readReturnKeyword(const char* src) {
-        return readKeyword(src, "return");
-    }
+    static StringRef readIntKeyword(const char* src) { return readKeyword(src, "int"); }
+    static StringRef readReturnKeyword(const char* src) { return readKeyword(src, "return"); }
+    static StringRef readIfKeyword(const char* src) { return readKeyword(src, "if"); }
+    static StringRef readElseKeyword(const char* src) { return readKeyword(src, "else"); }
 
     static StringRef readIdentifier(const char* src) {
         char first = src[0];

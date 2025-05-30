@@ -54,6 +54,15 @@ private:
             auto* retSt = (AstReturnStatement*) st;
             typeCheck(retSt->getExpression());
         }
+        else if (kind == AstStatement::Kind::If) {
+            auto* it = (AstIfStatement*) st;
+            typeCheck(it->getCondition());
+            typeCheck(it->getTrueBranch());
+            auto* falseBranch = it->getFalseBranch();
+            if (falseBranch != nullptr) {
+                typeCheck(falseBranch);
+            }
+        }
     }
 
 
