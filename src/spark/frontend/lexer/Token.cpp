@@ -17,7 +17,13 @@ static constexpr const char* _TokenKind2String[] = {
     "percent",
     "equals",
     "&&",
-    "||"
+    "||",
+    "==",
+    "!=",
+    "<",
+    "<=",
+    ">",
+    ">=",
     ",",
     "<eof>",
     "<bad>"

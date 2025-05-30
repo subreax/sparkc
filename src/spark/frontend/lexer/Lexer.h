@@ -71,9 +71,15 @@ private:
         { T_FWD_SLASH, TokenReaders::readFwdSlash },
         { T_PERCENT, TokenReaders::readPercent },
         { T_PERCENT, TokenReaders::readPercent },
+        { T_EQUALS_EQUALS, TokenReaders::readEqualsEquals, },
+        { T_NOT_EQUALS, TokenReaders::readNotEquals, },
         { T_EQUALS, TokenReaders::readEquals },
         { T_AMP_AMP, TokenReaders::readAmpAmp },
         { T_VBAR_VBAR, TokenReaders::readVBarVBar },
+        { T_LESS_OR_EQ, TokenReaders::readLessOrEq },
+        { T_LESS_THAN, TokenReaders::readLessThan },
+        { T_GREATER_OR_EQ, TokenReaders::readGreaterOrEq },
+        { T_GREATER_THAN, TokenReaders::readGreaterThan },
         { T_COMMA, TokenReaders::readComma },
         { T_EOF, TokenReaders::readEOF }
     };

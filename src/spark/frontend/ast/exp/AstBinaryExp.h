@@ -11,7 +11,13 @@ public:
         Div,
         Rem,
         And,
-        Or
+        Or,
+        Equals,
+        NotEquals,
+        LessThan,
+        LessOrEqual,
+        GreaterThan,
+        GreaterOrEqual
     };
 
     AstBinaryExp(AstExp* left, Operator op, AstExp* right) 
@@ -33,6 +39,12 @@ public:
         case T_PERCENT:     return Operator::Rem;
         case T_AMP_AMP:     return Operator::And;
         case T_VBAR_VBAR:   return Operator::Or;
+        case T_EQUALS_EQUALS: return Operator::Equals;
+        case T_NOT_EQUALS:  return Operator::NotEquals;
+        case T_LESS_THAN:   return Operator::LessThan;
+        case T_LESS_OR_EQ:  return Operator::LessOrEqual;
+        case T_GREATER_THAN: return Operator::GreaterThan;
+        case T_GREATER_OR_EQ: return Operator::GreaterOrEqual;
         default: 
             sparkError("AstBinaryExp", "Unknown operator: %s", TokenKind_toString(kind));
         }
@@ -41,7 +53,7 @@ public:
 
     static const char* operatorToString(Operator op) {
         static const char* values[] = {
-            "+", "-", "*", "/", "%", "and", "or"
+            "+", "-", "*", "/", "%", "and", "or", "==", "!=", "<", "<=", ">", ">="
         };
         auto valuesCount = sizeof(values) / sizeof(const char*);
         if ((int) op < valuesCount) {

@@ -5,7 +5,14 @@
 
 class SkrBranch : public SkrInstruction {
 public:
-    enum class Operator { Equals, NotEquals };
+    enum class Operator { 
+        Equals, 
+        NotEquals,
+        LessThan,
+        LessOrEqual,
+        GreaterThan,
+        GreaterOrEqual
+    };
 
     SkrBranch(SkrValue* left, Operator op, SkrValue* right, const char* label) 
         : SkrInstruction(Kind::Branch)

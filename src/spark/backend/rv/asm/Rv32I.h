@@ -15,6 +15,22 @@ public:
         return Rv32Base::rType(0b0110011, 0, 0x20, rd, rs1, rs2);
     }
 
+    static uint32_t slt(RvReg rd, RvReg rs1, RvReg rs2) {
+        return Rv32Base::rType(0b0110011, 0x2, 0, rd, rs1, rs2);
+    }
+
+    static uint32_t sltu(RvReg rd, RvReg rs1, RvReg rs2) {
+        return Rv32Base::rType(0b0110011, 0x3, 0, rd, rs1, rs2);
+    }
+
+    static uint32_t slti(RvReg rd, RvReg rs1, int32_t imm11) {
+        return Rv32Base::iType(0b0010011, 0x2, rd, rs1, imm11);
+    }
+
+    static uint32_t sltiu(RvReg rd, RvReg rs1, uint32_t imm11) {
+        return Rv32Base::iType(0b0010011, 0x3, rd, rs1, imm11);
+    }
+
     static uint32_t lw(RvReg rd, RvReg rs1, int32_t imm11) {
         return Rv32Base::iType(0b11, 0x2, rd, rs1, imm11);
     }
@@ -37,5 +53,28 @@ public:
 
     static uint32_t bne(RvReg rs1, RvReg rs2) {
         return Rv32Base::bType(0b1100011, 1, rs1, rs2);
+    }
+
+    // pseudo
+
+    static uint32_t seqz(RvReg rd, RvReg rs) {
+        return sltiu(rd, rs, 1);
+    }
+
+    static uint32_t snez(RvReg rd, RvReg rs) {
+        return sltu(rd, RvReg::ZERO, rs);
+    }
+
+    static uint32_t sltz(RvReg rd, RvReg rs) {
+        return slt(rd, rs, RvReg::ZERO);
+    }
+
+    static uint32_t sgtz(RvReg rd, RvReg rs) {
+        return slt(rd, RvReg::ZERO, rs);
+    }
+
+    // set greater than
+    static uint32_t sgt(RvReg rd, RvReg rs1, RvReg rs2) {
+        return slt(rd, rs2, rs1);
     }
 };

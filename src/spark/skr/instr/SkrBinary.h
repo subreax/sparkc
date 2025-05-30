@@ -2,10 +2,23 @@
 #include "SkrInstruction.h"
 #include "../value/SkrValue.h"
 
-
 class SkrBinary : public SkrInstruction {
 public:
-    enum class Operator { Plus, Minus, Mul, Div, Rem, And, Or };
+    enum class Operator { 
+        Plus,
+        Minus,
+        Mul,
+        Div,
+        Rem,
+        And,
+        Or,
+        Equals,
+        NotEquals,
+        LessThan,
+        LessOrEqual,
+        GreaterThan,
+        GreaterOrEqual
+    };
 
     SkrBinary(SkrVar* dst, SkrValue* left, Operator op, SkrValue* right)
         : SkrInstruction(Kind::Binary)

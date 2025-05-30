@@ -59,6 +59,12 @@ public:
     static StringRef readEquals(const char* src) { return readChar(src, '='); }
     static StringRef readAmpAmp(const char* src) { return readString(src, "&&"); }
     static StringRef readVBarVBar(const char* src) { return readString(src, "||"); }
+    static StringRef readEqualsEquals(const char* src) { return readString(src, "=="); }
+    static StringRef readNotEquals(const char* src) { return readString(src, "!="); }
+    static StringRef readLessThan(const char* src) { return readChar(src, '<'); }
+    static StringRef readGreaterThan(const char* src) { return readChar(src, '>'); }
+    static StringRef readLessOrEq(const char* src) { return readString(src, "<="); }
+    static StringRef readGreaterOrEq(const char* src) { return readString(src, ">="); }
     static StringRef readComma(const char* src) { return readChar(src, ','); }
     static StringRef readEOF(const char* src) { return readChar(src, '\0'); }
 

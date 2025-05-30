@@ -190,6 +190,12 @@ private:
         case AstBinaryExp::Operator::Mul: return SkrBinary::Operator::Mul;
         case AstBinaryExp::Operator::Div: return SkrBinary::Operator::Div;
         case AstBinaryExp::Operator::Rem: return SkrBinary::Operator::Rem;
+        case AstBinaryExp::Operator::Equals: return SkrBinary::Operator::Equals;
+        case AstBinaryExp::Operator::NotEquals: return SkrBinary::Operator::NotEquals;
+        case AstBinaryExp::Operator::LessThan: return SkrBinary::Operator::LessThan;
+        case AstBinaryExp::Operator::LessOrEqual: return SkrBinary::Operator::LessOrEqual;
+        case AstBinaryExp::Operator::GreaterThan: return SkrBinary::Operator::GreaterThan;
+        case AstBinaryExp::Operator::GreaterOrEqual: return SkrBinary::Operator::GreaterOrEqual;
         default:
             sparkError("SkrBinary", "Can't map AstBinaryExp::Operator to SkrBinary::Operator: %d", astOp);
             return SkrBinary::Operator::Plus;

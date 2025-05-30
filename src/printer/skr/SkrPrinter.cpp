@@ -15,9 +15,10 @@ std::ostream& operator<<(std::ostream& os, const SkrValue& skr) {
 }
 
 std::ostream& operator<<(std::ostream& os, SkrBinary::Operator op) {
-    static const char* OPS[7] = { "+", "-", "*", "/", "%", "&&", "||" };
+    static constexpr const char* OPS[] = { "+", "-", "*", "/", "%", "&&", "||", "==", "!=", "<", "<=", ">", ">=" };
+    static constexpr int OPS_SZ = sizeof(OPS) / sizeof(const char*);
     int iop = (int) op;
-    if (iop < 7) {
+    if (iop < OPS_SZ) {
         os << OPS[iop];
     } else {
         os << "_unknown_:" << iop;
@@ -27,6 +28,7 @@ std::ostream& operator<<(std::ostream& os, SkrBinary::Operator op) {
 
 std::ostream& operator<<(std::ostream& os, SkrBranch::Operator op) {
     static const char* OPS[2] = { "==", "!=" };
+    static constexpr int OPS_SZ = sizeof(OPS) / sizeof(const char*);
     int iop = (int) op;
     if (iop < 2) {
         os << OPS[iop];
