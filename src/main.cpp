@@ -72,7 +72,7 @@ int main(int argc, char** argv) {
 
     cout << "== skr ==" << endl;
     for (auto* skrFunc : skrFunctions) {
-        SkrPrinter::print(cout, skrFunc);
+        SkrPrinter::print(cout, skrFunc, symbolTable);
         cout << endl;
     }
     cout << endl;

@@ -4,6 +4,7 @@
 #include <iostream>
 #include <sstream>
 #include "../../spark/frontend/ast/everything.h"
+#include "../Type2String.h"
 
 class AstMermaidPrinter {
 private:
@@ -223,16 +224,7 @@ private:
     }
 
     std::string type2string(SymbolType* type) {
-        if (type == nullptr) {
-            return "null";
-        }
-
-        switch (type->kind)
-        {
-        case SymbolType::Kind::Integer: return "int";
-        case SymbolType::Kind::Float: return "float";
-        default: return "<unknown>";
-        }
+        return Type2String::run(type);
     }
 
     std::ostream& os;

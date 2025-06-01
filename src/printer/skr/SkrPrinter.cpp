@@ -1,5 +1,11 @@
 #include "SkrPrinter.h"
 #include "../Colored.h"
+#include "../Type2String.h"
+
+std::ostream& operator<<(std::ostream& os, const SymbolType& type) {
+    os << Type2String::run(&type);
+    return os;
+}
 
 std::ostream& operator<<(std::ostream& os, const SkrValue& skr) {
     if (skr.isConst()) {
@@ -47,26 +53,28 @@ std::ostream& operator<<(std::ostream& os, SkrBranch::Operator op) {
     return os;
 }
 
-void SkrPrinter::print(std::ostream& os, SkrFunction* func) {
+void SkrPrinter::print(std::ostream& os, SkrFunction* func, SymbolTable& table) {
     os << "fun " << Colored::label(func->getName()) << "(";
+    auto* funcType = (SymbolFunctionType*) table.get(func->getName());
     auto params = func->getParams();
     for (size_t i = 0; i < params.size(); i++) {
-        os << *params[i] << ": int";
+        auto* type = table.get(params[i]->getId());
+        os << *params[i] << ": " << *type;
         if (i != params.size() - 1) {
             os << ", ";
         }
     }
-    os << "): int \n";
+    os << "): " << *funcType->getReturnType() << "\n";
 
 
     const auto& skrs = func->getInstructions();
     for (auto* skr : skrs) {
         os << "    ";
-        print(os, skr);
+        print(os, skr, table);
     }
 }
 
-void SkrPrinter::print(std::ostream& os, SkrInstruction* skr) {
+void SkrPrinter::print(std::ostream& os, SkrInstruction* skr, SymbolTable& table) {
     auto kind = skr->kind;
     if (kind == SkrInstruction::Kind::Binary) {
         auto* bin = (SkrBinary*) skr;
