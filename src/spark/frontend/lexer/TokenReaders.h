@@ -9,6 +9,7 @@ using TokenReader = StringRef(*)(const char*);
 class TokenReaders {
 public:
     static StringRef readIntKeyword(const char* src) { return readKeyword(src, "int"); }
+    static StringRef readFloatKeyword(const char* src) { return readKeyword(src, "float"); }
     static StringRef readReturnKeyword(const char* src) { return readKeyword(src, "return"); }
     static StringRef readIfKeyword(const char* src) { return readKeyword(src, "if"); }
     static StringRef readElseKeyword(const char* src) { return readKeyword(src, "else"); }
@@ -41,6 +42,40 @@ public:
         } else {
             return StringRef::nullInstance();
         }
+    }
+
+    // 5f
+    // 5.5
+    // 5.5f
+    static StringRef readFloatConstant(const char* src) {
+        int i = 0;
+        bool wasDot = false;
+        while (isdigit(src[i])) {
+            i++;
+        }
+        if (i == 0) {
+            return StringRef::nullInstance();
+        }
+
+        if (src[i] == '.') {
+            wasDot = true;
+            i++;
+        } else {
+            return StringRef::nullInstance(); // because it is integer
+        }
+
+        while (isdigit(src[i])) {
+            i++;
+        }
+        if (src[i] == '.') {
+            return StringRef::nullInstance(); // we have read value '5.' or '5.5.'
+        }
+
+        if (src[i] == 'f') {
+            i++;
+        }
+
+        return StringRef(src, i);
     }
 
     static StringRef readOpenPar(const char* src) { return readChar(src, '('); }

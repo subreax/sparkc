@@ -3,7 +3,7 @@
 
 class SymbolType {
 public:
-    enum class Kind { Integer, Function };
+    enum class Kind { Integer, Float, Function };
 
     SymbolType(Kind kind) : kind(kind) {  }
 
@@ -22,12 +22,23 @@ private:
     SymbolIntType() : SymbolType(Kind::Integer) {  }
 };
 
+class SymbolFloatType : public SymbolType {
+public:
+    static SymbolFloatType* getInstance() {
+        static SymbolFloatType it;
+        return &it;
+    }
+
+private:
+    SymbolFloatType() : SymbolType(Kind::Float) {  }
+};
 
 class SymbolFunctionType : public SymbolType {
 public:
     SymbolFunctionType(SymbolType* retType, BoundArray<SymbolType*> params) 
         : SymbolType(Kind::Function)
-        , params(params) {  }
+        , params(params)
+        , retType(retType) {  }
 
     BoundArray<SymbolType*> getParams() { return params; }
     SymbolType* getReturnType() { return retType; }

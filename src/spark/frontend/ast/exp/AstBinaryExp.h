@@ -20,15 +20,19 @@ public:
         GreaterOrEqual
     };
 
-    AstBinaryExp(AstExp* left, Operator op, AstExp* right) 
-        : AstExp(Kind::Binary) 
+    AstBinaryExp(AstExp* left, Operator op, AstExp* right, SymbolType* type = nullptr)
+        : AstExp(Kind::Binary, type) 
         , left(left)
         , op(op)
         , right(right) {  }
 
     AstExp* getLeft() { return left; }
+    void setLeft(AstExp* exp) { left = exp; }
+
     Operator getOperator() { return op; }
+
     AstExp* getRight() { return right; }
+    void setRight(AstExp* exp) { right = exp; }
 
     static Operator toBinaryOperator(TokenKind kind) {
         switch (kind) {

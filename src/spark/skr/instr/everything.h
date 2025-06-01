@@ -6,3 +6,5 @@
 #include "SkrLabel.h"
 #include "SkrBranch.h"
 #include "SkrFunCall.h"
+#include "SkrInt2Float.h"
+#include "SkrFloat2Int.h"

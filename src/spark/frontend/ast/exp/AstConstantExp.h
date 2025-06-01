@@ -1,12 +1,13 @@
 #pragma once
 #include "AstExp.h"
+#include "../../../common/Constant.h"
 
 class AstConstantExp : public AstExp {
 public:
-    AstConstantExp(int32_t value) : AstExp(Kind::Constant), value(value) {  }
+    AstConstantExp(Constant* val) : AstExp(Kind::Constant, val->getType()), val(val) {  }
 
-    int32_t getValue() const { return value; }
+    Constant* getValue() const { return val; }
 
 private:
-    int32_t value;
+    Constant* val;
 };

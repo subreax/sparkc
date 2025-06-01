@@ -5,3 +5,4 @@
 #include "UnexpectedTokenExcepion.h"
 #include "WrongExprException.h"
 #include "WrongStatementException.h"
+#include "UnknownTypeException.h"

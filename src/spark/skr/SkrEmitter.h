@@ -10,13 +10,14 @@
 
 class SkrEmitter {
 public:
-    static SkrFunction* emit(AstFunction* func, Allocator& allocator, IdentifierGen& idGen, LabelGen& labelGen, std::vector<SkrInstruction*>& buf) {
-        return SkrEmitter(allocator, idGen, labelGen, buf).emit(func);
+    static SkrFunction* emit(AstFunction* func, Allocator& allocator, SymbolTable& table, IdentifierGen& idGen, LabelGen& labelGen, std::vector<SkrInstruction*>& buf) {
+        return SkrEmitter(allocator, idGen, labelGen, table, buf).emit(func);
     }
 
 private:
-    SkrEmitter(Allocator& allocator, IdentifierGen& idGen, LabelGen& labelGen, std::vector<SkrInstruction*>& out) 
+    SkrEmitter(Allocator& allocator, IdentifierGen& idGen, LabelGen& labelGen, SymbolTable& table, std::vector<SkrInstruction*>& out) 
         : allocator(allocator)
+        , table(table)
         , idGen(idGen)
         , labelGen(labelGen)
         , out(out) {  }
@@ -32,15 +33,14 @@ private:
             skrParams[i] = skrParam;
         }
 
-        const char* funcResultId = idGen.unique("retval");
-        funcResult = allocator.create<SkrVar>(funcResultId);
+        funcResult = createVar("retval", func->getReturnType());
         retLabel = labelGen.uniqueInternal("ret");
         emit(func->getBlock());
         removeUselessJumpToRet();
         out.emplace_back(allocator.create<SkrLabel>(retLabel));
 
         auto baInstructions = BoundArray<SkrInstruction*>::fromVector(out, allocator);
-        return allocator.create<SkrFunction>(func->getName(), skrParams, baInstructions, funcResultId);
+        return allocator.create<SkrFunction>(func->getName(), skrParams, baInstructions, funcResult->getId());
     }
 
     void emit(const AstBlock* block) {
@@ -147,6 +147,23 @@ private:
         else if (kind == AstExp::Kind::FunCall) {
             return emitFunCall((AstFunCall*) exp);
         }
+        else if (kind == AstExp::Kind::Cast) {
+            auto* it = (AstCast*) exp;
+            auto targetType = exp->type;
+            SkrValue* srcVal = emit(it->getExp());
+            SkrValue* dstVar = createVar("cast", targetType);
+            
+            if (getTypeKind(srcVal) == SymbolType::Kind::Integer && targetType->kind == SymbolType::Kind::Float) {
+                out.emplace_back(allocator.create<SkrInt2Float>(dstVar, srcVal));
+            }
+            else if (getTypeKind(srcVal) == SymbolType::Kind::Float && targetType->kind == SymbolType::Kind::Integer) {
+                out.emplace_back(allocator.create<SkrFloat2Int>(dstVar, srcVal));
+            }
+            else {
+                sparkError("SkrEmitter", "Failed to cast expression");
+            }
+            return dstVar;
+        }
         else {
             sparkError("SkrEmitter", "Unknown AstExp: %d", kind);
             return nullptr;
@@ -159,7 +176,7 @@ private:
             const char* falseLabel = labelGen.uniqueInternal("and_false");
             const char* endLabel = labelGen.uniqueInternal("and_end");
 
-            SkrVar* result = allocator.create<SkrVar>(idGen.unique("and"));
+            SkrVar* result = createVar("and", SymbolIntType::getInstance());
             SkrValue* left = emit(exp->getLeft());
             out.emplace_back(allocator.create<SkrBranch>(left, SkrBranch::Operator::Equals, getSkrConst(0), falseLabel));
             SkrValue* right = emit(exp->getRight());
@@ -179,7 +196,7 @@ private:
             const char* trueLabel = labelGen.uniqueInternal("or_true");
             const char* endLabel = labelGen.uniqueInternal("or_end");
 
-            SkrVar* result = allocator.create<SkrVar>(idGen.unique("or"));
+            SkrVar* result = createVar("or", SymbolIntType::getInstance());
             SkrValue* left = emit(exp->getLeft());
             out.emplace_back(allocator.create<SkrBranch>(left, SkrBranch::Operator::NotEquals, getSkrConst(0), trueLabel));
             SkrValue* right = emit(exp->getRight());
@@ -199,7 +216,7 @@ private:
             SkrValue* left = emit(exp->getLeft());
             auto op = binaryOpOf(exp->getOperator());
             SkrValue* right = emit(exp->getRight());
-            SkrVar* dst = allocator.create<SkrVar>(idGen.unique(funName));
+            SkrVar* dst = createVar(funName, getType(left));
             out.emplace_back(allocator.create<SkrBinary>(dst, left, op, right));
             return dst;
         }
@@ -215,6 +232,23 @@ private:
         auto* skrCall = allocator.create<SkrFunCall>(call->getFunName(), skrArgs, result);
         out.emplace_back(skrCall);
         return result;
+    }
+
+    SymbolType::Kind getTypeKind(SkrValue* value) {
+        return getType(value)->kind;
+    }
+
+    SymbolType* getType(SkrValue* value) {
+        if (value->isConst()) {
+            return value->toSkrConst()->getConst()->getType();
+        }
+        else if (value->isVar()) {
+            return table.get(value->toSkrVar()->getId());
+        }
+        else {
+            sparkError("SkrEmitter", "Unknown SkrValue kind");
+            return nullptr;
+        }
     }
 
     SkrBinary::Operator binaryOpOf(AstBinaryExp::Operator astOp) {
@@ -310,28 +344,50 @@ private:
             }
         }
     }
+    
+    SkrVar* createVar(const char* name, SymbolType* type) {
+        auto* id = idGen.unique(name);
+        table.declare(id, type);
+        return allocator.create<SkrVar>(id);
+    }
+
+    SkrVar* createVar(const char* name, const char* suffix, SymbolType* type) {
+        auto* id = idGen.unique(name, suffix);
+        table.declare(id, type);
+        return allocator.create<SkrVar>(id);
+    }
 
     SkrConst* getSkrZero() {
         if (skrZero == nullptr) {
-            skrZero = allocator.create<SkrConst>(0);
+            skrZero = allocator.create<SkrConst>(IntConstant::get0());
         }
         return skrZero;
     }
 
     SkrConst* getSkrOne() {
         if (skrOne == nullptr) {
-            skrOne = allocator.create<SkrConst>(1);
+            skrOne = allocator.create<SkrConst>(IntConstant::get1());
         }
         return skrOne;
+    }
+
+    SkrConst* getSkrConst(Constant* c) {
+        if (c->kind == Constant::Kind::Int) {
+            return getSkrConst(((IntConstant*) c)->val);
+        }
+        else {
+            return allocator.create<SkrConst>(c);
+        }
     }
 
     SkrConst* getSkrConst(int32_t v) {
         if (v == 0) return getSkrZero();
         if (v == 1) return getSkrOne();
-        return allocator.create<SkrConst>(v);
+        return allocator.create<SkrConst>(allocator.create<IntConstant>(v));
     }
 
     Allocator& allocator;
+    SymbolTable& table;
     IdentifierGen& idGen;
     LabelGen& labelGen;
     std::vector<SkrInstruction*>& out;

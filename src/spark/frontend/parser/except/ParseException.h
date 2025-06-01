@@ -4,7 +4,7 @@
 
 class ParseException : public SparkRuntimeException {
 public:
-    enum class Kind { UnexpectedToken, WrongConst, WrongExpression, WrongStatement, DuplicateDeclaration, UndeclaredVariable };
+    enum class Kind { UnexpectedToken, WrongConst, WrongExpression, WrongStatement, DuplicateDeclaration, UndeclaredVariable, UnknownType };
 
     ParseException(Kind kind, const Token& token, const std::string& msg)
         : SparkRuntimeException(msg)

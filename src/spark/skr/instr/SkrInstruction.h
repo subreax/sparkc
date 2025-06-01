@@ -1,9 +1,10 @@
 #pragma once
+#include "../value/SkrValue.h"
 
 class SkrInstruction {
 public:
     enum class Kind {
-        Binary, Copy, Jump, Label, Branch, FunCall
+        Binary, Copy, Jump, Label, Branch, FunCall, Int2Float, Float2Int
     };
 
     SkrInstruction(Kind kind) : kind(kind) {  }

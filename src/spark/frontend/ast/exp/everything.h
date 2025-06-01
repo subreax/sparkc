@@ -5,3 +5,4 @@
 #include "AstVar.h"
 #include "AstAssignment.h"
 #include "AstFunCall.h"
+#include "AstCast.h"

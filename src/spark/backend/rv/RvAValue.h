@@ -1,6 +1,7 @@
 #pragma once
 #include <cstdint>
 #include "RvReg.h"
+#include "../../common/Constant.h"
 
 class RvaValue {
 public:
@@ -21,7 +22,6 @@ public:
 private:
     int32_t value;
 };
-
 
 class RvaPseudoReg : public RvaValue {
 public:

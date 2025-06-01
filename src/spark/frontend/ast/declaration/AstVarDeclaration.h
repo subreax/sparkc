@@ -11,7 +11,10 @@ public:
         , init(init) { }
 
     const char* getName() const { return name; }
+    
     AstExp* getInitializer() { return init; }
+    void setInitializer(AstExp* init) { this->init = init; }
+
     SymbolType* getType() { return type; }
 
 private:

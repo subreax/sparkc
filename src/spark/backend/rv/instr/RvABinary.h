@@ -9,6 +9,7 @@ public:
         Plus,
         Minus,
         Mul,
+        MulH,
         Div,
         Rem,
         Equals, 
@@ -16,7 +17,10 @@ public:
         LessThan,
         LessOrEqual,
         GreaterThan,
-        GreaterOrEqual
+        GreaterOrEqual,
+        ShiftLeft,
+        ShiftRight,
+        Or
     };
 
     RvaBinary(RvaValue* dst, RvaValue* left, Operator op, RvaValue* right)
@@ -24,7 +28,13 @@ public:
         , dst(dst)
         , left(left)
         , op(op)
-        , right(right) {  }
+        , right(right)
+    {
+        if (left->kind == RvaValue::Kind::Imm && right->kind != RvaValue::Kind::Imm) {
+            this->left = right;
+            this->right = left;
+        }
+    }
 
     void emit(RvListing& listing) override {
         switch (op) {
@@ -40,6 +50,10 @@ public:
 
         case Operator::Mul:
             listing += Rv32M::mul(expectReg(dst), expectReg(left), expectReg(right));
+            break;
+
+        case Operator::MulH:
+            listing += Rv32M::mulh(expectReg(dst), expectReg(left), expectReg(right));
             break;
 
         case Operator::Div:
@@ -87,9 +101,40 @@ public:
             listing += Rv32I::seqz(expectReg(dst), expectReg(dst));
             break;
 
+        case Operator::ShiftLeft:
+            listing += Rv32I::slli(expectReg(dst), expectReg(left), expectImm(right));
+            break;
+
+        case Operator::ShiftRight:
+            listing += Rv32I::srli(expectReg(dst), expectReg(left), expectImm(right));
+            break;
+
+        case Operator::Or:
+            if (right->kind == RvaValue::Kind::Imm) {
+                listing += Rv32I::ori(expectReg(dst), expectReg(left), expectImm(right));
+            } else {
+                listing += Rv32I::or_(expectReg(dst), expectReg(left), expectReg(right));
+            }
+            break;
+
         default:
             sparkError("RvaBinary", "Unknown operator: %d", op);
         }
+    }
+
+    bool supportImm() {
+        return hasImmSupport(op);
+    }
+
+    static bool hasImmSupport(Operator op) {
+        switch (op) {
+        case Operator::ShiftLeft:
+        case Operator::ShiftRight:
+        case Operator::Or:
+            return true;
+        }
+
+        return false;
     }
 
     static Operator mapOperator(SkrBinary::Operator op) {

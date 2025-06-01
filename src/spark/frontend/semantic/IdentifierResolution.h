@@ -6,7 +6,7 @@
 
 class IdentifierResolution {
 public:
-    IdentifierResolution(SymbolTable& table, LinearAllocator& typeAlloc) 
+    IdentifierResolution(SymbolTable& table, Allocator& typeAlloc) 
         : table(table)
         , typeAlloc(typeAlloc) {  }
 
@@ -25,12 +25,12 @@ private:
         const auto& params = func->getParams();
         BoundArray<SymbolType*> paramTypes = BoundArray<SymbolType*>::create(params.size(), typeAlloc);
         for (size_t i = 0; i < params.size(); i++) {
-            paramTypes[i] = SymbolIntType::getInstance();
-            table.declare(params[i]->getIdentifier(), SymbolIntType::getInstance());
+            auto* type = params[i]->getType();
+            paramTypes[i] = type;
+            table.declare(params[i]->getIdentifier(), type);
         }
 
-        SymbolType* retType = SymbolIntType::getInstance();
-        SymbolFunctionType* funcType = typeAlloc.create<SymbolFunctionType>(retType, paramTypes);
+        SymbolFunctionType* funcType = typeAlloc.create<SymbolFunctionType>(func->getReturnType(), paramTypes);
         table.declare(func->getName(), funcType);
     }
 
@@ -55,7 +55,7 @@ private:
     void resolve(AstDeclaration* decl) {
         if (decl->kind == AstDeclaration::Kind::Var) {
             auto* varDecl = (AstVarDeclaration*) decl;
-            table.declare(varDecl->getName(), SymbolIntType::getInstance());
+            table.declare(varDecl->getName(), varDecl->getType());
         }
     }
 
@@ -75,5 +75,5 @@ private:
     }
 
     SymbolTable& table;
-    LinearAllocator& typeAlloc;
+    Allocator& typeAlloc;
 };

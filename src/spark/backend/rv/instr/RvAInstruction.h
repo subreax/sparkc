@@ -20,6 +20,14 @@ public:
     const Kind kind;
 
 protected:
+    static int32_t expectImm(RvaValue* val) {
+        if (val->kind == RvaValue::Kind::Imm) {
+            return ((RvaImm*) val)->getValue();
+        }
+        sparkError("RvaInstruction", "Expected RvaImm, but found %d", val->kind);
+        return 0;
+    }
+
     static RvReg expectReg(RvaValue* val) {
         if (val->kind == RvaValue::Kind::Register) {
             return ((RvaRegister*) val)->getReg();

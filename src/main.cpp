@@ -47,7 +47,7 @@ int main(int argc, char** argv) {
     AstProgram* program;
     try {
         program = parser.parseProgram();
-        Semantic(symbolTable, typeAlloc).process(program);
+        Semantic(symbolTable, typeAlloc, astAlloc).process(program);
     } catch (ParseException& e) {
         printError(e, source);
         return 1;
@@ -65,7 +65,7 @@ int main(int argc, char** argv) {
     std::vector<SkrFunction*> skrFunctions;
     std::vector<SkrInstruction*> skrsBuf;
     for (AstFunction* astFunc : program->functions) {
-        SkrFunction* func = SkrEmitter::emit(astFunc, skrAlloc, idGen, labelGen, skrsBuf);
+        SkrFunction* func = SkrEmitter::emit(astFunc, skrAlloc, symbolTable, idGen, labelGen, skrsBuf);
         skrFunctions.emplace_back(func);
         skrsBuf.clear();
     }
@@ -82,7 +82,7 @@ int main(int argc, char** argv) {
     std::vector<RvaInstruction*> rvaFixed;
     for (auto* skrFunc : skrFunctions) {
         StackFrame frame(rvaAlloc1);
-        Skr2RvaPseudo::emit(skrFunc, rvaAlloc1, frame, rva);
+        Skr2RvaPseudo::emit(skrFunc, rvaAlloc1, idGen, symbolTable, frame, rva);
         RvaPseudoReplacer::replace(rva, frame);
         RvaFixer::fix(rva, rvaFixed, rvaAlloc2);
 

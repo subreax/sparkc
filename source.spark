@@ -1,8 +1,7 @@
-int pixel(int a) {
-    if (a > 5) {
-        int a2 = a * a;
-        return a2 + 100;
-    } else {
-        return 0;
-    }
+float pixel(float val) {
+    return lerp(0.2, 0.8, val);
+}
+
+float lerp(float a, float b, float val) {
+    return a + (b - a) * val;
 }

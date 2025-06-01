@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include <sstream>
 #include "../../spark/frontend/ast/everything.h"
 
 class AstMermaidPrinter {
@@ -37,7 +38,7 @@ public:
     }
 
     std::string toMermaid(AstFunction* func) {
-        auto node = Node(*this, "function", { "name", func->getName() });
+        auto node = Node(*this, "function", { "name", func->getName(), "retType", type2string(func->getReturnType()) });
         for (auto* param : func->getParams()) {
             connect(node, toMermaid(param));
         }
@@ -54,7 +55,7 @@ public:
     }
 
     std::string toMermaid(AstFunParam* param) {
-        auto node = Node(*this, "param", { "value", param->getIdentifier() });
+        auto node = Node(*this, "param", { "value", param->getIdentifier(), "type", type2string(param->getType()) });
         return node.id;
     }
 
@@ -90,7 +91,7 @@ public:
         auto kind = st->kind;
         if (kind == AstStatement::Kind::Return) {
             auto* it = (AstReturnStatement*) st;
-            auto node = Node(*this, "return", { "type", type2string(it->getType()) });
+            auto node = Node(*this, "return");
             connect(node, toMermaid(it->getExpression()));
             return node.id;
         }
@@ -133,8 +134,8 @@ public:
         }
         else if (kind == AstExp::Kind::Constant) {
             auto* constant = (AstConstantExp*) exp;
-            auto strValue = std::to_string(constant->getValue());
-            auto child = Node(*this, kindStr, { "value", strValue, "type", type2string(constant) });
+            auto* value = constant->getValue();
+            auto child = Node(*this, kindStr, { "value", toString(value), "type", type2string(constant) });
             return child.id;
         }
         else if (kind == AstExp::Kind::Var) {
@@ -158,6 +159,12 @@ public:
             }
             return node.id;
         }
+        else if (kind == AstExp::Kind::Cast) {
+            auto* cast = (AstCast*) exp;
+            auto node = Node(*this, kindStr, { "type", type2string(cast) });
+            connect(node, toMermaid(cast->getExp()));
+            return node.id;
+        }
         else {
             sparkError("AstMermaidPrinter", "Unknown AstExp");
             return "";
@@ -165,6 +172,23 @@ public:
     }
 
 private:
+    std::string toString(Constant* constant) {
+        if (constant->kind == Constant::Kind::Int) {
+            auto* it = (IntConstant*) constant;
+            return std::to_string(it->val);
+        }
+        else if (constant->kind == Constant::Kind::Float) {
+            auto* it = (FloatConstant*) constant;
+            std::ostringstream oss;
+            oss << it->val;
+            return oss.str();
+        }
+        else {
+            sparkError("AstMermaidPrinter", "Unknown Constant: %d", constant->kind);
+            return "";
+        }
+    }
+
     void declare(const Node& node) {
         os << node.id << "(\"**[" << node.kind << "]**";
         auto& fields = node.fields;
@@ -181,15 +205,11 @@ private:
     }
 
     void connect(const Node& parent, const std::string& childId, const std::string& comment = "") {
-        if (!parent.id.empty()) {
-            os << parent.id << " -->";
-            if (!comment.empty()) {
-                os << "|" << comment << "|";
-            }
-            os << " ";
+        os << parent.id << " -->";
+        if (!comment.empty()) {
+            os << "|" << comment << "|";
         }
-
-        os << childId << "\n";
+        os << " " << childId << "\n";
     }
 
     const char* bslashIfNeeded(const std::string& s) {
@@ -210,6 +230,7 @@ private:
         switch (type->kind)
         {
         case SymbolType::Kind::Integer: return "int";
+        case SymbolType::Kind::Float: return "float";
         default: return "<unknown>";
         }
     }

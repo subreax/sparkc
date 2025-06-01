@@ -9,29 +9,31 @@
 
 class TypeChecker {
 public:
-    TypeChecker(SymbolTable& table) : table(table) {  }
+    TypeChecker(SymbolTable& table, Allocator& astAllocator) 
+        : table(table) 
+        , allocator(astAllocator) {  }
 
     void typeCheck(AstProgram* prog) {
         for (auto* func : prog->functions) {
-            typeCheck(func->getBlock());
+            typeCheck(func->getBlock(), func->getReturnType());
         }
     }
 
 private:
-    void typeCheck(const AstBlock* block) {
+    void typeCheck(const AstBlock* block, SymbolType* retType) {
         for (auto* item : block->getItems()) {
-            typeCheck(item);
+            typeCheck(item, retType);
         }
     }
 
-    void typeCheck(AstBlockItem* item) {
+    void typeCheck(AstBlockItem* item, SymbolType* retType) {
         if (item->kind == AstBlockItem::Kind::Declaration) {
             auto* declItem = (AstDeclBlockItem*) item;
             typeCheck(declItem->getDeclaration());
         }
         else if (item->kind == AstBlockItem::Kind::Statement) {
             auto* stItem = (AstStatementBlockItem*) item;
-            typeCheck(stItem->getStatement());
+            typeCheck(stItem->getStatement(), retType);
         }
         else {
             sparkError("TypeChecker", "Unknown AstBlockItem: %d", item->kind);
@@ -44,11 +46,12 @@ private:
             auto* initExp = varDecl->getInitializer();
             if (initExp != nullptr) {
                 typeCheck(initExp);
+                varDecl->setInitializer(cast(initExp, varDecl->getType()));
             }
         }
     }
 
-    void typeCheck(AstStatement* st) {
+    void typeCheck(AstStatement* st, SymbolType* retType) {
         auto kind = st->kind;
         if (kind == AstStatement::Kind::Expression) {
             auto* expSt = (AstExpressionStatement*) st;
@@ -56,19 +59,21 @@ private:
         }
         else if (kind == AstStatement::Kind::Return) {
             auto* retSt = (AstReturnStatement*) st;
-            typeCheck(retSt->getExpression());
+            auto* exp = retSt->getExpression();
+            typeCheck(exp);
+            retSt->setExpression(cast(exp, retType));
         }
         else if (kind == AstStatement::Kind::If) {
             auto* it = (AstIfStatement*) st;
             typeCheck(it->getCondition());
-            typeCheck(it->getTrueBranch());
+            typeCheck(it->getTrueBranch(), retType);
             auto* falseBranch = it->getFalseBranch();
             if (falseBranch != nullptr) {
-                typeCheck(falseBranch);
+                typeCheck(falseBranch, retType);
             }
         }
         else if (kind == AstStatement::Kind::Compound) {
-            typeCheck(((AstCompoundStatement*) st)->getBlock());
+            typeCheck(((AstCompoundStatement*) st)->getBlock(), retType);
         }
     }
 
@@ -79,25 +84,11 @@ private:
     void typeCheck(AstExp* exp) {
         auto kind = exp->kind;
         switch (kind) {
-        case AstExp::Kind::Constant:
-            break;
-            
-        case AstExp::Kind::Binary:
-            typeCheck((AstBinaryExp*) exp);
-            break;
-
-        case AstExp::Kind::Var:
-            typeCheck((AstVar*) exp);
-            break;
-
-        case AstExp::Kind::Assignment:
-            typeCheck((AstAssignment*) exp);
-            break;
-
-        case AstExp::Kind::FunCall:
-            typeCheck((AstFunCall*) exp);
-            break;
-
+        case AstExp::Kind::Constant: break;
+        case AstExp::Kind::Binary: typeCheck((AstBinaryExp*) exp); break;
+        case AstExp::Kind::Var: typeCheck((AstVar*) exp); break;
+        case AstExp::Kind::Assignment: typeCheck((AstAssignment*) exp); break;
+        case AstExp::Kind::FunCall: typeCheck((AstFunCall*) exp); break;
         default:
             sparkError("TypeChecker", "Unhandled AstExp: %s (%d)", AstExp::kindToString(kind), kind);
         }
@@ -108,11 +99,18 @@ private:
         if (type->kind == SymbolType::Kind::Function) {
             throw TypeException("Using variable as a function: '" + std::string(var->getIdentifier()) + "'");
         }
+
+        var->type = type;
     }
     
     void typeCheck(AstBinaryExp* bin) {
         typeCheck(bin->getLeft());
         typeCheck(bin->getRight());
+        auto type = getCommonType(bin->getLeft(), bin->getRight());
+
+        bin->type = type;
+        bin->setLeft(cast(bin->getLeft(), type));
+        bin->setRight(cast(bin->getRight(), type));
     }
 
     void typeCheck(AstFunCall* call) {
@@ -121,10 +119,21 @@ private:
             throw TypeException("Function '" + std::string(call->getFunName()) + "' doesn't exist");
         }
 
-        auto funParamsCount = funType->getParams().size();
-        if (call->getArgs().size() != funParamsCount) {
+        auto params = funType->getParams();
+        auto paramsCount = params.size();
+        auto args = call->getArgs();
+        if (args.size() != paramsCount) {
             throw TypeException("Function '" + std::string(call->getFunName()) + "' called with wrong number of arguments");
         }
+
+        for (size_t i = 0; i < args.size(); i++) {
+            auto* arg = args[i];
+            auto* paramType = params[i];
+            typeCheck(arg);
+            args[i] = cast(arg, paramType);
+        }
+
+        call->type = funType->getReturnType();
     }
 
     void typeCheck(AstAssignment* ass) {
@@ -133,7 +142,43 @@ private:
             throw TypeException(std::string("Expressions can only be assigned to variables, not to a ") + AstExp::kindToString(kind));
         }
         typeCheck(ass->getExp());
+        ass->type = ass->getExp()->type;
+    }
+
+    SymbolType* getCommonType(AstExp* e1, AstExp* e2) {
+        return getCommonType(e1->type, e2->type);
+    }
+
+    SymbolType* getCommonType(SymbolType* t1, SymbolType* t2) {
+        auto k1 = t1->kind;
+        auto k2 = t2->kind;
+        if (k1 == k2) {
+            return t1;
+        }
+
+        if (k1 == SymbolType::Kind::Function || k2 == SymbolType::Kind::Function) {
+            throw TypeException("Common type with function doesn't exist");
+        }
+        
+        if (k1 == SymbolType::Kind::Integer && k2 == SymbolType::Kind::Float) {
+            return t2;
+        }
+        else if (k1 == SymbolType::Kind::Float && k2 == SymbolType::Kind::Integer) {
+            return t1;
+        }
+        else {
+            sparkError("TypeChecker", "Can't figure out common type: %d %d", k1, k2);
+            return t1;
+        }
+    }
+
+    AstExp* cast(AstExp* exp, SymbolType* type) {
+        if (exp->type->kind == type->kind) {
+            return exp;
+        }
+        return allocator.create<AstCast>(exp, type);
     }
 
     SymbolTable& table;
+    Allocator& allocator;
 };

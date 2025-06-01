@@ -4,16 +4,18 @@
 
 class Semantic {
 public:
-    Semantic(SymbolTable& table, LinearAllocator& typeAlloc)
+    Semantic(SymbolTable& table, Allocator& typeAlloc, Allocator& astAlloc)
         : table(table)
-        , typeAlloc(typeAlloc) {  }
+        , typeAlloc(typeAlloc)
+        , astAlloc(astAlloc) {  }
 
     void process(AstProgram* prog) {
         IdentifierResolution(table, typeAlloc).resolve(prog);
-        TypeChecker(table).typeCheck(prog);
+        TypeChecker(table, astAlloc).typeCheck(prog);
     }
     
 private:
     SymbolTable& table;
-    LinearAllocator& typeAlloc;
+    Allocator& typeAlloc;
+    Allocator& astAlloc;
 };

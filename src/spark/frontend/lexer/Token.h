@@ -4,6 +4,7 @@
 
 enum TokenKind {
     T_INT_KEYWORD, //
+    T_FLOAT_KEYWORD,//
     T_RETURN_KEYWORD,//
     T_IF_KEYWORD,//
     T_ELSE_KEYWORD,//
@@ -13,6 +14,7 @@ enum TokenKind {
     T_OPEN_BRACE,//
     T_CLOSE_BRACE,//
     T_INT_CONSTANT,//
+    T_FLOAT_CONSTANT,
     T_SEMICOLON, //
     T_PLUS,//
     T_HYPHEN,//

@@ -1,5 +1,9 @@
 #pragma once
 #include <cstdint>
+#include "../../common/Constant.h"
+
+class SkrConst;
+class SkrVar;
 
 class SkrValue {
 public:
@@ -7,18 +11,33 @@ public:
 
     SkrValue(Kind kind) : kind(kind) {  }
 
+    bool isConst() const { return kind == Kind::Const; }
+    bool isVar() const { return kind == Kind::Var; }
+
+    SkrConst* toSkrConst() {
+        return (SkrConst*) this;
+    }
+
+    const SkrConst* toSkrConst() const {
+        return (const SkrConst*) this;
+    }
+
+    SkrVar* toSkrVar() {
+        return (SkrVar*) this;
+    }
+
     const Kind kind;
 };
 
 
 class SkrConst : public SkrValue {
 public:
-    SkrConst(int32_t c) : SkrValue(Kind::Const), c(c) { }
+    SkrConst(Constant* c) : SkrValue(Kind::Const), c(c) { }
 
-    int32_t getConst() const { return c; }
+    Constant* getConst() const { return c; }
 
 private:
-    int32_t c;
+    Constant* c;
 };
 
 

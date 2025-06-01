@@ -6,16 +6,19 @@
 #include "../../skr/SkrFunction.h"
 #include "instr/everything.h"
 #include "StackFrame.h"
+#include "FixedUtils.h"
 
 class Skr2RvaPseudo {
 public:
-    static void emit(SkrFunction* func, Allocator& allocator, StackFrame& frame, std::vector<RvaInstruction*>& buf) {
-        Skr2RvaPseudo(allocator, frame, buf).emit(func);
+    static void emit(SkrFunction* func, Allocator& allocator, IdentifierGen& idGen, SymbolTable& table, StackFrame& frame, std::vector<RvaInstruction*>& buf) {
+        Skr2RvaPseudo(allocator, idGen, table, frame, buf).emit(func);
     }
 
 private:
-    Skr2RvaPseudo(Allocator& allocator, StackFrame& frame, std::vector<RvaInstruction*>& out) 
+    Skr2RvaPseudo(Allocator& allocator, IdentifierGen& idGen, SymbolTable& symbolTable, StackFrame& frame, std::vector<RvaInstruction*>& out) 
         : allocator(allocator)
+        , idGen(idGen)
+        , table(symbolTable)
         , frame(frame)
         , out(out) {  }
 
@@ -29,15 +32,15 @@ private:
             epilogue->loadRa();
         }
 
-        add(allocator.create<RvaLabel>(func->getName()));
-        add(prologue);
+        add<RvaLabel>(func->getName());
+        addInstr(prologue);
 
         auto params = func->getParams();
         for (size_t i = 0; i < params.size(); i++) {
             if (i < 8) {
                 auto* to = frame.getOrPush(params[i]->getId());
                 auto* from = allocator.create<RvaRegister>(getArgReg(i));
-                add(allocator.create<RvaMov>(to, from));
+                add<RvaMov>(to, from);
             } else {
                 frame.bindParam(params[i]->getId());
             }
@@ -69,6 +72,14 @@ private:
                 emitFunCall((SkrFunCall*) skr);
                 break;
 
+            case SkrInstruction::Kind::Int2Float:
+                emitInt2Float((SkrInt2Float*) skr);
+                break;
+
+            case SkrInstruction::Kind::Float2Int:
+                emitFloat2Int((SkrFloat2Int*) skr);
+                break;
+
             default:
                 sparkError("Skr2RvaPseudo", "Unknown skr kind: %d", skr->kind);
             }
@@ -76,43 +87,61 @@ private:
 
         auto* resultPseudoReg = allocator.create<RvaPseudoReg>(func->getResultIdentifier());
         auto* a0Reg = allocator.create<RvaRegister>(RvReg::A0);
-        add(allocator.create<RvaMov>(a0Reg, resultPseudoReg));
-        add(epilogue);
-        add(allocator.create<RvaRet>());
+        add<RvaMov>(a0Reg, resultPseudoReg);
+        addInstr(epilogue);
+        add<RvaRet>();
     }
 
     void emitBinary(SkrBinary* it) {
-        auto* instr = allocator.create<RvaBinary>(
-            toPseudo(it->getDst()),
-            toPseudo(it->getLeft()),
-            RvaBinary::mapOperator(it->getOperator()),
-            toPseudo(it->getRight())
-        );
-        add(instr);
+        auto dstType = table.get(it->getDst()->getId())->kind;
+        auto op = it->getOperator();
+        if (dstType == SymbolType::Kind::Float && op == SkrBinary::Operator::Mul) {
+            emitFixedMul(it);
+        }
+        else if (dstType == SymbolType::Kind::Float && op == SkrBinary::Operator::Div) {
+            sparkError("Skr2RvaPseudo", "Fixed division is not implemented");
+        }
+        else {
+            add<RvaBinary>(
+                toPseudo(it->getDst()), 
+                toPseudo(it->getLeft()), 
+                RvaBinary::mapOperator(op), 
+                toPseudo(it->getRight())
+            );
+        }
+    }
+
+    void emitFixedMul(SkrBinary* it) {
+        auto* dst = toPseudo(it->getDst());
+        auto* dstH = newPseudo("tmp");
+        auto* left = toPseudo(it->getLeft());
+        auto* right = toPseudo(it->getRight());
+        add<RvaBinary>(dst, left, RvaBinary::Operator::Mul, right);
+        add<RvaBinary>(dstH, left, RvaBinary::Operator::MulH, right);
+        add<RvaBinary>(dst, dst, RvaBinary::Operator::ShiftRight, newImm(15));
+        add<RvaBinary>(dstH, dstH, RvaBinary::Operator::ShiftLeft, newImm(17));
+        add<RvaBinary>(dst, dstH, RvaBinary::Operator::Or, dst);
     }
 
     void emitCopy(SkrCopy* it) {
-        add(allocator.create<RvaMov>(
-            toPseudo(it->getTo()),
-            toPseudo(it->getFrom())
-        ));
+        add<RvaMov>(toPseudo(it->getTo()), toPseudo(it->getFrom()));
     }
 
     void emitJump(SkrJump* it) {
-        add(allocator.create<RvaJump>(it->getLabel()));
+        add<RvaJump>(it->getLabel());
     }
 
     void emitLabel(SkrLabel* it) {
-        add(allocator.create<RvaLabel>(it->getLabel()));
+        add<RvaLabel>(it->getLabel());
     }
 
     void emitBranch(SkrBranch* it) {
-        add(allocator.create<RvaBranch>(
+        add<RvaBranch>(
             toPseudo(it->getLeft()),
             RvaBranch::mapOperator(it->getOperator()),
             toPseudo(it->getRight()),
             it->getLabel()
-        ));
+        );
     }
 
     void emitFunCall(SkrFunCall* it) {
@@ -120,17 +149,31 @@ private:
         for (size_t i = 0; i < skrArgs.size(); i++) {
             auto* to = getArgDst(i);
             auto* from = toPseudo(skrArgs[i]);
-            out.emplace_back(allocator.create<RvaMov>(to, from));
+            add<RvaMov>(to, from);
         }
 
         auto* retVal = toPseudo(it->getRetVar());
-        out.emplace_back(allocator.create<RvaCall>(it->getName()));
-        out.emplace_back(allocator.create<RvaMov>(retVal, allocator.create<RvaRegister>(RvReg::A0)));
+        add<RvaCall>(it->getName());
+        add<RvaMov>(retVal, allocator.create<RvaRegister>(RvReg::A0));
 
         frame.popArgs();
     }
 
-    inline void add(RvaInstruction* instr) {
+    void emitInt2Float(SkrInt2Float* it) {
+        add<RvaBinary>(toPseudo(it->getDst()), toPseudo(it->getSrc()), RvaBinary::Operator::ShiftLeft, newImm(15));
+    }
+
+    void emitFloat2Int(SkrFloat2Int* it) {
+        // todo: could be wrong
+        add<RvaBinary>(toPseudo(it->getDst()), toPseudo(it->getSrc()), RvaBinary::Operator::ShiftRight, newImm(15));
+    }
+
+    template<typename T, typename... Args>
+    inline void add(Args... args) {
+        out.emplace_back(allocator.create<T>(args...));
+    }
+
+    inline void addInstr(RvaInstruction* instr) {
         out.emplace_back(instr);
     }
 
@@ -140,16 +183,34 @@ private:
         switch (kind) {
         case SkrValue::Kind::Const: {
             auto* it = (const SkrConst*) value;
-            return allocator.create<RvaImm>(it->getConst());
+            int32_t val;
+            if (it->getConst()->kind == Constant::Kind::Int) {
+                val = ((IntConstant*) it->getConst())->val;
+            }
+            else if (it->getConst()->kind == Constant::Kind::Float) {
+                val = FixedUtils::fromFloat(((FloatConstant*) it->getConst())->val);
+            }
+            else {
+                sparkError("Skr2RvaPseudo", "Unknown Constant kind: %d", it->getConst()->kind);
+            }
+            return allocator.create<RvaImm>(val);
         }
         case SkrValue::Kind::Var: {
             auto* it = (const SkrVar*) value;
             return allocator.create<RvaPseudoReg>(it->getId());
         }
         default:
-            sparkError("[Skr2RvaPseudo]", "Unknown Skrvalue kind: %d", kind);
+            sparkError("Skr2RvaPseudo", "Unknown Skrvalue kind: %d", kind);
             return nullptr;
         }
+    }
+
+    inline RvaImm* newImm(int32_t val) {
+        return allocator.create<RvaImm>(val);
+    }
+
+    inline RvaPseudoReg* newPseudo(const char* name) {
+        return allocator.create<RvaPseudoReg>(name);
     }
 
     RvaValue* getArgDst(int argIndex) {
@@ -168,6 +229,22 @@ private:
         return RvReg::ZERO;
     }
 
+    SymbolType::Kind getTypeKind(SkrValue* val) {
+        if (val->kind == SkrValue::Kind::Const) {
+            return getTypeKind(val->toSkrConst());
+        }
+        else if (val->kind == SkrValue::Kind::Var) {
+            return table.get(val->toSkrVar()->getId())->kind;
+        }
+        else {
+            sparkError("SkrCast", "Unknown from kind");
+        }
+    }
+
+    SymbolType::Kind getTypeKind(Constant* c) {
+        return c->getType()->kind;
+    }
+
     bool hasFunctionCalls(const BoundArray<SkrInstruction*>& skrs) const {
         for (SkrInstruction* it : skrs) {
             if (it->kind == SkrInstruction::Kind::FunCall) {
@@ -178,6 +255,8 @@ private:
     }
 
     Allocator& allocator;
+    IdentifierGen& idGen;
+    SymbolTable& table;
     StackFrame& frame;
     std::vector<RvaInstruction*>& out;
 };

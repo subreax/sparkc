@@ -11,7 +11,7 @@ public:
         , args(args) {  }
 
     const char* getFunName() const { return funName; }
-    const BoundArray<AstExp*>& getArgs() const { return args; }
+    BoundArray<AstExp*>& getArgs() { return args; }
 
 private:
     const char* funName;

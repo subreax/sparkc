@@ -83,6 +83,12 @@ uint32_t Rv32Base::bType(uint32_t opcode, uint32_t funct3, RvReg rs1, RvReg rs2)
         | regShl(rs2, 20);
 }
 
+uint32_t Rv32Base::uType(uint32_t opcode, RvReg rd, int32_t imm) {
+    return (opcode & mask7)
+        | regShl(rd, 7)
+        | imm << 12;
+}
+
 uint32_t Rv32Base::jType(uint32_t opcode, RvReg rd) {
     return (opcode & mask7) | regShl(rd, 7);
 }

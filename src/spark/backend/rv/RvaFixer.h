@@ -63,10 +63,15 @@ private:
     }
 
     void fix(RvaBinary* it) {
-        auto* dstReg = newReg(RvReg::T0);
+        auto* dstReg = getRegisterOrNew(it->dst, RvReg::T0);
         auto* leftReg = moveToReg(it->left, RvReg::T1);
-        auto* rightReg = moveToReg(it->right, RvReg::T2);
-        add(allocator.create<RvaBinary>(dstReg, leftReg, it->op, rightReg));
+        RvaValue* right;
+        if (it->supportImm()) {
+            right = getImmOrMoveToReg(it->right, RvReg::T2);
+        } else {
+            right = moveToReg(it->right, RvReg::T2);
+        }
+        add(allocator.create<RvaBinary>(dstReg, leftReg, it->op, right));
         if (it->dst->kind == RvaValue::Kind::Memory) {
             add(allocator.create<RvaStore>(clone(it->dst), dstReg));
         }
@@ -76,6 +81,20 @@ private:
         auto* left = moveToReg(it->left, RvReg::T0);
         auto* right = moveToReg(it->right, RvReg::T1);
         add(allocator.create<RvaBranch>(left, it->op, right, it->label));
+    }
+
+    RvaRegister* getRegisterOrNew(RvaValue* v, RvReg reg) {
+        if (v->kind == RvaValue::Kind::Register) {
+            return (RvaRegister*) clone(v);
+        }
+        return newReg(reg);
+    }
+
+    RvaValue* getImmOrMoveToReg(RvaValue* val, RvReg reg) {
+        if (val->kind == RvaValue::Kind::Imm) {
+            return val;
+        }
+        return moveToReg(val, reg);
     }
 
     RvaRegister* moveToReg(RvaValue* val, RvReg reg) {

@@ -15,6 +15,22 @@ public:
         return Rv32Base::rType(0b0110011, 0, 0x20, rd, rs1, rs2);
     }
 
+    static uint32_t or_(RvReg rd, RvReg rs1, RvReg rs2) {
+        return Rv32Base::rType(0b0110011, 0x6, 0, rd, rs1, rs2);
+    }
+
+    static uint32_t ori(RvReg rd, RvReg rs1, uint32_t imm5) {
+        return Rv32Base::iType(0b0010011, 0x6, rd, rs1, imm5 & 0b11111);
+    }
+
+    static uint32_t slli(RvReg rd, RvReg rs1, uint32_t imm5) {
+        return Rv32Base::iType(0b0010011, 0x1, rd, rs1, imm5 & 0b11111);
+    }
+
+    static uint32_t srli(RvReg rd, RvReg rs1, uint32_t imm5) {
+        return Rv32Base::iType(0b0010011, 0x5, rd, rs1, imm5 & 0b11111);
+    }
+
     static uint32_t slt(RvReg rd, RvReg rs1, RvReg rs2) {
         return Rv32Base::rType(0b0110011, 0x2, 0, rd, rs1, rs2);
     }
@@ -61,6 +77,10 @@ public:
 
     static uint32_t bge(RvReg rs1, RvReg rs2) {
         return Rv32Base::bType(0b1100011, 0x5, rs1, rs2);
+    }
+
+    static uint32_t lui(RvReg rd, int32_t imm) {
+        return Rv32Base::uType(0b0110111, rd, imm);
     }
 
     // pseudo

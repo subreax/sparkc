@@ -2,10 +2,19 @@
 #include "../Colored.h"
 
 std::ostream& operator<<(std::ostream& os, const SkrValue& skr) {
-    if (skr.kind == SkrValue::Kind::Const) {
-        os << ((SkrConst*) &skr)->getConst();
+    if (skr.isConst()) {
+        auto* c = skr.toSkrConst()->getConst();
+        if (c->kind == Constant::Kind::Int) {
+            os << ((IntConstant*) c)->val;
+        }
+        else if (c->kind == Constant::Kind::Float) {
+            os << ((FloatConstant*) c)->val;
+        }
+        else {
+            os << "err_unknown_constant";
+        }
     } 
-    else if (skr.kind == SkrValue::Kind::Var) {
+    else if (skr.isVar()) {
         os << ((SkrVar*) &skr)->getId();
     } 
     else {
@@ -90,6 +99,14 @@ void SkrPrinter::print(std::ostream& os, SkrInstruction* skr) {
             }
         }
         os << ")";
+    }
+    else if (kind == SkrInstruction::Kind::Int2Float) {
+        auto* it = (SkrInt2Float*) skr;
+        os << *it->getDst() << " = (float) " << *it->getSrc();
+    }
+    else if (kind == SkrInstruction::Kind::Float2Int) {
+        auto* it = (SkrFloat2Int*) skr;
+        os << *it->getDst() << " = (int) " << *it->getSrc();
     }
     else {
         os << "unknown skr: " << (int) kind;

@@ -35,7 +35,7 @@ public:
     }
 
     AstFunction* parseFunction() {
-        expect(T_INT_KEYWORD);
+        auto* retType = parseType();
         Token idToken = expect(T_IDENTIFIER);
         const char* funName = idGen.copy(idToken.value);
 
@@ -56,13 +56,13 @@ public:
         scope.closeScope();
 
         auto paramsBa = BoundArray<AstFunParam*>::fromVector(params, allocator);
-        return allocator.create<AstFunction>(funName, paramsBa, block);
+        return allocator.create<AstFunction>(funName, retType, paramsBa, block);
     }
 
     AstFunParam* parseFunParam() {
-        expect(T_INT_KEYWORD);
+        auto* type = parseType();
         auto id = scope.declare(expect(T_IDENTIFIER));
-        return allocator.create<AstFunParam>(id);
+        return allocator.create<AstFunParam>(id, type);
     }
 
     AstBlock* parseBlock() {
@@ -90,8 +90,8 @@ public:
     }
 
     AstDeclaration* tryParseDeclaration() {
-        if (current.kind == T_INT_KEYWORD) {
-            takeToken();
+        SymbolType* type = tryParseType();
+        if (type != nullptr) {
             const char* varName = scope.declare(expect(T_IDENTIFIER));
             AstExp* initializer = nullptr;
             if (current.kind == T_EQUALS) {
@@ -99,7 +99,7 @@ public:
                 initializer = parseExpression();
             }
             expect(T_SEMICOLON);
-            return allocator.create<AstVarDeclaration>(varName, SymbolIntType::getInstance(), initializer);
+            return allocator.create<AstVarDeclaration>(varName, type, initializer);
         }
         else {
             return nullptr;
@@ -158,7 +158,13 @@ public:
         if (current.kind == T_INT_CONSTANT) {
             auto token = takeToken();
             int32_t value = parseInt(token);
-            return allocator.create<AstConstantExp>(value);
+            auto* c = allocator.create<IntConstant>(value);
+            return allocator.create<AstConstantExp>(c);
+        }
+        else if (current.kind == T_FLOAT_CONSTANT) {
+            auto token = takeToken();
+            auto* c = allocator.create<FloatConstant>(parseFloat(token));
+            return allocator.create<AstConstantExp>(c);
         }
         else if (current.kind == T_OPEN_PAR) {
             takeToken();
@@ -212,6 +218,44 @@ private:
             throw ParseConstException(token);
         }
         return value;
+    }
+
+    float parseFloat(const Token& token) {
+        if (token.value.getLength() > 12) {
+            throw ParseConstException(token);
+        }
+
+        char buf[16];
+        int len = token.value.copyTo(buf, sizeof(buf));
+
+        char* end;
+        float value = strtof(buf, &end);
+        if (*end != 0) {
+            throw ParseConstException(token);
+        }
+        return value;
+    }
+
+    SymbolType* parseType() {
+        auto* type = tryParseType();
+        if (type == nullptr) {
+            throw UnknownTypeException(current);
+        }
+        return type;
+    }
+
+    SymbolType* tryParseType() {
+        if (current.kind == T_INT_KEYWORD) {
+            takeToken();
+            return SymbolIntType::getInstance();
+        }
+        else if (current.kind == T_FLOAT_KEYWORD) {
+            takeToken();
+            return SymbolFloatType::getInstance();
+        }
+        else {
+            return nullptr;
+        }
     }
 
     Token takeToken() {
