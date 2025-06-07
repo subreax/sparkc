@@ -3,27 +3,26 @@
 #include "../symbol/SymbolType.h"
 #include "Error.h"
 
+class IntConstant;
+class FloatConstant;
+
 class Constant {
 public:
-    enum class Kind { Int, Float };
+    Constant(SymbolType* type) : type(type) {  }
 
-    Constant(Kind kind) : kind(kind) {  }
+    bool isInt() const { return type->kind == SymbolType::Kind::Integer; }
+    bool isFloat() const { return type->kind == SymbolType::Kind::Float; }
 
-    SymbolType* getType() {
-        if (kind == Kind::Int) return SymbolIntType::getInstance();
-        if (kind == Kind::Float) return SymbolFloatType::getInstance();
+    int32_t intValue() const;
+    float floatValue() const;
 
-        sparkError("Constant", "getType failed, unknown kind: %d", kind);
-        return nullptr;
-    }
-
-    const Kind kind;
+    SymbolType *const type;
 };
 
 class IntConstant : public Constant {
 public:
     IntConstant(int32_t val) 
-        : Constant(Kind::Int), val(val) {  }
+        : Constant(SymbolIntType::getInstance()), val(val) {  }
 
     static IntConstant* get0() {
         static IntConstant c(0);
@@ -41,7 +40,7 @@ public:
 class FloatConstant : public Constant {
 public:
     FloatConstant(float val) 
-        : Constant(Kind::Float), val(val) {  }
+        : Constant(SymbolFloatType::getInstance()), val(val) {  }
 
     float val;
 };

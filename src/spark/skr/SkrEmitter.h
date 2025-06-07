@@ -36,7 +36,6 @@ private:
         funcResult = createVar("retval", func->getReturnType());
         retLabel = labelGen.uniqueInternal("ret");
         emit(func->getBlock());
-        removeUselessJumpToRet();
         out.emplace_back(allocator.create<SkrLabel>(retLabel));
 
         auto baInstructions = BoundArray<SkrInstruction*>::fromVector(out, allocator);
@@ -92,7 +91,7 @@ private:
         else if (kind == AstStatement::Kind::If) {
             auto* it = (AstIfStatement*) st;
             auto* ifFalseLabel = labelGen.uniqueInternal("false");
-            emitBranch(it->getCondition(), ifFalseLabel);
+            emitInvertBranch(it->getCondition(), ifFalseLabel);
             emit(it->getTrueBranch());
             out.emplace_back(allocator.create<SkrLabel>(ifFalseLabel));
             
@@ -110,17 +109,36 @@ private:
         }
     }
 
-    void emitBranch(AstExp* exp, const char* ifFalseLabel) {
-        if (isLogicalBin(exp)) {
+    void emitBranch(AstExp* exp, const char* trueLabel) {
+        emitBranch(exp, trueLabel, false);
+    }
+
+    void emitInvertBranch(AstExp* exp, const char* falseLabel) {
+        emitBranch(exp, falseLabel, true);
+    }
+
+    void emitBranch(AstExp* exp, const char* label, bool invert) {
+        if (isLogicalBin(exp) && exp->type->kind == SymbolType::Kind::Integer) {
             AstBinaryExp* binExp = (AstBinaryExp*) exp;
             auto* left = emit(binExp->getLeft());
-            auto invertedOp = invertedBranchOpOf(binExp->getOperator());
+            SkrBranch::Operator skrOp;
+            if (invert) {
+                skrOp = invertedBranchOpOf(binExp->getOperator());
+            } else {
+                skrOp = branchOpOf(binExp->getOperator());
+            }
             auto* right = emit(binExp->getRight());
-            auto* branch = allocator.create<SkrBranch>(left, invertedOp, right, ifFalseLabel);
+            auto* branch = allocator.create<SkrBranch>(left, skrOp, right, label);
             out.emplace_back(branch);
         } else {
             auto* res = emit(exp);
-            auto* branch = allocator.create<SkrBranch>(res, SkrBranch::Operator::Equals, getSkrConst(0), ifFalseLabel);
+            SkrBranch::Operator skrOp;
+            if (invert) {
+                skrOp = SkrBranch::Operator::Equals;
+            } else {
+                skrOp = SkrBranch::Operator::NotEquals;
+            }
+            auto* branch = allocator.create<SkrBranch>(res, skrOp, getSkrConst(0), label);
             out.emplace_back(branch);
         }
     }
@@ -177,10 +195,8 @@ private:
             const char* endLabel = labelGen.uniqueInternal("and_end");
 
             SkrVar* result = createVar("and", SymbolIntType::getInstance());
-            SkrValue* left = emit(exp->getLeft());
-            out.emplace_back(allocator.create<SkrBranch>(left, SkrBranch::Operator::Equals, getSkrConst(0), falseLabel));
-            SkrValue* right = emit(exp->getRight());
-            out.emplace_back(allocator.create<SkrBranch>(right, SkrBranch::Operator::Equals, getSkrConst(0), falseLabel));
+            emitInvertBranch(exp->getLeft(), falseLabel);
+            emitInvertBranch(exp->getRight(), falseLabel);
             // true
             out.emplace_back(allocator.create<SkrCopy>(result, getSkrConst(1)));
             out.emplace_back(allocator.create<SkrJump>(endLabel));
@@ -197,10 +213,8 @@ private:
             const char* endLabel = labelGen.uniqueInternal("or_end");
 
             SkrVar* result = createVar("or", SymbolIntType::getInstance());
-            SkrValue* left = emit(exp->getLeft());
-            out.emplace_back(allocator.create<SkrBranch>(left, SkrBranch::Operator::NotEquals, getSkrConst(0), trueLabel));
-            SkrValue* right = emit(exp->getRight());
-            out.emplace_back(allocator.create<SkrBranch>(right, SkrBranch::Operator::NotEquals, getSkrConst(0), trueLabel));
+            emitBranch(exp->getLeft(), trueLabel);
+            emitBranch(exp->getRight(), trueLabel);
             // false
             out.emplace_back(allocator.create<SkrCopy>(result, getSkrConst(0)));
             out.emplace_back(allocator.create<SkrJump>(endLabel));
@@ -240,7 +254,7 @@ private:
 
     SymbolType* getType(SkrValue* value) {
         if (value->isConst()) {
-            return value->toSkrConst()->getConst()->getType();
+            return value->toSkrConst()->getConst()->type;
         }
         else if (value->isVar()) {
             return table.get(value->toSkrVar()->getId());
@@ -282,6 +296,7 @@ private:
         case AstBinaryExp::Operator::GreaterOrEqual: return SkrBranch::Operator::GreaterOrEqual;
         default:
             sparkError("SkrBinary", "Can't map AstBinaryExp::Operator to SkrBranch::Operator: %d", astOp);
+            return SkrBranch::Operator::Equals;
         }
     }
 
@@ -372,7 +387,7 @@ private:
     }
 
     SkrConst* getSkrConst(Constant* c) {
-        if (c->kind == Constant::Kind::Int) {
+        if (c->isInt()) {
             return getSkrConst(((IntConstant*) c)->val);
         }
         else {

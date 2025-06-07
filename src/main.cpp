@@ -5,18 +5,21 @@
 #include "spark/frontend/parser/Parser.h"
 #include "spark/frontend/semantic/Semantic.h"
 #include "spark/skr/SkrEmitter.h"
+#include "spark/skr/optimizer/SkrOptimizer.h"
 #include "spark/backend/rv/Skr2RvaPseudo.h"
 #include "spark/backend/rv/RvaPseudoReplacer.h"
 #include "spark/backend/rv/RvaFixer.h"
 #include "spark/backend/rv/asm/RvAssembler.h"
 #include "printer/ast/AstMermaidPrinter.h"
 #include "printer/skr/SkrPrinter.h"
+#include "printer/irgraph/IrControlGraphPrinter.h"
 #include "printer/rva/RvaPrinter.h"
 using namespace std;
 
 
 string readFile(const char* path);
 void writeMermaidAst(AstProgram* exp, const char* outFile);
+void writeMermaidControlFlow(CfgGraph<SkrInstruction*>& graph, SymbolTable& table, const char* outFile);
 void dump(const LinearAllocator& allocator, const char* outFile);
 void dump(const uint8_t* block, size_t sz, const char* outFile);
 void printMemoryUsage(const char* name, size_t used, size_t cap);
@@ -60,7 +63,7 @@ int main(int argc, char** argv) {
 
     LinearAllocator skrAlloc(2048);
     LinearAllocator rvaAlloc1(2048);
-    LinearAllocator rvaAlloc2(2048);
+    LinearAllocator rvaAlloc2(4096);
 
     std::vector<SkrFunction*> skrFunctions;
     std::vector<SkrInstruction*> skrsBuf;
@@ -74,8 +77,22 @@ int main(int argc, char** argv) {
     for (auto* skrFunc : skrFunctions) {
         SkrPrinter::print(cout, skrFunc, symbolTable);
         cout << endl;
+
+        auto body = skrFunc->getInstructions().toVector();
+        CfgBuilder<SkrInstruction> cfgBuilder;
+        cfgBuilder.build_delGraphWhenDone(body);
+        auto fileName = std::string("control_") + skrFunc->getName() + ".md";
+        writeMermaidControlFlow(cfgBuilder.getGraph(), symbolTable, fileName.c_str());
     }
     cout << endl;
+
+    /* cout << "== skr optimized ==" << endl;
+    for (int i = 0; i < skrFunctions.size(); i++) {
+        skrFunctions[i] = SkrOptimizer(skrAlloc, skrFunctions[i]).optimize(SkrOptimizer::Config());
+        SkrPrinter::print(cout, skrFunctions[i], symbolTable);
+        cout << endl;
+    }
+    cout << endl; */
 
     size_t rva1Peak = 0;
     std::vector<RvaInstruction*> rva;
@@ -129,7 +146,7 @@ void printMemoryUsage(const char* name, size_t used, size_t cap) {
     snprintf(buf, sizeof(buf), "%3d %% ", percentage);
     printf("%5s ", buf);
 
-    const int w = 30;
+    const int w = cap * 45 / 4096;
     cout << "[";
     for (int i = 0; i < w; i++) {
         if (i * 100 / (w - 1) < percentage) {
@@ -139,7 +156,7 @@ void printMemoryUsage(const char* name, size_t used, size_t cap) {
             cout << " ";
         }
     }
-    cout << "] " << used << " / " << cap << endl;
+    cout << "] " /* << used << " / " << cap */ << endl;
 }
 
 void printAllocatorStats(const char* name, const LinearAllocator& allocator) {
@@ -164,7 +181,30 @@ void writeMermaidAst(AstProgram* prog, const char* outFile) {
 
     ofstream astOut(outFile);
     astOut << "```mermaid\n";
+    astOut << "---\n"
+"config:\n"
+"  look: neo\n"
+"  theme: redux-dark\n"
+"---\n";
     astOut << "flowchart LR\n";
+    astOut << oss.str();
+    astOut << "```";
+    astOut.close();
+}
+
+void writeMermaidControlFlow(CfgGraph<SkrInstruction*>& graph, SymbolTable& table, const char* outFile) {
+    std::ostringstream oss;
+    IrControlGraphMermaidPrinter conv(oss, table);
+    conv.print(graph);
+
+    ofstream astOut(outFile);
+    astOut << "```mermaid\n";
+    astOut << "---\n"
+"config:\n"
+"  look: neo\n"
+"  theme: redux-dark\n"
+"---\n";
+    astOut << "flowchart TB\n";
     astOut << oss.str();
     astOut << "```";
     astOut.close();

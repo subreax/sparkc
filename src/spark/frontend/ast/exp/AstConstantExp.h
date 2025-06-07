@@ -4,7 +4,7 @@
 
 class AstConstantExp : public AstExp {
 public:
-    AstConstantExp(Constant* val) : AstExp(Kind::Constant, val->getType()), val(val) {  }
+    AstConstantExp(Constant* val) : AstExp(Kind::Constant, val->type), val(val) {  }
 
     Constant* getValue() const { return val; }
 

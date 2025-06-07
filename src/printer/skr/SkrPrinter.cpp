@@ -10,10 +10,10 @@ std::ostream& operator<<(std::ostream& os, const SymbolType& type) {
 std::ostream& operator<<(std::ostream& os, const SkrValue& skr) {
     if (skr.isConst()) {
         auto* c = skr.toSkrConst()->getConst();
-        if (c->kind == Constant::Kind::Int) {
+        if (c->type->kind == SymbolType::Kind::Integer) {
             os << ((IntConstant*) c)->val;
         }
-        else if (c->kind == Constant::Kind::Float) {
+        else if (c->type->kind == SymbolType::Kind::Float) {
             os << ((FloatConstant*) c)->val;
         }
         else {
@@ -30,7 +30,7 @@ std::ostream& operator<<(std::ostream& os, const SkrValue& skr) {
 }
 
 std::ostream& operator<<(std::ostream& os, SkrBinary::Operator op) {
-    static constexpr const char* OPS[] = { "+", "-", "*", "/", "%", "&&", "||", "==", "!=", "<", "<=", ">", ">=" };
+    static constexpr const char* OPS[] = { "+", "-", "*", "/", "%", "==", "!=", "<", "<=", ">", ">=" };
     static constexpr int OPS_SZ = sizeof(OPS) / sizeof(const char*);
     int iop = (int) op;
     if (iop < OPS_SZ) {
@@ -71,10 +71,11 @@ void SkrPrinter::print(std::ostream& os, SkrFunction* func, SymbolTable& table) 
     for (auto* skr : skrs) {
         os << "    ";
         print(os, skr, table);
+        os << "\n";
     }
 }
 
-void SkrPrinter::print(std::ostream& os, SkrInstruction* skr, SymbolTable& table) {
+void SkrPrinter::print(std::ostream& os, SkrInstruction* skr, SymbolTable& table, bool colored) {
     auto kind = skr->kind;
     if (kind == SkrInstruction::Kind::Binary) {
         auto* bin = (SkrBinary*) skr;
@@ -86,19 +87,40 @@ void SkrPrinter::print(std::ostream& os, SkrInstruction* skr, SymbolTable& table
     }
     else if (kind == SkrInstruction::Kind::Jump) {
         auto* it = (SkrJump*) skr;
-        os << "Jump to " << Colored::label(it->getLabel());
+        os << "jmp ";
+        if (colored) {
+            os << Colored::label(it->getLabel());
+        } else {
+            os << it->getLabel();
+        }
     }
     else if (kind == SkrInstruction::Kind::Label) {
         auto* it = (SkrLabel*) skr;
-        os << Colored::label(it->getLabel()) << ":";
+        if (colored) {
+            os << Colored::label(it->getLabel()) << ":";
+        } else {
+            os << it->getLabel() << ":";
+        }
     }
     else if (kind == SkrInstruction::Kind::Branch) {
         auto* it = (SkrBranch*) skr;
-        os << "branch to " << Colored::label(it->getLabel()) << " if " << *it->getLeft() << " " << it->getOperator() << " " << *it->getRight();
+        os << "jmp ";
+        if (colored) {
+            os << Colored::label(it->getLabel());
+        } else {
+            os << it->getLabel();
+        }
+        os << " if " << *it->getLeft() << " " << it->getOperator() << " " << *it->getRight();
     }
     else if (kind == SkrInstruction::Kind::FunCall) {
         auto* it = (SkrFunCall*) skr;
-        os << *it->getRetVar() << " = " << Colored::label(it->getName()) << "(";
+        os << *it->getRetVar() << " = ";
+        if (colored) {
+            os << Colored::label(it->getName());
+        } else {
+            os << it->getName();
+        }
+        os << "(";
         auto args = it->getArgs();
         for (size_t i = 0; i < args.size(); i++) {
             os << *args[i];
@@ -119,5 +141,4 @@ void SkrPrinter::print(std::ostream& os, SkrInstruction* skr, SymbolTable& table
     else {
         os << "unknown skr: " << (int) kind;
     }
-    os << "\n";
 }

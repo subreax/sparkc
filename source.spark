@@ -1,7 +1,3 @@
-float pixel(float val) {
-    return lerp(0.2, 0.8, val);
-}
-
-float lerp(float a, float b, float val) {
-    return a + (b - a) * val;
+int cond(int x) {
+    return x > 3 && x < 5;
 }

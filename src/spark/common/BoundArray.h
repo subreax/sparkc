@@ -70,6 +70,14 @@ public:
         return ba;
     }
 
+    std::vector<T> toVector() const {
+        std::vector<T> v(itemsCount);
+        for (size_t i = 0; i < itemsCount; i++) {
+            v[i] = (*this)[i];
+        }
+        return v;
+    }
+
     T& operator[](size_t idx) {
         if (idx < itemsCount) {
             return mem[idx];

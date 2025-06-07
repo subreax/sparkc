@@ -10,8 +10,6 @@ public:
         Mul,
         Div,
         Rem,
-        And,
-        Or,
         Equals,
         NotEquals,
         LessThan,

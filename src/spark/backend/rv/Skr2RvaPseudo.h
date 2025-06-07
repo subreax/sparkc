@@ -183,15 +183,16 @@ private:
         switch (kind) {
         case SkrValue::Kind::Const: {
             auto* it = (const SkrConst*) value;
+            auto* constant = it->getConst();
             int32_t val;
-            if (it->getConst()->kind == Constant::Kind::Int) {
-                val = ((IntConstant*) it->getConst())->val;
+            if (constant->isInt()) {
+                val = constant->intValue();
             }
-            else if (it->getConst()->kind == Constant::Kind::Float) {
-                val = FixedUtils::fromFloat(((FloatConstant*) it->getConst())->val);
+            else if (constant->isFloat()) {
+                val = FixedUtils::fromFloat(constant->floatValue());
             }
             else {
-                sparkError("Skr2RvaPseudo", "Unknown Constant kind: %d", it->getConst()->kind);
+                sparkError("Skr2RvaPseudo", "Unknown Constant type: %d", constant->type);
             }
             return allocator.create<RvaImm>(val);
         }
@@ -210,7 +211,7 @@ private:
     }
 
     inline RvaPseudoReg* newPseudo(const char* name) {
-        return allocator.create<RvaPseudoReg>(name);
+        return allocator.create<RvaPseudoReg>(idGen.unique(name));
     }
 
     RvaValue* getArgDst(int argIndex) {
@@ -227,22 +228,6 @@ private:
         }
         sparkError("Skr2RvaPseudo", "getArgReg(idx): idx should be in range [0; 7]");
         return RvReg::ZERO;
-    }
-
-    SymbolType::Kind getTypeKind(SkrValue* val) {
-        if (val->kind == SkrValue::Kind::Const) {
-            return getTypeKind(val->toSkrConst());
-        }
-        else if (val->kind == SkrValue::Kind::Var) {
-            return table.get(val->toSkrVar()->getId())->kind;
-        }
-        else {
-            sparkError("SkrCast", "Unknown from kind");
-        }
-    }
-
-    SymbolType::Kind getTypeKind(Constant* c) {
-        return c->getType()->kind;
     }
 
     bool hasFunctionCalls(const BoundArray<SkrInstruction*>& skrs) const {

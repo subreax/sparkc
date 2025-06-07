@@ -174,18 +174,18 @@ public:
 
 private:
     std::string toString(Constant* constant) {
-        if (constant->kind == Constant::Kind::Int) {
+        if (constant->isInt()) {
             auto* it = (IntConstant*) constant;
             return std::to_string(it->val);
         }
-        else if (constant->kind == Constant::Kind::Float) {
+        else if (constant->isFloat()) {
             auto* it = (FloatConstant*) constant;
             std::ostringstream oss;
             oss << it->val;
             return oss.str();
         }
         else {
-            sparkError("AstMermaidPrinter", "Unknown Constant: %d", constant->kind);
+            sparkError("AstMermaidPrinter", "Unknown Constant: %d", constant->type->kind);
             return "";
         }
     }

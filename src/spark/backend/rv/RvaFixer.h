@@ -92,7 +92,7 @@ private:
 
     RvaValue* getImmOrMoveToReg(RvaValue* val, RvReg reg) {
         if (val->kind == RvaValue::Kind::Imm) {
-            return val;
+            return clone(val);
         }
         return moveToReg(val, reg);
     }
