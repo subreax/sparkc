@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <filesystem>
 #include "spark/frontend/lexer/Lexer.h"
 #include "spark/frontend/parser/Parser.h"
 #include "spark/frontend/semantic/Semantic.h"
@@ -12,20 +13,32 @@
 #include "spark/backend/rv/asm/RvAssembler.h"
 #include "printer/ast/AstMermaidPrinter.h"
 #include "printer/skr/SkrPrinter.h"
-#include "printer/irgraph/IrControlGraphPrinter.h"
+#include "printer/cfg/SkrCfgMermaidPrinter.h"
 #include "printer/rva/RvaPrinter.h"
 using namespace std;
 
 
 string readFile(const char* path);
 void writeMermaidAst(AstProgram* exp, const char* outFile);
-void writeMermaidControlFlow(CfgGraph<SkrInstruction*>& graph, SymbolTable& table, const char* outFile);
+void writeMermaidControlFlow(CfgGraph<SkrInstruction*>& graph, SymbolTable& table, std::string funName);
 void dump(const LinearAllocator& allocator, const char* outFile);
 void dump(const uint8_t* block, size_t sz, const char* outFile);
 void printMemoryUsage(const char* name, size_t used, size_t cap);
 void printAllocatorStats(const char* name, const LinearAllocator& allocator);
 void printError(ParseException& e, const string& source);
 string getLine(const string& src, int lineNo);
+
+class CfgGraphPrinter : public SkrOptimizer::OnGraphCreatedListener {
+public:
+    CfgGraphPrinter(SymbolTable& table) : table(table) {  }
+
+    void onCreated(const char* funName, int iteration, CfgGraph<SkrInstruction*>* graph) override {
+        writeMermaidControlFlow(*graph, table, std::string(funName) + "." + std::to_string(iteration) + ".md");
+    }
+
+private:
+    SymbolTable& table;
+};
 
 int main(int argc, char** argv) {
     if (argc == 1) {
@@ -77,22 +90,18 @@ int main(int argc, char** argv) {
     for (auto* skrFunc : skrFunctions) {
         SkrPrinter::print(cout, skrFunc, symbolTable);
         cout << endl;
-
-        auto body = skrFunc->getInstructions().toVector();
-        CfgBuilder<SkrInstruction> cfgBuilder;
-        cfgBuilder.build_delGraphWhenDone(body);
-        auto fileName = std::string("control_") + skrFunc->getName() + ".md";
-        writeMermaidControlFlow(cfgBuilder.getGraph(), symbolTable, fileName.c_str());
     }
     cout << endl;
 
-    /* cout << "== skr optimized ==" << endl;
+    CfgGraphPrinter graphPrinter(symbolTable);
+
+    cout << "== skr optimized ==" << endl;
     for (int i = 0; i < skrFunctions.size(); i++) {
-        skrFunctions[i] = SkrOptimizer(skrAlloc, skrFunctions[i]).optimize(SkrOptimizer::Config());
+        skrFunctions[i] = SkrOptimizer(skrAlloc, skrFunctions[i], &graphPrinter).optimize(SkrOptimizer::Config());
         SkrPrinter::print(cout, skrFunctions[i], symbolTable);
         cout << endl;
     }
-    cout << endl; */
+    cout << endl;
 
     size_t rva1Peak = 0;
     std::vector<RvaInstruction*> rva;
@@ -192,12 +201,13 @@ void writeMermaidAst(AstProgram* prog, const char* outFile) {
     astOut.close();
 }
 
-void writeMermaidControlFlow(CfgGraph<SkrInstruction*>& graph, SymbolTable& table, const char* outFile) {
+void writeMermaidControlFlow(CfgGraph<SkrInstruction*>& graph, SymbolTable& table, std::string outFile) {
+    std::filesystem::create_directory("cfg");
     std::ostringstream oss;
-    IrControlGraphMermaidPrinter conv(oss, table);
+    SkrCfgMermaidPrinter conv(oss, table);
     conv.print(graph);
 
-    ofstream astOut(outFile);
+    ofstream astOut("cfg/" + outFile);
     astOut << "```mermaid\n";
     astOut << "---\n"
 "config:\n"

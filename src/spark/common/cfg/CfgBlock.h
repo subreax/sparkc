@@ -37,6 +37,12 @@ public:
     bool isEmpty() { return body.empty(); }
     bool isNotEmpty() { return !isEmpty(); }
 
+    void copyTo(std::vector<I>& out) {
+        for (I& instr : body) {
+            out.emplace_back(instr);
+        }
+    }
+
 private:
     std::vector<I> body;
     const int id;

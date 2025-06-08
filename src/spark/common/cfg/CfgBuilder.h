@@ -22,7 +22,7 @@ public:
     }
 
 private:
-    void readBlocks(const std::vector<I*>& body, std::vector<CfgBlock<I*>*>& nodes) {
+    static void readBlocks(const std::vector<I*>& body, std::vector<CfgBlock<I*>*>& nodes) {
         int counter = 0;
         nodes.emplace_back(new CfgBlock<I*>(counter++));
 

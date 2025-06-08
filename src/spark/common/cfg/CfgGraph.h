@@ -136,6 +136,12 @@ public:
         return nodes;
     }
 
+    void toPlain(std::vector<I*>& out) {
+        for (CfgBlock<I>* block : nodes) {
+            block->copyTo(out);
+        }
+    }
+
 private:
     size_t indexOf(const CfgBlock<I>* block) const {
         for (size_t i = 0; i < nodes.size(); i++) {

@@ -4,9 +4,9 @@
 #include "../../spark/common/cfg/CfgGraph.h"
 #include "../skr/SkrPrinter.h"
 
-class IrControlGraphMermaidPrinter {
+class SkrCfgMermaidPrinter {
 public:
-    IrControlGraphMermaidPrinter(std::ostream& out, SymbolTable& table) 
+    SkrCfgMermaidPrinter(std::ostream& out, SymbolTable& table) 
         : out(out)
         , table(table) { }
 
@@ -16,28 +16,19 @@ public:
             declare(node->getId(), node->getBody());
         }
 
-        auto* begin = nodes.front();
-        addConnections(graph, begin);
+        addConnections(graph);
     }
 
 private:
-    void addConnections(const CfgGraph<SkrInstruction*>& graph, const CfgBlock<SkrInstruction*>* node) {
-        if (isVisited(node)) {
-            return;
-        }
-
-        visited.emplace(node->getId());
-        auto it = graph.successorsIterator(node);
-        auto end = graph.sEnd();
-        while (it != end) {
-            connect(graph, node, *it);
-            ++it;
-        }
-
-        auto it2 = graph.successorsIterator(node);
-        while (it2 != end) {
-            addConnections(graph, *it2);
-            ++it2;
+    void addConnections(const CfgGraph<SkrInstruction*>& graph) {
+        const auto& nodes = graph.getNodes();
+        for (auto* block : nodes) {
+            auto it = graph.successorsIterator(block);
+            auto end = graph.sEnd();
+            while (it != end) {
+                connect(graph, block, *it);
+                ++it;
+            }
         }
     }
 
@@ -68,11 +59,6 @@ private:
         out << "id" << n1->getId() << " --> " << "id" << n2->getId() << "\n";
     }
 
-    bool isVisited(const CfgBlock<SkrInstruction*>* node) {
-        return visited.find(node->getId()) != visited.end();
-    }
-
-    std::set<int> visited;
     std::ostream& out;
     SymbolTable& table;
 };
