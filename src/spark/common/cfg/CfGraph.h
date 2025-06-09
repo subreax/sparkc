@@ -5,11 +5,11 @@
 
 
 template<typename CfgGraph>
-class CfgSGraphIterator {
+class CfSGraphIterator {
 public:
     using ItemType = typename CfgGraph::ItemType;
 
-    CfgSGraphIterator(const std::vector<CfgBlock<ItemType>*>& nodes, const BitMatrix& edges, size_t nodeIdx, size_t c = -1)
+    CfSGraphIterator(const std::vector<CfgBlock<ItemType>*>& nodes, const BitMatrix& edges, size_t nodeIdx, size_t c = -1)
         : nodes(nodes)
         , edges(edges)
         , r(nodeIdx) 
@@ -24,18 +24,18 @@ public:
         return nodes[c];
     }
 
-    CfgSGraphIterator& operator++() {
+    CfSGraphIterator& operator++() {
         do {
             c = std::min(c + 1, edges.getColsCount());
         } while (c < edges.getColsCount() && !edges.get(r, c));
         return *this;
     }
 
-    bool operator==(const CfgSGraphIterator& other) const {
+    bool operator==(const CfSGraphIterator& other) const {
         return c == other.c;
     }
 
-    bool operator!=(const CfgSGraphIterator& other) const {
+    bool operator!=(const CfSGraphIterator& other) const {
         return !(*this == other);
     }
 
@@ -48,11 +48,11 @@ private:
 };
 
 template<typename CfgGraph>
-class CfgPGraphIterator {
+class CfPGraphIterator {
 public:
     using ItemType = typename CfgGraph::ItemType;
 
-    CfgPGraphIterator(const std::vector<CfgBlock<ItemType>*>& nodes, const BitMatrix& edges, size_t nodeIdx, size_t r = -1)
+    CfPGraphIterator(const std::vector<CfgBlock<ItemType>*>& nodes, const BitMatrix& edges, size_t nodeIdx, size_t r = -1)
         : nodes(nodes)
         , edges(edges)
         , r(r)
@@ -65,18 +65,18 @@ public:
         return nodes[r];
     }
 
-    CfgPGraphIterator& operator++() {
+    CfPGraphIterator& operator++() {
         do {
             r = std::min(r + 1, edges.getRowsCount());
         } while (r < edges.getRowsCount() && !edges.get(r, c));
         return *this;
     }
 
-    bool operator==(const CfgPGraphIterator& other) const {
+    bool operator==(const CfPGraphIterator& other) const {
         return r == other.r;
     }
 
-    bool operator!=(const CfgPGraphIterator& other) const {
+    bool operator!=(const CfPGraphIterator& other) const {
         return !(*this == other);
     }
 
@@ -89,18 +89,18 @@ private:
 };
 
 template<typename I>
-class CfgGraph {
+class CfGraph {
 public:
     using ItemType = I;
-    using PIterator = CfgPGraphIterator<CfgGraph>;
-    using SIterator = CfgSGraphIterator<CfgGraph>;
+    using PIterator = CfPGraphIterator<CfGraph>;
+    using SIterator = CfSGraphIterator<CfGraph>;
 
-    CfgGraph(const std::vector<CfgBlock<I>*>& nodes)
+    CfGraph(const std::vector<CfgBlock<I>*>& nodes)
         : nodes(nodes)
         , edges(nodes.size()) {  }
 
 
-    ~CfgGraph() {
+    ~CfGraph() {
         for (auto* node : nodes) {
             delete node;
         }
@@ -112,8 +112,50 @@ public:
         edges.set(p1, p2);
     }
 
+    void disconnect(CfgBlock<I>* block) {
+        size_t idx = indexOf(block);
+        size_t edgesCount = edges.getRowsCount(); // doesn't matter
+        for (size_t i = 0; i < edgesCount; i++) {
+            edges.remove(idx, i);
+            edges.remove(i, idx);
+        }
+    }
+
+    size_t countSuccessors(const CfgBlock<I>* block) const {
+        auto it = successorsIterator(block);
+        auto end = sEnd();
+        size_t count = 0;
+        while (it != end) {
+            ++count;
+            ++it;
+        }
+        return count;
+    }
+
+    size_t countPrecedessors(const CfgBlock<I>* block) const {
+        auto it = precedessorsIterator(block);
+        auto end = pEnd();
+        size_t count = 0;
+        while (it != end) {
+            ++count;
+            ++it;
+        }
+        return count;
+    }
+
     bool isConnected(const CfgBlock<I>* block1, const CfgBlock<I>* block2) const {
         return edges.get(indexOf(block1), indexOf(block2));
+    }
+
+    bool hasConnections(const CfgBlock<I>* block) const {
+        size_t idx = indexOf(block);
+        size_t edgesCount = edges.getRowsCount();
+        for (size_t i = 0; i < edgesCount; i++) {
+            if (edges.get(idx, i) + edges.get(i, idx) > 0) {
+                return true;
+            }
+        }
+        return false;
     }
 
     SIterator successorsIterator(const CfgBlock<I>* block) const {
@@ -136,9 +178,11 @@ public:
         return nodes;
     }
 
-    void toPlain(std::vector<I*>& out) {
+    void toPlain(std::vector<I>& out) {
         for (CfgBlock<I>* block : nodes) {
-            block->copyTo(out);
+            if (hasConnections(block)) {
+                block->copyTo(out);
+            }
         }
     }
 
@@ -150,7 +194,7 @@ private:
             }
         }
 
-        sparkError("CfgGraph", "indexOf failed");
+        sparkError("CfGraph", "indexOf failed");
         return 0;
     }
 

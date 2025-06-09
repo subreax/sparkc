@@ -20,7 +20,7 @@ using namespace std;
 
 string readFile(const char* path);
 void writeMermaidAst(AstProgram* exp, const char* outFile);
-void writeMermaidControlFlow(CfgGraph<SkrInstruction*>& graph, SymbolTable& table, std::string funName);
+void writeMermaidControlFlow(CfGraph<SkrInstruction*>& graph, SymbolTable& table, std::string funName);
 void dump(const LinearAllocator& allocator, const char* outFile);
 void dump(const uint8_t* block, size_t sz, const char* outFile);
 void printMemoryUsage(const char* name, size_t used, size_t cap);
@@ -32,7 +32,7 @@ class CfgGraphPrinter : public SkrOptimizer::OnGraphCreatedListener {
 public:
     CfgGraphPrinter(SymbolTable& table) : table(table) {  }
 
-    void onCreated(const char* funName, int iteration, CfgGraph<SkrInstruction*>* graph) override {
+    void onCreated(const char* funName, int iteration, CfGraph<SkrInstruction*>* graph) override {
         writeMermaidControlFlow(*graph, table, std::string(funName) + "." + std::to_string(iteration) + ".md");
     }
 
@@ -201,7 +201,7 @@ void writeMermaidAst(AstProgram* prog, const char* outFile) {
     astOut.close();
 }
 
-void writeMermaidControlFlow(CfgGraph<SkrInstruction*>& graph, SymbolTable& table, std::string outFile) {
+void writeMermaidControlFlow(CfGraph<SkrInstruction*>& graph, SymbolTable& table, std::string outFile) {
     std::filesystem::create_directory("cfg");
     std::ostringstream oss;
     SkrCfgMermaidPrinter conv(oss, table);

@@ -53,6 +53,8 @@ public:
             }
             it++;
         }
+
+        filterNops(instructions);
     }
 
     static constexpr SkrInstruction* NOP = nullptr;
@@ -239,6 +241,21 @@ private:
         default:
             sparkError("ConstantFolding", "Unknown branch operator: %d", op);
             return false;
+        }
+    }
+
+    static void filterNops(std::vector<SkrInstruction*>& skrs) {
+        size_t offset = 0;
+        for (size_t i = 0; i < skrs.size(); i++) {
+            if (skrs[i] == NOP) {
+                offset++;
+            } else {
+                skrs[i - offset] = skrs[i];
+            }
+        }
+
+        if (offset > 0) {
+            skrs.resize(skrs.size() - offset);
         }
     }
 };

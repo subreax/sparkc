@@ -32,6 +32,16 @@ public:
         data[idx] = data[idx] | (1 << bit);
     }
 
+    void reset(size_t bit) {
+        if (bit >= bitsCount) {
+            throw OutOfBoundsException(0, bitsCount, bit);
+        }
+
+        size_t idx = bit / 32;
+        size_t bitPos = bit % 32;
+        data[idx] = data[idx] & ~(1 << bit);
+    }
+
     bool operator[](size_t idx) const {
         return get(idx);
     }

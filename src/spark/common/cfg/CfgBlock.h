@@ -31,7 +31,9 @@ public:
         body.emplace_back(instr);
     }
 
+    std::vector<I>& getBody() { return body; }
     const std::vector<I>& getBody() const { return body; }
+
     int getId() const { return id; }
 
     bool isEmpty() { return body.empty(); }
@@ -41,6 +43,26 @@ public:
         for (I& instr : body) {
             out.emplace_back(instr);
         }
+    }
+
+    bool isLabeled() const {
+        return !body.empty() && cfg::isLabel(body.front());
+    }
+
+    bool hasJump() const {
+        return !body.empty() && cfg::isJump(body.back());
+    }
+
+    bool hasBranch() const {
+        return !body.empty() && cfg::isBranch(body.back());
+    }
+
+    const char* getLabel() const {
+        return cfg::getLabel(body.front());
+    }
+
+    const char* getJumpOrBranchLabel() const {
+        return cfg::getLabel(body.back());
     }
 
 private:

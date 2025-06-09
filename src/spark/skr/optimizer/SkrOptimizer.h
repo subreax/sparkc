@@ -2,9 +2,10 @@
 #include "../../common/alloc/LinearAllocator.h"
 #include "../instr/everything.h"
 #include "../SkrFunction.h"
-#include "ConstantFolding.h"
-#include "SkrCfgOverloadings.h"
 #include "../../common/cfg/CfgBuilder.h"
+#include "SkrCfgOverloadings.h"
+#include "ConstantFolding.h"
+#include "UnreachableCodeElimination.h"
 
 class SkrOptimizer {
 public:
@@ -18,7 +19,7 @@ public:
     class OnGraphCreatedListener {
     public:
         virtual ~OnGraphCreatedListener() = default;
-        virtual void onCreated(const char* funName, int iteration, CfgGraph<SkrInstruction*>* graph) = 0;
+        virtual void onCreated(const char* funName, int iteration, CfGraph<SkrInstruction*>* graph) = 0;
     };
 
     SkrOptimizer(Allocator& a1, SkrFunction* rawFunc, OnGraphCreatedListener* onGraphCreated = nullptr)
@@ -28,21 +29,32 @@ public:
         , onGraphCreatedListener(onGraphCreated) {  }
 
     SkrFunction* optimize(Config config) {
-        auto* initialGraph = CfgBuilder<SkrInstruction>().build_delGraphWhenDone(raw);
-        notifyGraphCreated(rawFunc->getName(), 0, initialGraph);
-        delete initialGraph;
-
-        if (config.constantFolding) {
-            ConstantFolding::run(a1, raw);
-            filterNullptrs();
+        if (onGraphCreatedListener != nullptr) {
+            auto* initialGraph = CfgBuilder<SkrInstruction>().build_delGraphWhenDone(raw);
+            notifyGraphCreated(rawFunc->getName(), 0, initialGraph);
+            delete initialGraph;
         }
 
-        auto* graph = CfgBuilder<SkrInstruction>().build_delGraphWhenDone(raw);
-        notifyGraphCreated(rawFunc->getName(), 1, graph);
+        for (size_t i = 1; i <= 4; i++) {
+            if (config.constantFolding) {
+                ConstantFolding::run(a1, raw);
+            }
+    
+            auto* graph = CfgBuilder<SkrInstruction>().build_delGraphWhenDone(raw);
+            
+            if (config.deadCodeElimination) {
+                UnreachableCodeElimination(graph).run();
+            }
+
+            notifyGraphCreated(rawFunc->getName(), i, graph);
+            raw.clear();
+            graph->toPlain(raw);
+
+            delete graph;
+        }
+
 
         auto bodyBa = BoundArray<SkrInstruction*>::fromVector(raw, a1);
-
-        delete graph;
         return a1.create<SkrFunction>(
             rawFunc->getName(),
             rawFunc->getParams(),
@@ -52,23 +64,8 @@ public:
     }
 
 private:
-    void filterNullptrs() {
-        size_t offset = 0;
-        for (size_t i = 0; i < raw.size(); i++) {
-            if (raw[i] == nullptr) {
-                offset++;
-            } else {
-                raw[i - offset] = raw[i];
-            }
-        }
-        
-        if (offset > 0) {
-            raw.resize(raw.size() - offset);
-        }
-    }
-
-    void notifyGraphCreated(const char* funName, int iteration, CfgGraph<SkrInstruction*>* graph) {
-        if (onGraphCreatedListener) {
+    void notifyGraphCreated(const char* funName, int iteration, CfGraph<SkrInstruction*>* graph) {
+        if (onGraphCreatedListener != nullptr) {
             onGraphCreatedListener->onCreated(funName, iteration, graph);
         }
     }

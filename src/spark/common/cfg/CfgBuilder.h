@@ -1,20 +1,20 @@
 #pragma once
 #include <vector>
 #include <unordered_set>
-#include "CfgGraph.h"
+#include "CfGraph.h"
 
 template<typename I>
 class CfgBuilder {
 public:
-    CfgGraph<I*>* build_delGraphWhenDone(const std::vector<I*>& body) {
+    CfGraph<I*>* build_delGraphWhenDone(const std::vector<I*>& body) {
         std::vector<CfgBlock<I*>*> nodes;
         readBlocks(body, nodes);
-        graph = new CfgGraph<I*>(nodes);
+        graph = new CfGraph<I*>(nodes);
         addEdges();
         return graph;
     }
 
-    CfgGraph<I*>& getGraph() {
+    CfGraph<I*>& getGraph() {
         if (graph == nullptr) {
             sparkError("CfgBuilder", "Graph is not ready");
         }
@@ -51,20 +51,20 @@ private:
         auto& blocks = graph->getNodes(); 
 
         for (size_t i = 0; i < blocks.size() - 1; i++) {
-            auto* block = blocks[i];
+            CfgBlock<SkrInstruction*>* block = blocks[i];
             if (isVisited(block)) {
                 continue;
             }
 
             visited.emplace(block->getId());
 
-            if (hasJump(block)) {
-                const char* jumpLabel = cfg::getLabel(block->getBody().back());
+            if (block->hasJump()) {
+                const char* jumpLabel = block->getJumpOrBranchLabel();
                 auto* nextNode = findBlockByLabel(jumpLabel);
                 graph->connect(block, nextNode);
             }
-            else if (hasBranch(block)) {
-                const char* jumpLabel = cfg::getLabel(block->getBody().back());
+            else if (block->hasBranch()) {
+                const char* jumpLabel = block->getJumpOrBranchLabel();
                 auto* jumpNode = findBlockByLabel(jumpLabel);
                 graph->connect(block, jumpNode);
                 graph->connect(block, blocks[i + 1]);
@@ -78,16 +78,11 @@ private:
     CfgBlock<I*>* findBlockByLabel(const char* label) {
         const auto& nodes = graph->getNodes();
         for (auto* node : nodes) {
-            if (node->isEmpty()) {
+            if (node->isEmpty() || !node->isLabeled()) {
                 continue;
             }
 
-            auto* firstInstr = node->getBody().front();
-            if (!cfg::isLabel(firstInstr)) {
-                continue;
-            }
-
-            const char* nodeLabel = cfg::getLabel(firstInstr);
+            const char* nodeLabel = node->getLabel();
             if (strncmp(label, nodeLabel, 128) == 0) {
                 return node;
             }
@@ -101,15 +96,7 @@ private:
         return visited.find(block->getId()) != visited.end();
     }
 
-    bool hasJump(CfgBlock<I*>* block) {
-        return block->isNotEmpty() && cfg::isJump(block->getBody().back());
-    }
-
-    bool hasBranch(CfgBlock<I*>* block) {
-        return block->isNotEmpty() && cfg::isBranch(block->getBody().back());
-    }
-
 
     std::unordered_set<int> visited;
-    CfgGraph<I*>* graph = nullptr;
+    CfGraph<I*>* graph = nullptr;
 };

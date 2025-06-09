@@ -14,6 +14,10 @@ public:
         data.set(getIndex(r, c));
     }
 
+    void remove(size_t r, size_t c) {
+        data.reset(getIndex(r, c));
+    }
+
     bool get(size_t r, size_t c) const {
         return data.get(getIndex(r, c));
     }
