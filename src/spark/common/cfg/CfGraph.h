@@ -96,24 +96,22 @@ public:
     using SIterator = CfSGraphIterator<CfGraph>;
 
     CfGraph(const std::vector<CfgBlock<I>*>& nodes)
-        : nodes(nodes)
+        : blocks(nodes)
         , edges(nodes.size()) {  }
 
 
     ~CfGraph() {
-        for (auto* node : nodes) {
+        for (auto* node : blocks) {
             delete node;
         }
     }
 
     void connect(CfgBlock<I>* block1, CfgBlock<I>* block2) {
-        size_t p1 = indexOf(block1);
-        size_t p2 = indexOf(block2);
-        edges.set(p1, p2);
+        edges.set(block1->getIdx(), block2->getIdx());
     }
 
     void disconnect(CfgBlock<I>* block) {
-        size_t idx = indexOf(block);
+        size_t idx = block->getIdx();
         size_t edgesCount = edges.getRowsCount(); // doesn't matter
         for (size_t i = 0; i < edgesCount; i++) {
             edges.remove(idx, i);
@@ -144,11 +142,11 @@ public:
     }
 
     bool isConnected(const CfgBlock<I>* block1, const CfgBlock<I>* block2) const {
-        return edges.get(indexOf(block1), indexOf(block2));
+        return edges.get(block1->getIdx(), block2->getIdx());
     }
 
     bool hasConnections(const CfgBlock<I>* block) const {
-        size_t idx = indexOf(block);
+        size_t idx = block->getIdx();
         size_t edgesCount = edges.getRowsCount();
         for (size_t i = 0; i < edgesCount; i++) {
             if (edges.get(idx, i) + edges.get(i, idx) > 0) {
@@ -159,27 +157,31 @@ public:
     }
 
     SIterator successorsIterator(const CfgBlock<I>* block) const {
-        return SIterator(nodes, edges, indexOf(block));
+        return SIterator(blocks, edges, block->getIdx());
     }
 
     SIterator sEnd() const {
-        return SIterator(nodes, edges, nodes.size(), nodes.size());
+        return SIterator(blocks, edges, blocks.size(), blocks.size());
     }
 
     PIterator precedessorsIterator(const CfgBlock<I>* block) const {
-        return PIterator(nodes, edges, indexOf(block));
+        return PIterator(blocks, edges, block->getIdx());
     }
 
     PIterator pEnd() const {
-        return PIterator(nodes, edges, nodes.size(), nodes.size());
+        return PIterator(blocks, edges, blocks.size(), blocks.size());
     }
 
-    const std::vector<CfgBlock<I>*>& getNodes() const {
-        return nodes;
+    CfgBlock<I>* getBlock(int index) const {
+        return blocks[index];
+    }
+
+    const std::vector<CfgBlock<I>*>& getBlocks() const {
+        return blocks;
     }
 
     void toPlain(std::vector<I>& out) {
-        for (CfgBlock<I>* block : nodes) {
+        for (CfgBlock<I>* block : blocks) {
             if (hasConnections(block)) {
                 block->copyTo(out);
             }
@@ -187,17 +189,6 @@ public:
     }
 
 private:
-    size_t indexOf(const CfgBlock<I>* block) const {
-        for (size_t i = 0; i < nodes.size(); i++) {
-            if (nodes[i] == block) {
-                return i;
-            }
-        }
-
-        sparkError("CfGraph", "indexOf failed");
-        return 0;
-    }
-
-    std::vector<CfgBlock<I>*> nodes;
+    std::vector<CfgBlock<I>*> blocks;
     BitMatrix edges;
 };

@@ -18,10 +18,10 @@ public:
 private:
     void disconnectUnreachableBlocks() {
         std::unordered_set<int> visited;
-        auto& nodes = graph->getNodes();
-        traverse(nodes.front(), visited);
+        auto& blocks = graph->getBlocks();
+        traverse(blocks.front(), visited);
 
-        for (auto* block : nodes) {
+        for (auto* block : blocks) {
             if (!contains(visited, block)) {
                 graph->disconnect(block);
             }
@@ -29,14 +29,14 @@ private:
     }
 
     void removeUselessJumps() {
-        const auto& nodes = graph->getNodes();
-        if (nodes.empty()) {
+        const auto& blocks = graph->getBlocks();
+        if (blocks.empty()) {
             return;
         }
 
-        for (size_t i = 0; i < nodes.size() - 1; i++) {
-            auto* curr = nodes[i];
-            auto* next = nodes[i + 1];
+        for (size_t i = 0; i < blocks.size() - 1; i++) {
+            auto* curr = blocks[i];
+            auto* next = blocks[i + 1];
 
             if (graph->isConnected(curr, next) && curr->hasJump() && next->isLabeled()) {
                 auto* jumpLabel = curr->getJumpOrBranchLabel();
@@ -49,14 +49,14 @@ private:
     }
 
     void removeUselessLabels() {
-        const auto& nodes = graph->getNodes();
-        if (nodes.empty()) {
+        const auto& blocks = graph->getBlocks();
+        if (blocks.empty()) {
             return;
         }
 
-        for (size_t i = 0; i < nodes.size() - 1; i++) {
-            auto* curr = nodes[i];
-            auto* next = nodes[i + 1];
+        for (size_t i = 0; i < blocks.size() - 1; i++) {
+            auto* curr = blocks[i];
+            auto* next = blocks[i + 1];
 
             if (graph->isConnected(curr, next) && next->isLabeled() && graph->countPrecedessors(next) == 1) {
                 next->getBody().erase(next->getBody().begin());
@@ -69,11 +69,10 @@ private:
             return;
         }
 
-        visited.emplace(block->getId());
+        visited.emplace(block->getIdx());
 
         auto it = graph->successorsIterator(block);
         auto end = graph->sEnd();
-
         while (it != end) {
             traverse(*it, visited);
             ++it;
@@ -81,7 +80,7 @@ private:
     }
 
     static bool contains(const std::unordered_set<int>& s, const CfgBlock<SkrInstruction*>* block) {
-        return s.find(block->getId()) != s.end();
+        return s.find(block->getIdx()) != s.end();
     }
 
     CfGraph<SkrInstruction*>* graph;

@@ -23,40 +23,41 @@ public:
 
 private:
     static void readBlocks(const std::vector<I*>& body, std::vector<CfgBlock<I*>*>& nodes) {
-        int counter = 0;
-        nodes.emplace_back(new CfgBlock<I*>(counter++));
+        int blockIdx = 0;
+        nodes.emplace_back(new CfgBlock<I*>(blockIdx++));
 
         std::vector<I*> block;
         for (auto* instr : body) {
             if (!block.empty() && cfg::isLabel(instr)) {
-                nodes.emplace_back(new CfgBlock<I*>(counter++, block));
+                nodes.emplace_back(new CfgBlock<I*>(blockIdx++, block));
                 block.clear();
             }
 
             block.emplace_back(instr);
             if (cfg::isJump(instr) || cfg::isBranch(instr)) {
-                nodes.emplace_back(new CfgBlock<I*>(counter++, block));
+                nodes.emplace_back(new CfgBlock<I*>(blockIdx++, block));
                 block.clear();
             }
         }
 
         if (!block.empty()) {
-            nodes.emplace_back(new CfgBlock<I*>(counter++, block));
+            nodes.emplace_back(new CfgBlock<I*>(blockIdx++, block));
         }
 
-        nodes.emplace_back(new CfgBlock<I*>(counter++));
+        nodes.emplace_back(new CfgBlock<I*>(blockIdx++));
     }
 
     void addEdges() {
-        auto& blocks = graph->getNodes(); 
+        const auto& blocks = graph->getBlocks(); 
+        std::unordered_set<int> visited;
 
         for (size_t i = 0; i < blocks.size() - 1; i++) {
             CfgBlock<SkrInstruction*>* block = blocks[i];
-            if (isVisited(block)) {
+            if (isVisited(visited, block)) {
                 continue;
             }
 
-            visited.emplace(block->getId());
+            visited.emplace(block->getIdx());
 
             if (block->hasJump()) {
                 const char* jumpLabel = block->getJumpOrBranchLabel();
@@ -76,7 +77,7 @@ private:
     }
 
     CfgBlock<I*>* findBlockByLabel(const char* label) {
-        const auto& nodes = graph->getNodes();
+        const auto& nodes = graph->getBlocks();
         for (auto* node : nodes) {
             if (node->isEmpty() || !node->isLabeled()) {
                 continue;
@@ -92,11 +93,9 @@ private:
         return nullptr;
     }
 
-    bool isVisited(const CfgBlock<I*>* block) {
-        return visited.find(block->getId()) != visited.end();
+    static bool isVisited(const std::unordered_set<int>& visited, const CfgBlock<I*>* block) {
+        return visited.find(block->getIdx()) != visited.end();
     }
 
-
-    std::unordered_set<int> visited;
     CfGraph<I*>* graph = nullptr;
 };

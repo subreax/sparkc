@@ -11,21 +11,21 @@ public:
         , table(table) { }
 
     void print(CfGraph<SkrInstruction*>& graph) {
-        auto& nodes = graph.getNodes();
-        declareBegin(nodes.front()->getId());
-        for (size_t i = 1; i < nodes.size() - 1; i++) {
-            auto* node = nodes[i];
-            declare(node->getId(), node->getBody());
+        auto& blocks = graph.getBlocks();
+        declareBegin(blocks.front()->getIdx());
+        for (size_t i = 1; i < blocks.size() - 1; i++) {
+            auto* node = blocks[i];
+            declare(node->getIdx(), node->getBody());
         }
-        declareEnd(nodes.back()->getId());
+        declareEnd(blocks.back()->getIdx());
 
         addConnections(graph);
     }
 
 private:
     void addConnections(const CfGraph<SkrInstruction*>& graph) {
-        const auto& nodes = graph.getNodes();
-        for (auto* block : nodes) {
+        const auto& blocks = graph.getBlocks();
+        for (auto* block : blocks) {
             auto it = graph.successorsIterator(block);
             auto end = graph.sEnd();
             while (it != end) {
@@ -61,7 +61,7 @@ private:
     }
 
     void connect(const CfGraph<SkrInstruction*>& graph, const CfgBlock<SkrInstruction*>* n1, const CfgBlock<SkrInstruction*>* n2) {
-        out << "id" << n1->getId() << " --> " << "id" << n2->getId() << "\n";
+        out << "id" << n1->getIdx() << " --> " << "id" << n2->getIdx() << "\n";
     }
 
     std::ostream& out;

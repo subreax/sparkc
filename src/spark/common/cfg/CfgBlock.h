@@ -21,10 +21,10 @@ bool isBranch(I* ptr);
 template<typename I>
 class CfgBlock {
 public:
-    CfgBlock(int id) : id(id) {  }
+    CfgBlock(int idx) : idx(idx) {  }
 
-    CfgBlock(int id, const std::vector<I>& body) 
-        : id(id)
+    CfgBlock(int idx, const std::vector<I>& body) 
+        : idx(idx)
         , body(body) {  }
 
     void add(const I& instr) {
@@ -34,7 +34,7 @@ public:
     std::vector<I>& getBody() { return body; }
     const std::vector<I>& getBody() const { return body; }
 
-    int getId() const { return id; }
+    int getIdx() const { return idx; }
 
     bool isEmpty() { return body.empty(); }
     bool isNotEmpty() { return !isEmpty(); }
@@ -67,5 +67,5 @@ public:
 
 private:
     std::vector<I> body;
-    const int id;
+    const int idx;
 };
