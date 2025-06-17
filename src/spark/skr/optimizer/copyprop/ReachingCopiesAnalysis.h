@@ -27,9 +27,9 @@ public:
         while (pendingBlocks.isNotEmpty()) {
             size_t blockIdx = pendingBlocks.peek();
             pendingBlocks.pop();
-            auto* ab = getAnnotated(blockIdx);
+            RCABlock* ab = getAnnotated(blockIdx);
 
-            auto oldAb = *ab;
+            RCABlock oldAb = *ab;
             std::vector<SkrCopy*> incomingCopies;
             meet(blockIdx, allCopies, incomingCopies);
             transfer(blockIdx, incomingCopies);
@@ -84,16 +84,21 @@ private:
     }
 
     void getAllCopies(std::vector<SkrCopy*>& out) {
-        ReachingCopies copies;
         const auto& blocks = graph->getBlocks();
         for (auto* block : blocks) {
-            for (auto* skr : block->getBody()) {
-                if (skr->kind == SkrInstruction::Kind::Copy) {
-                    copies.add((SkrCopy*) skr);
+            getAllCopies(block, out);
+        }
+    }
+
+    void getAllCopies(CfgBlock<SkrInstruction*>* block, std::vector<SkrCopy*>& inOut) {
+        for (auto* skr : block->getBody()) {
+            if (skr->kind == SkrInstruction::Kind::Copy) {
+                auto* skrCopy = (SkrCopy*) skr;
+                if (!ReachingCopiesUtils::contains(inOut, skrCopy)) {
+                    inOut.emplace_back(skrCopy);
                 }
             }
         }
-        out = copies.getCopies();
     }
 
     void addAllSuccessors(size_t blockIdx, Uniqueue<size_t>& dst) {
