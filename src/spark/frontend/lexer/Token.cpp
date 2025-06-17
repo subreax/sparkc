@@ -6,6 +6,7 @@ static constexpr const char* _TokenKind2String[] = {
     "return",
     "if",
     "else",
+    "while",
     "<identifier>",
     "open par",
     "close par",

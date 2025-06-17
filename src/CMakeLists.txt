@@ -6,6 +6,7 @@ add_executable(sparkc
     spark/common/StringRef.cpp
     spark/common/Constant.cpp
     spark/backend/rv/asm/Rv32Base.cpp
+    spark/skr/value/SkrValue.cpp
     printer/skr/SkrPrinter.cpp
     printer/rva/RvaPrinter.cpp
     printer/ast/AstMermaidPrinter.cpp

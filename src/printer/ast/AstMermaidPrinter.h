@@ -112,6 +112,13 @@ public:
             }
             return node.id;
         }
+        else if (kind == AstStatement::Kind::While) {
+            auto* it = (AstWhileStatement*) st;
+            auto node = Node(*this, "while");
+            connect(node, toMermaid(it->getCondition()), "condition");
+            connect(node, toMermaid(it->getStatement()), "body");
+            return node.id;
+        }
         else if (kind == AstStatement::Kind::Compound) {
             auto* it = (AstCompoundStatement*) st;
             return toMermaid(it->getBlock());

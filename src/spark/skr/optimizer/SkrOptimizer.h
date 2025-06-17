@@ -6,6 +6,7 @@
 #include "SkrCfgOverloadings.h"
 #include "ConstantFolding.h"
 #include "UnreachableCodeElimination.h"
+#include "copyprop/CopyPropagation.h"
 
 class SkrOptimizer {
 public:
@@ -44,6 +45,9 @@ public:
             
             if (config.deadCodeElimination) {
                 UnreachableCodeElimination(graph).run();
+            }
+            if (config.copyPropagation) {
+                CopyPropagation(graph, a1).run();
             }
 
             notifyGraphCreated(rawFunc->getName(), i, graph);

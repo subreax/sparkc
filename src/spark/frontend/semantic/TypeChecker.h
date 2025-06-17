@@ -72,6 +72,11 @@ private:
                 typeCheck(falseBranch, retType);
             }
         }
+        else if (kind == AstStatement::Kind::While) {
+            auto* it = (AstWhileStatement*) st;
+            typeCheck(it->getCondition());
+            typeCheck(it->getStatement(), retType);
+        }
         else if (kind == AstStatement::Kind::Compound) {
             typeCheck(((AstCompoundStatement*) st)->getBlock(), retType);
         }

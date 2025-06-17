@@ -93,12 +93,28 @@ private:
             auto* ifFalseLabel = labelGen.uniqueInternal("false");
             emitInvertBranch(it->getCondition(), ifFalseLabel);
             emit(it->getTrueBranch());
-            out.emplace_back(allocator.create<SkrLabel>(ifFalseLabel));
-            
+
             auto* falseBranch = it->getFalseBranch();
             if (falseBranch != nullptr) {
+                auto* endLabel = labelGen.uniqueInternal("end");
+                out.emplace_back(allocator.create<SkrJump>(endLabel));
+                out.emplace_back(allocator.create<SkrLabel>(ifFalseLabel));
                 emit(falseBranch);
+                out.emplace_back(allocator.create<SkrLabel>(endLabel));
+            } 
+            else {
+                out.emplace_back(allocator.create<SkrLabel>(ifFalseLabel));
             }
+        }
+        else if (kind == AstStatement::Kind::While) {
+            auto* it = (AstWhileStatement*) st;
+            auto* startLabel = labelGen.uniqueInternal("start");
+            auto* endLabel = labelGen.uniqueInternal("end");
+            out.emplace_back(allocator.create<SkrLabel>(startLabel));
+            emitInvertBranch(it->getCondition(), endLabel);
+            emit(it->getStatement());
+            out.emplace_back(allocator.create<SkrJump>(startLabel));
+            out.emplace_back(allocator.create<SkrLabel>(endLabel));
         }
         else if (kind == AstStatement::Kind::Compound) {
             auto* it = (AstCompoundStatement*) st;

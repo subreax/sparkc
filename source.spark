@@ -1,7 +1,12 @@
-int cond(int x) {
-    if (10 < 5) {
-        return 0;
+int tmp2(int arg) {
+    int x;
+    int y;
+    if (arg == 0) {
+        y = 20;
+        x = y;
     } else {
-        return x * 3;
+        y = 100;
+        x = y;
     }
+    return x;
 }

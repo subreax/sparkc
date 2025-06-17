@@ -13,6 +13,8 @@ public:
 
     const char* getName() const { return name; }
     const SkrVar* getRetVar() const { return retVar; }
+
+    BoundArray<SkrValue*>& getArgs() { return args; }
     const BoundArray<SkrValue*>& getArgs() const { return args; }
 
 private:

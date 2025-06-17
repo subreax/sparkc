@@ -126,6 +126,14 @@ public:
             }
             return allocator.create<AstIfStatement>(cond, ifTrue, ifFalse);
         }
+        else if (current.kind == T_WHILE_KEYWORD) {
+            takeToken();
+            expect(T_OPEN_PAR);
+            auto* cond = parseExpression();
+            expect(T_CLOSE_PAR);
+            auto* st = parseStatement();
+            return allocator.create<AstWhileStatement>(cond, st);
+        }
         else if (current.kind == T_OPEN_BRACE) {
             AstBlock* block = parseBlock();
             return allocator.create<AstCompoundStatement>(block);

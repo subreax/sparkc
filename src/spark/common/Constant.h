@@ -16,6 +16,8 @@ public:
     int32_t intValue() const;
     float floatValue() const;
 
+    bool operator==(const Constant& other) const;
+
     SymbolType *const type;
 };
 

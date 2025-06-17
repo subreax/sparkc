@@ -61,6 +61,7 @@ private:
         { T_RETURN_KEYWORD, TokenReaders::readReturnKeyword },
         { T_IF_KEYWORD, TokenReaders::readIfKeyword },
         { T_ELSE_KEYWORD, TokenReaders::readElseKeyword },
+        { T_WHILE_KEYWORD, TokenReaders::readWhileKeyword },
         { T_IDENTIFIER, TokenReaders::readIdentifier },
         { T_FLOAT_CONSTANT, TokenReaders::readFloatConstant },
         { T_INT_CONSTANT, TokenReaders::readIntConstant },

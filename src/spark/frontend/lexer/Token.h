@@ -8,6 +8,7 @@ enum TokenKind {
     T_RETURN_KEYWORD,//
     T_IF_KEYWORD,//
     T_ELSE_KEYWORD,//
+    T_WHILE_KEYWORD,
     T_IDENTIFIER,//
     T_OPEN_PAR,//
     T_CLOSE_PAR,//

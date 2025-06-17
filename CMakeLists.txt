@@ -17,6 +17,9 @@ add_executable(tests
   tests/asm/test_rv32base.cpp
   tests/alloc/test_linearalloc.cpp
   src/spark/backend/rv/asm/Rv32Base.cpp
+  src/spark/common/Constant.cpp
+  src/spark/skr/value/SkrValue.cpp
+
 )
 target_include_directories(tests PUBLIC src/spark/)
 target_link_libraries(tests PRIVATE Catch2::Catch2WithMain)

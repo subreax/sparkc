@@ -160,12 +160,26 @@ public:
         return SIterator(blocks, edges, block->getIdx());
     }
 
+    SIterator successorsIterator(size_t blockIdx) const {
+        if (blockIdx >= blocks.size()) {
+            sparkError("CfGraph", "Failed to get successors iterator: Invalid index %d", blockIdx);
+        }
+        return SIterator(blocks, edges, blockIdx);
+    }
+
     SIterator sEnd() const {
         return SIterator(blocks, edges, blocks.size(), blocks.size());
     }
 
     PIterator precedessorsIterator(const CfgBlock<I>* block) const {
         return PIterator(blocks, edges, block->getIdx());
+    }
+
+    PIterator precedessorsIterator(size_t blockIdx) const {
+        if (blockIdx >= blocks.size()) {
+            sparkError("CfGraph", "Failed to get precedessors iterator: Invalid index %d", blockIdx);
+        }
+        return PIterator(blocks, edges, blockIdx);
     }
 
     PIterator pEnd() const {
@@ -186,6 +200,14 @@ public:
                 block->copyTo(out);
             }
         }
+    }
+
+    bool isEntryBlock(size_t blockIdx) const {
+        return blockIdx == 0;
+    }
+
+    bool isEndBlock(size_t blockIdx) const {
+        return blockIdx == blocks.size() - 1;
     }
 
 private:

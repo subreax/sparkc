@@ -26,6 +26,13 @@ public:
         return (SkrVar*) this;
     }
 
+    const SkrVar* toSkrVar() const {
+        return (const SkrVar*) this;
+    }
+
+    bool operator==(const SkrValue& other) const;
+    bool operator!=(const SkrValue& other) const;
+
     const Kind kind;
 };
 

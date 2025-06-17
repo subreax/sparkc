@@ -92,6 +92,13 @@ public:
         throw std::out_of_range("BoundArray index is out of range");
     }
 
+    void set(size_t idx, const T& value) {
+        if (idx < itemsCount) {
+            mem[idx] = value;
+        }
+        throw std::out_of_range("BoundArray index is out of range");
+    }
+
     size_t size() const { return itemsCount; }
 
     Iterator begin() {
