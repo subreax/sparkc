@@ -26,7 +26,14 @@ public:
                 auto* left = br->getLeft();
                 auto* right = br->getRight();
                 if (left->isConst() && right->isConst()) {
-                    *it = evaluate(a, br);
+                    *it = evaluateConst(a, br);
+                }
+                else if (left->isVar() && *left == *right) {
+                    if (br->getOperator() == SkrBranch::Operator::Equals) {
+                        *it = a.create<SkrJump>(br->getLabel());
+                    } else {
+                        *it = NOP;
+                    }
                 }
             }
             else if (skr->kind == SkrInstruction::Kind::Int2Float) {
@@ -193,7 +200,7 @@ private:
         return a.create<FloatConstant>(res);
     }
 
-    static SkrInstruction* evaluate(Allocator& a, SkrBranch* branch) {
+    static SkrInstruction* evaluateConst(Allocator& a, SkrBranch* branch) {
         auto* left = branch->getLeft()->toSkrConst()->getConst();
         auto* right = branch->getRight()->toSkrConst()->getConst();
 

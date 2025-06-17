@@ -17,6 +17,8 @@ public:
         bool deadStoreElimination = true;
     };
 
+    static constexpr size_t MAX_ITERATIONS = 50;
+
     class OnGraphCreatedListener {
     public:
         virtual ~OnGraphCreatedListener() = default;
@@ -36,12 +38,14 @@ public:
             delete initialGraph;
         }
 
-        for (size_t i = 1; i <= 4; i++) {
+        std::vector<SkrInstruction*> optimized = raw;
+
+        for (size_t i = 1; i <= MAX_ITERATIONS; i++) {
             if (config.constantFolding) {
-                ConstantFolding::run(a1, raw);
+                ConstantFolding::run(a1, optimized);
             }
     
-            auto* graph = CfgBuilder<SkrInstruction>().build_delGraphWhenDone(raw);
+            auto* graph = CfgBuilder<SkrInstruction>().build_delGraphWhenDone(optimized);
             
             if (config.deadCodeElimination) {
                 UnreachableCodeElimination(graph).run();
@@ -51,12 +55,17 @@ public:
             }
 
             notifyGraphCreated(rawFunc->getName(), i, graph);
-            raw.clear();
-            graph->toPlain(raw);
 
+            optimized.clear();
+            graph->toPlain(optimized);
             delete graph;
-        }
 
+            if (raw == optimized) {
+                break;
+            }
+
+            raw = optimized;
+        }
 
         auto bodyBa = BoundArray<SkrInstruction*>::fromVector(raw, a1);
         return a1.create<SkrFunction>(

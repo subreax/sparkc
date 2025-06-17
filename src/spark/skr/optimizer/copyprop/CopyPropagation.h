@@ -55,13 +55,19 @@ private:
         }
         else if (instr->kind == SkrInstruction::Kind::FunCall) {
             auto* it = (SkrFunCall*) instr;
-            auto& args = it->getArgs();
-            for (size_t i = 0; i < args.size(); i++) {
-                args.set(i, replace(args[i], copies));
-            }
+            auto newArgs = replace(it->getArgs(), copies);
+            return allocator.create<SkrFunCall>(it->getName(), newArgs, it->getRetVar());
         }
 
         return instr;
+    }
+
+    BoundArray<SkrValue*> replace(const BoundArray<SkrValue*>& arr, const std::vector<SkrCopy*>& copies) {
+        auto newArr = BoundArray<SkrValue*>::create(arr.size(), allocator);
+        for (size_t i = 0; i < arr.size(); i++) {
+            newArr.set(i, replace(arr[i], copies));
+        }
+        return newArr;
     }
 
     static SkrValue* replace(SkrValue* value, const std::vector<SkrCopy*>& copies) {
