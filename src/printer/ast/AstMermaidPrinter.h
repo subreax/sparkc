@@ -22,10 +22,9 @@ private:
 
     private:
         static std::string genId() {
+            static int idCounter = 0;
             return "id" + std::to_string(idCounter++);
         }
-
-        static int idCounter;
     };
 
 public:
@@ -171,6 +170,18 @@ public:
             auto* cast = (AstCast*) exp;
             auto node = Node(*this, kindStr, { "type", type2string(cast) });
             connect(node, toMermaid(cast->getExp()));
+            return node.id;
+        }
+        else if (kind == AstExp::Kind::Dereference) {
+            auto* dereference = (AstDereference*) exp;
+            Node node(*this, kindStr, { "type", type2string(dereference) });
+            connect(node, toMermaid(dereference->getExpression()));
+            return node.id;
+        }
+        else if (kind == AstExp::Kind::AddrOf) {
+            auto* addrOf = (AstAddrOf*) exp;
+            Node node(*this, kindStr, { "type", type2string(addrOf) });
+            connect(node, toMermaid(addrOf->getExpression()));
             return node.id;
         }
         else {

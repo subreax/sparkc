@@ -1,9 +1,5 @@
-int pixel(int arg) {
-    int zz = 12;
-    int asd = 34;
-    if (arg > 0) {
-        return zz + 5;
-    } else {
-        return arg + asd + 8;
-    }
+int pixel(int& arg) {
+    int& a = arg;
+    a = arg;
+    return a;
 }

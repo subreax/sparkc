@@ -23,6 +23,7 @@ enum TokenKind {
     T_FWD_SLASH,//
     T_PERCENT,//
     T_EQUALS,//
+    T_AMP,//
     T_AMP_AMP,//
     T_VBAR_VBAR,//
     T_EQUALS_EQUALS,//

@@ -80,6 +80,7 @@ private:
         { T_NOT_EQUALS, TokenReaders::readNotEquals, },
         { T_EQUALS, TokenReaders::readEquals },
         { T_AMP_AMP, TokenReaders::readAmpAmp },
+        { T_AMP, TokenReaders::readAmp },
         { T_VBAR_VBAR, TokenReaders::readVBarVBar },
         { T_LESS_OR_EQ, TokenReaders::readLessOrEq },
         { T_LESS_THAN, TokenReaders::readLessThan },

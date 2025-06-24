@@ -57,3 +57,4 @@ public:
 private:
     const char* id;
 };
+

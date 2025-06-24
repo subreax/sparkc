@@ -6,9 +6,8 @@
 
 class IdentifierResolution {
 public:
-    IdentifierResolution(SymbolTable& table, Allocator& typeAlloc) 
-        : table(table)
-        , typeAlloc(typeAlloc) {  }
+    IdentifierResolution(SymbolTable& table) 
+        : table(table) {  }
 
     void resolve(AstProgram* program) {
         for (auto* func : program->functions) {
@@ -23,11 +22,13 @@ public:
 private:
     void declareFunction(AstFunction* func) {
         const auto& params = func->getParams();
+        auto& typeAlloc = table.getTypeAllocator();
         BoundArray<SymbolType*> paramTypes = BoundArray<SymbolType*>::create(params.size(), typeAlloc);
         for (size_t i = 0; i < params.size(); i++) {
-            auto* type = params[i]->getType();
+            AstFunParam* param = params[i];
+            auto* type = param->getType();
             paramTypes[i] = type;
-            table.declare(params[i]->getIdentifier(), type);
+            table.declare(param->getIdentifier(), type);
         }
 
         SymbolFunctionType* funcType = typeAlloc.create<SymbolFunctionType>(func->getReturnType(), paramTypes);
@@ -68,6 +69,10 @@ private:
                 resolve(falseBranch);
             }
         }
+        else if (st->kind == AstStatement::Kind::While) {
+            auto* it = (AstWhileStatement*) st;
+            resolve(it->getStatement());
+        }
         else if (st->kind == AstStatement::Kind::Compound) {
             auto* it = (AstCompoundStatement*) st;
             resolve(it->getBlock());
@@ -75,5 +80,4 @@ private:
     }
 
     SymbolTable& table;
-    Allocator& typeAlloc;
 };

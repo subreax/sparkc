@@ -99,6 +99,7 @@ public:
     static StringRef readLessOrEq(const char* src) { return readString(src, "<="); }
     static StringRef readGreaterOrEq(const char* src) { return readString(src, ">="); }
     static StringRef readComma(const char* src) { return readChar(src, ','); }
+    static StringRef readAmp(const char* src) { return readChar(src, '&'); }
     static StringRef readEOF(const char* src) { return readChar(src, '\0'); }
 
 private:

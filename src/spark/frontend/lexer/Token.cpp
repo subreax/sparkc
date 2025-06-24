@@ -2,7 +2,7 @@
 
 static constexpr const char* _TokenKind2String[] = {
     "int",
-    "unit",
+    "float",
     "return",
     "if",
     "else",
@@ -13,6 +13,7 @@ static constexpr const char* _TokenKind2String[] = {
     "open brace",
     "close brace",
     "<int constant>",
+    "<float constant>",
     "semicolon",
     "plus",
     "hyphen",
@@ -20,6 +21,7 @@ static constexpr const char* _TokenKind2String[] = {
     "fwd slash",
     "percent",
     "equals",
+    "&",
     "&&",
     "||",
     "==",

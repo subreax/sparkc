@@ -12,11 +12,13 @@ public:
     Parser(
         Lexer& lexer, 
         Allocator& allocator, 
+        Allocator& typeAlloc,
         IdentifierGen& idGen,
         Scope& scope
     )
         : lexer(lexer)
         , allocator(allocator)
+        , typeAlloc(typeAlloc)
         , idGen(idGen)
         , scope(scope)
     {
@@ -59,6 +61,9 @@ public:
         return allocator.create<AstFunction>(funName, retType, paramsBa, block);
     }
 
+    bool hasNext() const { return current.kind != T_EOF; }
+
+private:
     AstFunParam* parseFunParam() {
         auto* type = parseType();
         auto id = scope.declare(expect(T_IDENTIFIER));
@@ -210,9 +215,6 @@ public:
         }
     }
 
-    bool hasNext() const { return current.kind != T_EOF; }
-
-private:
     int32_t parseInt(const Token& token) {
         if (token.value.getLength() > 12) {
             throw ParseConstException(token);
@@ -253,16 +255,24 @@ private:
     }
 
     SymbolType* tryParseType() {
+        SymbolType* type;
         if (current.kind == T_INT_KEYWORD) {
             takeToken();
-            return SymbolIntType::getInstance();
+            type = SymbolIntType::getInstance();
         }
         else if (current.kind == T_FLOAT_KEYWORD) {
             takeToken();
-            return SymbolFloatType::getInstance();
+            type = SymbolFloatType::getInstance();
         }
         else {
             return nullptr;
+        }
+
+        if (current.kind == T_AMP) {
+            takeToken();
+            return typeAlloc.create<SymbolPointerType>(type);
+        } else {
+            return type;
         }
     }
 
@@ -319,6 +329,7 @@ private:
     Token current;
     Lexer& lexer;
     Allocator& allocator;
+    Allocator& typeAlloc;
     IdentifierGen& idGen;
     Scope& scope;
 };

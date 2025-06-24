@@ -10,6 +10,7 @@ public:
 
     AstExp* getVar() { return var; }
     AstExp* getExp() { return exp; }
+    void setExp(AstExp* exp) { this->exp = exp; }
 
 private:
     AstExp* var;

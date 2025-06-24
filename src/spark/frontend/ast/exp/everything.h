@@ -6,3 +6,5 @@
 #include "AstAssignment.h"
 #include "AstFunCall.h"
 #include "AstCast.h"
+#include "AstDereference.h"
+#include "AstAddrOf.h"

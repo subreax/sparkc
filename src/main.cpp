@@ -52,18 +52,17 @@ int main(int argc, char** argv) {
     LinearAllocator astAlloc(2048);
     LinearAllocator idAlloc(2048, true);
     LinearAllocator scopeAlloc(2048, true);
-    LinearAllocator typeAlloc(2048);
+    LinearAllocator typeAlloc(512);
 
     IdentifierGen idGen(idAlloc);
     LabelGen labelGen(idAlloc);
-
+    SymbolTable symbolTable(typeAlloc);
     Scope scope(idGen, scopeAlloc);
-    SymbolTable symbolTable;
-    Parser parser(lexer, astAlloc, idGen, scope);
+    Parser parser(lexer, astAlloc, symbolTable.getTypeAllocator(), idGen, scope);
     AstProgram* program;
     try {
         program = parser.parseProgram();
-        Semantic(symbolTable, typeAlloc, astAlloc).process(program);
+        Semantic(symbolTable, astAlloc).process(program);
     } catch (ParseException& e) {
         printError(e, source);
         return 1;
@@ -151,8 +150,8 @@ void printMemoryUsage(const char* name, size_t used, size_t cap) {
     auto percentage = used * 100 / cap;
     printf("%-13s", name);
     
-    char buf[8];
-    snprintf(buf, sizeof(buf), "%3d %% ", percentage);
+    char buf[16];
+    snprintf(buf, sizeof(buf), "%5d ", used);
     printf("%5s ", buf);
 
     const int w = cap * 45 / 4096;
@@ -162,10 +161,10 @@ void printMemoryUsage(const char* name, size_t used, size_t cap) {
             cout << "#";
         }
         else {
-            cout << " ";
+            cout << ".";
         }
     }
-    cout << "] " /* << used << " / " << cap */ << endl;
+    cout << "] " << endl;
 }
 
 void printAllocatorStats(const char* name, const LinearAllocator& allocator) {

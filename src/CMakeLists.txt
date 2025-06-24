@@ -9,5 +9,4 @@ add_executable(sparkc
     spark/skr/value/SkrValue.cpp
     printer/skr/SkrPrinter.cpp
     printer/rva/RvaPrinter.cpp
-    printer/ast/AstMermaidPrinter.cpp
 )

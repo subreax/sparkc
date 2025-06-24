@@ -3,7 +3,7 @@
 
 class SymbolType {
 public:
-    enum class Kind { Integer, Float, Function };
+    enum class Kind { Integer, Float, Pointer, Function };
 
     SymbolType(Kind kind) : kind(kind) {  }
 
@@ -41,9 +41,21 @@ public:
         , retType(retType) {  }
 
     BoundArray<SymbolType*> getParams() { return params; }
-    SymbolType* getReturnType() { return retType; }
+    const BoundArray<SymbolType*> getParams() const { return params; }
+
+    SymbolType* getReturnType() const { return retType; }
 
 private:
     BoundArray<SymbolType*> params;
     SymbolType* retType;
+};
+
+class SymbolPointerType : public SymbolType {
+public:
+    SymbolPointerType(SymbolType* varType) : SymbolType(Kind::Pointer), varType(varType) {  }
+
+    SymbolType* getVarType() const { return varType; }
+
+private:
+    SymbolType* varType;
 };
