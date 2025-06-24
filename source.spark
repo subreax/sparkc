@@ -1,12 +1,9 @@
-int tmp2(int arg) {
-    int x;
-    int y;
-    if (arg == 0) {
-        y = 20;
-        x = y;
+int pixel(int arg) {
+    int zz = 12;
+    int asd = 34;
+    if (arg > 0) {
+        return zz + 5;
     } else {
-        y = 100;
-        x = y;
+        return arg + asd + 8;
     }
-    return x;
 }

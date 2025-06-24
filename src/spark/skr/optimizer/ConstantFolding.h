@@ -2,6 +2,7 @@
 #include <cmath>
 #include "../../common/alloc/Allocator.h"
 #include "../instr/everything.h"
+#include "SkrOptimizerUtils.h"
 
 class ConstantFolding {
 public:
@@ -32,7 +33,7 @@ public:
                     if (br->getOperator() == SkrBranch::Operator::Equals) {
                         *it = a.create<SkrJump>(br->getLabel());
                     } else {
-                        *it = NOP;
+                        *it = nullptr;
                     }
                 }
             }
@@ -61,10 +62,8 @@ public:
             it++;
         }
 
-        filterNops(instructions);
+        SkrOptimizerUtils::filterNullptrs(instructions);
     }
-
-    static constexpr SkrInstruction* NOP = nullptr;
 
 private:
     static SkrConst* evaluate(Allocator& a, SkrConst* left, SkrBinary::Operator op, SkrConst* right) {
@@ -213,13 +212,13 @@ private:
         }
         else {
             sparkError("ConstantFolding", "Unknown type for comparison: %d", left->type->kind);
-            return NOP;
+            return nullptr;
         }
 
         if (res) {
             return a.create<SkrJump>(branch->getLabel());
         } else {
-            return NOP;
+            return nullptr;
         }
     }
 
@@ -248,21 +247,6 @@ private:
         default:
             sparkError("ConstantFolding", "Unknown branch operator: %d", op);
             return false;
-        }
-    }
-
-    static void filterNops(std::vector<SkrInstruction*>& skrs) {
-        size_t offset = 0;
-        for (size_t i = 0; i < skrs.size(); i++) {
-            if (skrs[i] == NOP) {
-                offset++;
-            } else {
-                skrs[i - offset] = skrs[i];
-            }
-        }
-
-        if (offset > 0) {
-            skrs.resize(skrs.size() - offset);
         }
     }
 };

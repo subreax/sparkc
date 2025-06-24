@@ -194,6 +194,10 @@ public:
         return blocks;
     }
 
+    size_t getBlocksCount() const {
+        return blocks.size();
+    }
+
     void toPlain(std::vector<I>& out) {
         for (CfgBlock<I>* block : blocks) {
             if (hasConnections(block)) {

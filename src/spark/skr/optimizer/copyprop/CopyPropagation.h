@@ -2,6 +2,7 @@
 #include <vector>
 #include "../../../common/cfg/CfGraph.h"
 #include "ReachingCopiesAnalysis.h"
+#include "../SkrOptimizerUtils.h"
 
 class CopyPropagation {
 public:
@@ -24,10 +25,10 @@ public:
             for (size_t instrIdx = 0; instrIdx < instrCount; instrIdx++) {
                 body[instrIdx] = rewriteInstruction(block, annotated, instrIdx);
                 if (shouldBeRemoved(body[instrIdx])) {
-                    body[instrIdx] = NOP;
+                    body[instrIdx] = nullptr;
                 }
             }
-            removeNops(body);
+            SkrOptimizerUtils::filterNullptrs(body);
         }
     }
 
@@ -47,7 +48,7 @@ private:
             auto* it = (SkrCopy*) instr;
             auto* from = replace(it->getFrom(), copies);
             if (*from == *it->getTo()) {
-                return NOP;
+                return nullptr;
             }
             if (from != it->getFrom()) {
                 return allocator.create<SkrCopy>(it->getTo(), from);
@@ -95,18 +96,6 @@ private:
     CfgBlock<SkrInstruction*>* getBlock(int idx) { return graph->getBlock(idx); }
     const CfgBlock<SkrInstruction*>* getBlock(int idx) const { return graph->getBlock(idx); }
 
-    static void removeNops(std::vector<SkrInstruction*>& skrs) {
-        size_t offset = 0;
-        for (size_t i = 0; i < skrs.size() - offset; i++) {
-            if (skrs[i] == NOP) {
-                offset++;
-            }
-            skrs[i] = skrs[i + offset];
-        }
-
-        skrs.resize(skrs.size() - offset);
-    }
-
     static SkrCopy* findCopyByDst(const std::vector<SkrCopy*>& copies, SkrVar* var) {
         for (auto* c : copies) {
             if (*c->getTo() == *var) {
@@ -115,8 +104,6 @@ private:
         }
         return nullptr;
     }
-
-    static constexpr SkrInstruction* NOP = nullptr;
 
     CfGraph<SkrInstruction*>* graph;
     Allocator& allocator;

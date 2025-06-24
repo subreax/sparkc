@@ -33,13 +33,13 @@ private:
             skrParams[i] = skrParam;
         }
 
-        funcResult = createVar("retval", func->getReturnType());
+        funcRetVal = createVar("retval", func->getReturnType());
         retLabel = labelGen.uniqueInternal("ret");
         emit(func->getBlock());
         out.emplace_back(allocator.create<SkrLabel>(retLabel));
 
         auto baInstructions = BoundArray<SkrInstruction*>::fromVector(out, allocator);
-        return allocator.create<SkrFunction>(func->getName(), skrParams, baInstructions, funcResult->getId());
+        return allocator.create<SkrFunction>(func->getName(), skrParams, baInstructions, funcRetVal);
     }
 
     void emit(const AstBlock* block) {
@@ -81,7 +81,7 @@ private:
         if (kind == AstStatement::Kind::Return) {
             auto* it = (AstReturnStatement*) st;
             auto* retVal = emit(it->getExpression());
-            out.emplace_back(allocator.create<SkrCopy>(funcResult, retVal));
+            out.emplace_back(allocator.create<SkrCopy>(funcRetVal, retVal));
             out.emplace_back(allocator.create<SkrJump>(retLabel));
         }
         else if (kind == AstStatement::Kind::Expression) {
@@ -174,8 +174,11 @@ private:
         else if (kind == AstExp::Kind::Assignment) {
             auto* ass = (AstAssignment*) exp;
             SkrValue* left = emit(ass->getVar());
+            if (!left->isVar()) {
+                sparkError("SkrEmitter", "Left is expected to be a variable");
+            }
             SkrValue* right = emit(ass->getExp());
-            out.emplace_back(allocator.create<SkrCopy>(left, right));
+            out.emplace_back(allocator.create<SkrCopy>(left->toSkrVar(), right));
             return left;
         }
         else if (kind == AstExp::Kind::FunCall) {
@@ -185,8 +188,8 @@ private:
             auto* it = (AstCast*) exp;
             auto targetType = exp->type;
             SkrValue* srcVal = emit(it->getExp());
-            SkrValue* dstVar = createVar("cast", targetType);
-            
+            SkrVar* dstVar = createVar("cast", targetType);
+
             if (getTypeKind(srcVal) == SymbolType::Kind::Integer && targetType->kind == SymbolType::Kind::Float) {
                 out.emplace_back(allocator.create<SkrInt2Float>(dstVar, srcVal));
             }
@@ -422,7 +425,7 @@ private:
     IdentifierGen& idGen;
     LabelGen& labelGen;
     std::vector<SkrInstruction*>& out;
-    SkrVar* funcResult = nullptr;
+    SkrVar* funcRetVal = nullptr;
     const char* funName = nullptr;
     const char* retLabel = nullptr;
     SkrConst* skrZero = nullptr;

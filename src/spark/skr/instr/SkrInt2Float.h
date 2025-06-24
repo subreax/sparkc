@@ -3,15 +3,18 @@
 
 class SkrInt2Float : public SkrInstruction {
 public:
-    SkrInt2Float(SkrValue* dst, SkrValue* src)
+    SkrInt2Float(SkrVar* dst, SkrValue* src)
         : SkrInstruction(Kind::Int2Float)
         , dst(dst)
         , src(src) {  }
 
-    SkrValue* getDst() { return dst; }
+    SkrVar* getDst() { return dst; }
+    const SkrVar* getDst() const { return dst; }
+
     SkrValue* getSrc() { return src; }
+    const SkrValue* getSrc() const { return src; }
 
 private:
-    SkrValue* dst;
+    SkrVar* dst;
     SkrValue* src;
 };

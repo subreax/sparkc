@@ -6,20 +6,20 @@
 
 class SkrFunction {
 public:
-    SkrFunction(const char* name, BoundArray<SkrVar*> params, BoundArray<SkrInstruction*> instructions, const char* resultId)
+    SkrFunction(const char* name, BoundArray<SkrVar*> params, BoundArray<SkrInstruction*> instructions, const SkrVar* retVar)
         : instructions(instructions)
         , params(params)
-        , resultId(resultId)
+        , retVar(retVar)
         , name(name) {  }
 
     const char* getName() const { return name; }
     const BoundArray<SkrVar*>& getParams() const { return params; }
-    const char* getResultIdentifier() const { return resultId; }
+    const SkrVar* getRetVar() const { return retVar; }
     BoundArray<SkrInstruction*>& getInstructions() { return instructions; }
 
 private:
     BoundArray<SkrInstruction*> instructions;
     BoundArray<SkrVar*> params;
-    const char* resultId;
+    const SkrVar* retVar;
     const char* name;
 };

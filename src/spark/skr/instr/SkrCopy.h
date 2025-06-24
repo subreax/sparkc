@@ -4,13 +4,13 @@
 
 class SkrCopy : public SkrInstruction {
 public:
-    SkrCopy(SkrValue* to, SkrValue* from) 
+    SkrCopy(SkrVar* to, SkrValue* from) 
         : SkrInstruction(Kind::Copy)
         , to(to)
         , from(from) {  }
 
     SkrValue* getFrom() { return from; }
-    SkrValue* getTo() { return to; }
+    SkrVar* getTo() { return to; }
 
     bool operator==(const SkrCopy& other) const {
         return *to == *other.to && *from == *other.from;
@@ -21,6 +21,6 @@ public:
     }
 
 private:
-    SkrValue* to;
+    SkrVar* to;
     SkrValue* from;
 };

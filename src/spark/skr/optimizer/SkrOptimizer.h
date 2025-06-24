@@ -7,6 +7,7 @@
 #include "ConstantFolding.h"
 #include "UnreachableCodeElimination.h"
 #include "copyprop/CopyPropagation.h"
+#include "dselim/DeadStoreElimination.h"
 
 class SkrOptimizer {
 public:
@@ -53,6 +54,9 @@ public:
             if (config.copyPropagation) {
                 CopyPropagation(graph, a1).run();
             }
+            if (config.deadStoreElimination) {
+                DeadStoreElimination(graph, rawFunc->getRetVar()).run();
+            }
 
             notifyGraphCreated(rawFunc->getName(), i, graph);
 
@@ -72,7 +76,7 @@ public:
             rawFunc->getName(),
             rawFunc->getParams(),
             bodyBa,
-            rawFunc->getResultIdentifier()
+            rawFunc->getRetVar()
         );
     }
 

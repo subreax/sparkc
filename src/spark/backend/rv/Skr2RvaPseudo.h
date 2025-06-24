@@ -85,7 +85,7 @@ private:
             }
         }
 
-        auto* resultPseudoReg = allocator.create<RvaPseudoReg>(func->getResultIdentifier());
+        auto* resultPseudoReg = allocator.create<RvaPseudoReg>(func->getRetVar()->getId());
         auto* a0Reg = allocator.create<RvaRegister>(RvReg::A0);
         add<RvaMov>(a0Reg, resultPseudoReg);
         addInstr(epilogue);

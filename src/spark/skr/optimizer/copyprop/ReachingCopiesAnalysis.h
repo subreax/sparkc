@@ -79,6 +79,14 @@ private:
                 auto* callInstr = (SkrFunCall*) instr;
                 currentCopies.kill(callInstr->getRetVar());
             }
+            else if (instr->kind == SkrInstruction::Kind::Float2Int) {
+                auto* it = (SkrFloat2Int*) instr;
+                currentCopies.kill(it->getDst()->toSkrVar());
+            }
+            else if (instr->kind == SkrInstruction::Kind::Int2Float) {
+                auto* it = (SkrInt2Float*) instr;
+                currentCopies.kill(it->getDst()->toSkrVar());
+            }
         }
         annotated->blockCopies = currentCopies.getCopies();
     }
