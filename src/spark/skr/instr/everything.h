@@ -8,3 +8,6 @@
 #include "SkrFunCall.h"
 #include "SkrInt2Float.h"
 #include "SkrFloat2Int.h"
+#include "SkrLoad.h"
+#include "SkrStore.h"
+#include "SkrGetAddr.h"

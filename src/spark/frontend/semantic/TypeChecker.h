@@ -146,10 +146,13 @@ private:
         if (kind != AstExp::Kind::Var) {
             throw TypeException(std::string("Expressions can only be assigned to variables, not to a ") + AstExp::kindToString(kind));
         }
+
         typeCheck(ass->getVar());
-        typeCheck(ass->getExp());
-        ass->setExp(castToPlainType(ass->getExp(), ass->getVar()->type));
+        ass->setVar(dereference(ass->getVar()));
         ass->type = ass->getVar()->type;
+
+        typeCheck(ass->getExp());
+        ass->setExp(cast(ass->getExp(), ass->type));
     }
 
     static SymbolType* getCommonType(AstExp* e1, AstExp* e2) {
@@ -157,8 +160,8 @@ private:
     }
 
     static SymbolType* getCommonType(SymbolType* t1, SymbolType* t2) {
-        auto k1 = getPlainType(t1)->kind;
-        auto k2 = getPlainType(t2)->kind;
+        auto k1 = t1->kind;
+        auto k2 = t2->kind;
         if (k1 == k2) {
             return t1;
         }
@@ -172,17 +175,28 @@ private:
         else if (k1 == SymbolType::Kind::Float && k2 == SymbolType::Kind::Integer) {
             return t1;
         }
+        else if (k1 == SymbolType::Kind::Pointer || k2 == SymbolType::Kind::Pointer) {
+            return getCommonType(dereference(t1), dereference(t2));
+        }
         else {
             sparkError("TypeChecker", "Can't figure out common type: %d %d", k1, k2);
             return t1;
         }
     }
 
-    static SymbolType* getPlainType(SymbolType* t) {
+    static SymbolType* dereference(SymbolType* t) {
         if (t->kind == SymbolType::Kind::Pointer) {
-            return getPlainType(((SymbolPointerType*) t)->getVarType());
+            return ((SymbolPointerType*) t)->getVarType();
         }
         return t;
+    }
+
+    AstExp* dereference(AstExp* exp) {
+        auto* type = exp->type;
+        if (type->kind == SymbolType::Kind::Pointer) {
+            return allocator.create<AstDereference>(exp, dereference(type));
+        }
+        return exp;
     }
 
     AstExp* cast(AstExp* exp, SymbolType* targetType) {
@@ -190,27 +204,20 @@ private:
             return exp;
         }
         else if (exp->hasType(SymbolType::Kind::Pointer)) {
-            auto* ptrType = (SymbolPointerType*) exp->type;
-            auto* dereferenced = allocator.create<AstDereference>(exp, ptrType->getVarType());
-            return cast(dereferenced, targetType);
+            return cast(dereference(exp), targetType);
         }
         else if (targetType->kind == SymbolType::Kind::Pointer) {
             if (exp->kind != AstExp::Kind::Var) {
                 throw TypeException("Can't get address: exp is not AstVar");
             }
 
-            auto* ptrType = (SymbolPointerType*) targetType;
-            if (exp->type->kind == ptrType->getVarType()->kind) {
-                return allocator.create<AstAddrOf>(exp, ptrType);
+            if (exp->type->kind == dereference(targetType)->kind) {
+                return allocator.create<AstAddrOf>(exp, targetType);
             } else {
                 throw TypeException("Can't reference to a variable with another type");
             }
         }
         return allocator.create<AstCast>(exp, targetType);
-    }
-
-    AstExp* castToPlainType(AstExp* exp, SymbolType* targetType) {
-        return cast(exp, getPlainType(targetType));
     }
 
     SymbolTable& table;

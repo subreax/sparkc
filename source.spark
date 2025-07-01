@@ -1,5 +1,7 @@
-int pixel(int& arg) {
-    int& a = arg;
-    a = arg;
-    return a;
+int pixel(float x, float& r, float& g, float& b) {
+    float br = 0.5;
+    r = 1.0 * x * br;
+    g = 0.5 * x * br;
+    b = (1.0 - x) * br;
+    return 0;
 }

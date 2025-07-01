@@ -9,6 +9,8 @@ public:
         , exp(exp) {  }
 
     AstExp* getVar() { return var; }
+    void setVar(AstExp* var) { this->var = var; }
+
     AstExp* getExp() { return exp; }
     void setExp(AstExp* exp) { this->exp = exp; }
 

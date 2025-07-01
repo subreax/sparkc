@@ -10,3 +10,4 @@
 #include "RvaEpilogue.h"
 #include "RvaBranch.h"
 #include "RvaCall.h"
+#include "RvaGetAddress.h"

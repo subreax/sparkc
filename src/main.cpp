@@ -92,7 +92,7 @@ int main(int argc, char** argv) {
     }
     cout << endl;
 
-    CfgGraphPrinter graphPrinter(symbolTable);
+    /* CfgGraphPrinter graphPrinter(symbolTable);
 
     cout << "== skr optimized ==" << endl;
     for (int i = 0; i < skrFunctions.size(); i++) {
@@ -100,7 +100,7 @@ int main(int argc, char** argv) {
         SkrPrinter::print(cout, skrFunctions[i], symbolTable);
         cout << endl;
     }
-    cout << endl;
+    cout << endl; */
 
     size_t rva1Peak = 0;
     std::vector<RvaInstruction*> rva;

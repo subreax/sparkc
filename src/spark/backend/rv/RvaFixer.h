@@ -24,6 +24,9 @@ private:
             case RvaInstruction::Kind::Move:        fix((RvaMov*) rva); break;
             case RvaInstruction::Kind::Binary:      fix((RvaBinary*) rva); break;
             case RvaInstruction::Kind::Branch:      fix((RvaBranch*) rva); break;
+            case RvaInstruction::Kind::Load:        fix((RvaLoad*) rva); break;
+            case RvaInstruction::Kind::Store:       fix((RvaStore*) rva); break;
+            case RvaInstruction::Kind::GetAddress:  fix((RvaGetAddress*) rva); break;
 
             case RvaInstruction::Kind::Call:        clone((RvaCall*) rva); break;
             case RvaInstruction::Kind::Epilogue:    clone((RvaEpilogue*) rva); break;
@@ -72,15 +75,50 @@ private:
             right = moveToReg(it->right, RvReg::T2);
         }
         add(allocator.create<RvaBinary>(dstReg, leftReg, it->op, right));
-        if (it->dst->kind == RvaValue::Kind::Memory) {
-            add(allocator.create<RvaStore>(clone(it->dst), dstReg));
-        }
+        storeIfNeeded(it->dst, dstReg);
     }
 
     void fix(RvaBranch* it) {
         auto* left = moveToReg(it->left, RvReg::T0);
         auto* right = moveToReg(it->right, RvReg::T1);
         add(allocator.create<RvaBranch>(left, it->op, right, it->label));
+    }
+
+    void fix(RvaLoad* it) {
+        auto* toReg = getRegisterOrNew(it->to, RvReg::T0);
+        auto* fromAddrReg = moveToReg(it->fromAddr, RvReg::T1);
+        auto* fromMem = allocator.create<RvaMemory>(fromAddrReg->getReg(), 0);
+        add(allocator.create<RvaLoad>(toReg, fromMem));
+        storeIfNeeded(it->to, toReg);
+    }
+
+    void fix(RvaStore* it) {
+        auto* fromReg = moveToReg(it->from, RvReg::T0);
+        auto* toAddrReg = moveToReg(it->toAddr, RvReg::T1);
+        auto* toMem = allocator.create<RvaMemory>(toAddrReg->getReg(), 0);
+        add(allocator.create<RvaStore>(toMem, fromReg));
+    }
+
+    void fix(RvaGetAddress* it) {
+        auto* toReg = moveToReg(it->to, RvReg::T0);
+        if (it->of->kind != RvaValue::Kind::Memory) {
+            sparkError("RvaFixer", "Failed to fix RvaGetAddress: 'of' is not a memory");
+        }
+
+        auto* mem = (RvaMemory*) it->of;
+        add(allocator.create<RvaBinary>(
+            toReg, 
+            allocator.create<RvaRegister>(mem->getBase()), 
+            RvaBinary::Operator::Plus,
+            allocator.create<RvaImm>(mem->getOffset())
+        ));
+        storeIfNeeded(it->to, toReg);
+    }
+
+    void storeIfNeeded(RvaValue* initial, RvaRegister* reg) {
+        if (initial->kind == RvaValue::Kind::Memory) {
+            add(allocator.create<RvaStore>(clone(initial), reg));
+        }
     }
 
     RvaRegister* getRegisterOrNew(RvaValue* v, RvReg reg) {

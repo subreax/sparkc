@@ -80,6 +80,18 @@ private:
                 emitFloat2Int((SkrFloat2Int*) skr);
                 break;
 
+            case SkrInstruction::Kind::Load:
+                emitLoad((SkrLoad*) skr);
+                break;
+
+            case SkrInstruction::Kind::Store:
+                emitStore((SkrStore*) skr);
+                break;
+
+            case SkrInstruction::Kind::GetAddr:
+                emitGetAddr((SkrGetAddr*) skr);
+                break;
+
             default:
                 sparkError("Skr2RvaPseudo", "Unknown skr kind: %d", skr->kind);
             }
@@ -166,6 +178,18 @@ private:
     void emitFloat2Int(SkrFloat2Int* it) {
         // todo: could be wrong
         add<RvaBinary>(toPseudo(it->getDst()), toPseudo(it->getSrc()), RvaBinary::Operator::ShiftRight, newImm(15));
+    }
+
+    void emitLoad(SkrLoad* it) {
+        add<RvaLoad>(toPseudo(it->getTo()), toPseudo(it->getFrom()));
+    }
+
+    void emitStore(SkrStore* it) {
+        add<RvaStore>(toPseudo(it->getTo()), toPseudo(it->getFrom()));
+    }
+
+    void emitGetAddr(SkrGetAddr* it) {
+        add<RvaGetAddress>(toPseudo(it->getTo()), toPseudo(it->getVar()));
     }
 
     template<typename T, typename... Args>

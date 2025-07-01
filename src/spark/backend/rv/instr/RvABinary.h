@@ -40,7 +40,11 @@ public:
         switch (op) {
         case Operator::Plus:
             // todo: support left or right as imm
-            listing += Rv32I::add(expectReg(dst), expectReg(left), expectReg(right));
+            if (right->kind == RvaValue::Kind::Imm) {
+                listing += Rv32I::addi(expectReg(dst), expectReg(left), expectImm(right));
+            } else {
+                listing += Rv32I::add(expectReg(dst), expectReg(left), expectReg(right));
+            }
             break;
 
         case Operator::Minus:

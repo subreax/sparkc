@@ -40,6 +40,9 @@ private:
         case RvaInstruction::Kind::Binary:      replace((RvaBinary*) it); break;
         case RvaInstruction::Kind::Move:        replace((RvaMov*) it); break;
         case RvaInstruction::Kind::Branch:      replace((RvaBranch*) it); break;
+        case RvaInstruction::Kind::Load:        replace((RvaLoad*) it); break;
+        case RvaInstruction::Kind::Store:       replace((RvaStore*) it); break;
+        case RvaInstruction::Kind::GetAddress:  replace((RvaGetAddress*) it); break;
         }
     }
 
@@ -57,6 +60,21 @@ private:
     void replace(RvaBranch* it) {
         replace(&it->left);
         replace(&it->right);
+    }
+
+    void replace(RvaLoad* it) {
+        replace(&it->to);
+        replace(&it->fromAddr);
+    }
+    
+    void replace(RvaStore* it) {
+        replace(&it->toAddr);
+        replace(&it->from);
+    }
+
+    void replace(RvaGetAddress* it) {
+        replace(&it->to);
+        replace(&it->of);
     }
 
     inline void replace(RvaValue** v) {
