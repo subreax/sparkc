@@ -44,6 +44,10 @@ private:
         if (decl->kind == AstDeclaration::Kind::Var) {
             auto* varDecl = (AstVarDeclaration*) decl;
             auto* initExp = varDecl->getInitializer();
+            if (varDecl->getType()->kind == SymbolType::Kind::Pointer && initExp == nullptr) {
+                throw TypeException("Reference is not initialized");
+            }
+
             if (initExp != nullptr) {
                 typeCheck(initExp);
                 varDecl->setInitializer(cast(initExp, varDecl->getType()));
@@ -175,8 +179,11 @@ private:
         else if (k1 == SymbolType::Kind::Float && k2 == SymbolType::Kind::Integer) {
             return t1;
         }
-        else if (k1 == SymbolType::Kind::Pointer || k2 == SymbolType::Kind::Pointer) {
-            return getCommonType(dereference(t1), dereference(t2));
+        else if (k1 == SymbolType::Kind::Pointer && k2 == SymbolType::Kind::Pointer) {
+            if (dereference(t1)->kind != dereference(t2)->kind) {
+                throw TypeException("Can't reference to a variable with another type");
+            }
+            return t1;
         }
         else {
             sparkError("TypeChecker", "Can't figure out common type: %d %d", k1, k2);
@@ -201,6 +208,9 @@ private:
 
     AstExp* cast(AstExp* exp, SymbolType* targetType) {
         if (exp->hasType(targetType)) {
+            if (!arePointersCompatible(exp->type, targetType)) {
+                throw TypeException("Can't cast pointer to another type");
+            }
             return exp;
         }
         else if (exp->hasType(SymbolType::Kind::Pointer)) {
@@ -218,6 +228,13 @@ private:
             }
         }
         return allocator.create<AstCast>(exp, targetType);
+    }
+
+    bool arePointersCompatible(SymbolType* t1, SymbolType* t2) {
+        if (t1->kind == SymbolType::Kind::Pointer && t2->kind == SymbolType::Kind::Pointer) {
+            return dereference(t1)->kind == dereference(t2)->kind;
+        }
+        return true;
     }
 
     SymbolTable& table;
