@@ -95,6 +95,9 @@ private:
     void resolve(AstDeclaration* decl) {
         if (decl->kind == AstDeclaration::Kind::Var) {
             auto* varDecl = (AstVarDeclaration*) decl;
+            if (varDecl->getInitializer() != nullptr) {
+                resolve(varDecl->getInitializer());
+            }
             varDecl->setId(declareVar(varDecl->getId(), varDecl->getType()));
         }
         else {

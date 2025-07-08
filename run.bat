@@ -1,4 +1,4 @@
 @echo off
 cd out
-sparkc ../source.spark
+sparkc ../%*
 cd ..

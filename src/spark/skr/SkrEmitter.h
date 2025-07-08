@@ -168,28 +168,28 @@ private:
         if (kind == AstExp::Kind::Constant) {
             auto* it = (AstConstantExp*) exp;
             auto* c = getSkrConst(it->getValue());
-            return SkrExpRes::val(c, getType(c));
+            return SkrExpRes::val(c);
         }
         else if (kind == AstExp::Kind::Dereference) {
             auto* it = (AstDereference*) exp;
             SkrValue* innerRes = emitAndConvert(it->getExpression());
-            return SkrExpRes::ptr(innerRes, getType(innerRes));
+            return SkrExpRes::ptr(innerRes);
         }
         else if (kind == AstExp::Kind::AddrOf) {
             auto* it = (AstAddrOf*) exp;
             SkrExpRes var = emit(it->getExpression());
-            auto* toType = symbolTable.getTypeAllocator().create<SymbolPointerType>(var.getType());
+            auto* toType = symbolTable.getTypeAllocator().create<SymbolPointerType>(getType(var.get()));
             SkrVar* to = createVar("addr", toType);
-            out.emplace_back(allocator.create<SkrGetAddr>(to, var.get()));
-            return SkrExpRes::val(to, toType);
+            out.emplace_back(allocator.create<SkrGetAddr>(to, var.get()->toSkrVar()));
+            return SkrExpRes::val(to);
         }
         else if (kind == AstExp::Kind::Binary) {
             auto* res = emitBinary((AstBinaryExp*) exp);
-            return SkrExpRes::val(res, getType(res));
+            return SkrExpRes::val(res);
         }
         else if (kind == AstExp::Kind::Var) {
             auto* var = allocator.create<SkrVar>(((AstVar*) exp)->getId());
-            return SkrExpRes::val(var, getType(var));
+            return SkrExpRes::val(var);
         }
         else if (kind == AstExp::Kind::Assignment) {
             auto* ass = (AstAssignment*) exp;
@@ -200,19 +200,17 @@ private:
                 return left;
             }
             else if (left.kind == SkrExpRes::Kind::Field) {
-                auto* structure = left.get();
-                int offset = left.getOffset();
-                out.emplace_back(allocator.create<SkrOffsetStore>(structure, offset, right));
-                return SkrExpRes::val(right, getType(right));
+                out.emplace_back(allocator.create<SkrOffsetStore>(left.getBase(), left.getOffset(), right));
+                return SkrExpRes::val(right);
             }
             else {
                 out.emplace_back(allocator.create<SkrCopy>(left.get()->toSkrVar(), right));
-                return SkrExpRes::val(right, getType(right));
+                return SkrExpRes::val(right);
             }
         }
         else if (kind == AstExp::Kind::FunCall) {
             auto* res = emitFunCall((AstFunCall*) exp);
-            return SkrExpRes::val(res, getType(res));
+            return SkrExpRes::val(res);
         }
         else if (kind == AstExp::Kind::Cast) {
             auto* it = (AstCast*) exp;
@@ -229,25 +227,25 @@ private:
             else {
                 sparkError("SkrEmitter", "Failed to cast expression");
             }
-            return SkrExpRes::val(dstVar, targetType);
+            return SkrExpRes::val(dstVar);
         }
         else if (kind == AstExp::Kind::Dot) {
             auto* it = (AstDot*) exp;
 
-            auto inner = emit(it->getFrom());
-            StringRef field = emitField(it->getField());
+            StringRef field = getFieldId(it->getField());
+            StringRef tag = getStructTag(it->getFrom()->type);
+            int offset = typeTable.getField(tag, field).offset;
 
-            auto tag = getStructTag(inner.getType());
-            const auto& fieldInfo = typeTable.getField(tag, field);
-            return SkrExpRes::field(inner.get(), inner.getOffset() + fieldInfo.offset, fieldInfo.type);
+            auto inner = emit(it->getFrom());
+            return SkrExpRes::field(inner.get(), inner.getOffset() + offset);
         }
         else {
             sparkError("SkrEmitter", "Unknown AstExp: %d", kind);
-            return SkrExpRes::val(nullptr, nullptr);
+            return SkrExpRes::val(nullptr);
         }
     }
 
-    StringRef emitField(AstExp* exp) {
+    StringRef getFieldId(AstExp* exp) {
         if (exp->kind == AstExp::Kind::Var) {
             return ((AstVar*) exp)->getId();
         }
@@ -321,15 +319,13 @@ private:
             return res.get();
         }
         else if (res.kind == SkrExpRes::Kind::Ptr) {
-            SkrValue* tmpVar = createVar("deref", dereferenceType(res.get()));
+            SkrValue* tmpVar = createVar("deref", exp->type);
             out.emplace_back(allocator.create<SkrLoad>(tmpVar, res.get()));
             return tmpVar;
         }
         else if (res.kind == SkrExpRes::Kind::Field) {
-            auto* base = res.get();
-            int offset = res.getOffset();
-            SkrValue* tmpVar = createVar(funName, res.getType());
-            out.emplace_back(allocator.create<SkrOffsetLoad>(tmpVar, base, offset));
+            SkrValue* tmpVar = createVar("field", exp->type);
+            out.emplace_back(allocator.create<SkrOffsetLoad>(tmpVar, res.getBase(), res.getOffset()));
             return tmpVar;
         }
 

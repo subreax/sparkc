@@ -5,20 +5,19 @@ class SkrExpRes {
 public:
     enum class Kind { Val, Ptr, Field };
 
-    static SkrExpRes val(SkrValue* value, SymbolType* type) { return SkrExpRes(Kind::Val, value, type, 0); }
-    static SkrExpRes ptr(SkrValue* value, SymbolType* type) { return SkrExpRes(Kind::Ptr, value, type, 0); }
-    static SkrExpRes field(SkrValue* base, int offset, SymbolType* type) { return SkrExpRes(Kind::Field, base, type, offset); }
+    static SkrExpRes val(SkrValue* value) { return SkrExpRes(Kind::Val, value, 0); }
+    static SkrExpRes ptr(SkrValue* value) { return SkrExpRes(Kind::Ptr, value, 0); }
+    static SkrExpRes field(SkrValue* base, int offset) { return SkrExpRes(Kind::Field, base, offset); }
 
     SkrValue* get() const { return _val; }
-    SymbolType* getType() const { return _type; }
+    SkrValue* getBase() const { return _val; }
     int getOffset() const { return _offset; }
 
     const Kind kind;
 
 private:
-    SkrExpRes(Kind kind, SkrValue* val, SymbolType* type, int offset) : kind(kind), _val(val), _type(type), _offset(offset) {  }
+    SkrExpRes(Kind kind, SkrValue* val, int offset) : kind(kind), _val(val), _offset(offset) {  }
 
     SkrValue* _val;
-    SymbolType* _type;
     int _offset;
 };

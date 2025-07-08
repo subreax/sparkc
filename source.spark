@@ -1,9 +1,10 @@
 struct color(float r, float g, float b, float a);
 
-int pixel(color& out, float x) {
+color pixel(float x) {
+    color out;
     out.r = 1.0 * x;
     out.g = 0.6 * x;
     out.b = 0.0;
     out.a = 1.0;
-    return 0;
+    return out;
 }

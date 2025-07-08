@@ -217,7 +217,7 @@ private:
         else if (k1 == SymbolType::Kind::Float && k2 == SymbolType::Kind::Integer) {
             return t1;
         }
-        else if (k1 == SymbolType::Kind::Pointer && k2 == SymbolType::Kind::Pointer) {
+        else if (k1 == SymbolType::Kind::Pointer || k2 == SymbolType::Kind::Pointer) {
             if (dereference(t1)->kind != dereference(t2)->kind) {
                 throw TypeException("Can't reference to a variable with another type");
             }
