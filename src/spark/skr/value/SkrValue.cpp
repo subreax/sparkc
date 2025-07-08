@@ -7,8 +7,7 @@ bool SkrValue::operator==(const SkrValue& other) const {
     }
 
     if (kind == Kind::Var) {
-        // todo: replace with something more reliable
-        return strncmp(toSkrVar()->getId(), other.toSkrVar()->getId(), 128) == 0;
+        return toSkrVar()->getId() == other.toSkrVar()->getId();
     }
     else if (kind == Kind::Const) {
         return *(toSkrConst()->getConst()) == *(other.toSkrConst()->getConst());

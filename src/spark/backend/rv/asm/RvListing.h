@@ -11,10 +11,10 @@ class RvListing {
 public:
     struct Label {
         Label() = default;
-        Label(int32_t offset, const char* value) : offset(offset), value(value) {  }
+        Label(int32_t offset, StringRef value) : offset(offset), value(value) {  }
 
         int32_t offset = 0;
-        const char* value = nullptr;
+        StringRef value = StringRef::nullInstance();
     };
 
     RvListing(uint8_t* out, size_t cap) : out(out), cap(cap) {  }
@@ -29,11 +29,11 @@ public:
         return *this;
     }
 
-    void addLabel(const char* label) {
+    void addLabel(StringRef label) {
         labels.emplace_back(offset, label);
     }
 
-    void addWithLabel(uint32_t instr, const char* label) {
+    void addWithLabel(uint32_t instr, StringRef label) {
         write_u32(instr, offset);
         unresolved.emplace_back(offset, label);
         offset += 4;
@@ -68,12 +68,12 @@ public:
 private:
     struct Unresolved {
         Unresolved() = default;
-        Unresolved(int32_t offset, const char* label) 
+        Unresolved(int32_t offset, StringRef label) 
             : offset(offset)
             , label(label) {  }
 
         int32_t offset = 0;
-        const char* label = nullptr;
+        StringRef label = StringRef::nullInstance();
     };
 
     void write_u32(uint32_t instr, int32_t offset) {
@@ -84,13 +84,13 @@ private:
         }
     }
 
-    int32_t calculateOffsetToLabel(int32_t pc, const char* label) {
+    int32_t calculateOffsetToLabel(int32_t pc, StringRef label) {
         return getLabelOffset(label) - pc;
     }
 
-    int32_t getLabelOffset(const char* label) {
+    int32_t getLabelOffset(StringRef label) {
         for (auto& l : labels) {
-            if (strncmp(l.value, label, 128) == 0) {
+            if (l.value == label) {
                 return l.offset;
             }
         }

@@ -21,7 +21,7 @@ std::ostream& operator<<(std::ostream& os, const SkrValue& skr) {
         }
     } 
     else if (skr.isVar()) {
-        os << ((SkrVar*) &skr)->getId();
+        os << ((SkrVar*) &skr)->getId().toString();
     } 
     else {
         os << "_unknown_: " << (int) skr.kind;
@@ -91,7 +91,7 @@ void SkrPrinter::print(std::ostream& os, SkrInstruction* skr, SymbolTable& table
         if (colored) {
             os << Colored::label(it->getLabel());
         } else {
-            os << it->getLabel();
+            os << it->getLabel().toString();
         }
     }
     else if (kind == SkrInstruction::Kind::Label) {
@@ -99,7 +99,7 @@ void SkrPrinter::print(std::ostream& os, SkrInstruction* skr, SymbolTable& table
         if (colored) {
             os << Colored::label(it->getLabel()) << ":";
         } else {
-            os << it->getLabel() << ":";
+            os << it->getLabel().toString() << ":";
         }
     }
     else if (kind == SkrInstruction::Kind::Branch) {
@@ -108,7 +108,7 @@ void SkrPrinter::print(std::ostream& os, SkrInstruction* skr, SymbolTable& table
         if (colored) {
             os << Colored::label(it->getLabel());
         } else {
-            os << it->getLabel();
+            os << it->getLabel().toString();
         }
         os << " if " << *it->getLeft() << " " << it->getOperator() << " " << *it->getRight();
     }
@@ -118,7 +118,7 @@ void SkrPrinter::print(std::ostream& os, SkrInstruction* skr, SymbolTable& table
         if (colored) {
             os << Colored::label(it->getName());
         } else {
-            os << it->getName();
+            os << it->getName().toString();
         }
         os << "(";
         auto args = it->getArgs();
@@ -149,6 +149,14 @@ void SkrPrinter::print(std::ostream& os, SkrInstruction* skr, SymbolTable& table
     else if (kind == SkrInstruction::Kind::GetAddr) {
         auto* it = (SkrGetAddr*) skr;
         os << *it->getTo() << " = addrOf(" << *it->getVar() << ")";
+    }
+    else if (kind == SkrInstruction::Kind::OffsetLoad) {
+        auto* it = (SkrOffsetLoad*) skr;
+        os << *it->getTo() << " = " << it->getFromOffset() << "(" << *it->getFrom() << ")";
+    }
+    else if (kind == SkrInstruction::Kind::OffsetStore) {
+        auto* it = (SkrOffsetStore*) skr;
+        os << it->getToOffset() << "(" << *it->getTo() << ") = " << *it->getFrom();
     }
     else {
         os << "unknown skr: " << (int) kind;

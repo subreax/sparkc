@@ -1,54 +1,44 @@
 #pragma once
 #include "alloc/Allocator.h"
-#include "CStringBuilder.h"
+#include "StringBuilder.h"
 #include "StringRef.h"
 
 class IdentifierGen {
 public:
     IdentifierGen(Allocator& allocator) : allocator(allocator) { }
 
-    const char* unique(const char* id) {
-        return unique(id, strlen(id));
+    StringRef unique(const char* id) {
+        return unique(StringRef::cstr(id));
     }
 
-    const char* unique(const char* id, const char* suffix) {
-        char buf[MAX_ID_LEN + 2];
-        CStringBuilder(buf, sizeof(buf))
-            .append(id, MAX_ID_LEN - 4)
-            .append("_")
-            .append(suffix);
-
+    StringRef unique(StringRef id, const char* prefix) {
+        char buf[MAX_ID_LEN];
+        StringBuilder(buf, sizeof(buf))
+            .append(StringRef::cstr(prefix))
+            .append(StringRef::cstr("_"))
+            .append(id);
         return unique(buf);
     }
 
-    const char* unique(StringRef ref) {
-        return unique(ref.getReference(), ref.getLength());
+    StringRef unique(StringRef id) {
+        StringRef str = StringBuilder(nameBuf, sizeof(nameBuf))
+            .append(id, std::min(id.getLength(), MAX_ID_LEN))
+            .append(StringRef::cstr("."))
+            .append(counter++)
+            .toString();
+        return copy(str);
     }
 
-    const char* copy(StringRef ref) {
-        auto len = std::min(ref.getLength() + 1, sizeof(nameBuf));
-        return CStringBuilder(allocator.allocate(len))
+    StringRef copy(StringRef ref) {
+        auto len = std::min(ref.getLength(), sizeof(nameBuf));
+        return StringBuilder(allocator.allocate(len))
             .append(ref)
-            .getString();
+            .toString();
     }
 
     static constexpr size_t MAX_ID_LEN = 24;
 
 private:
-    const char* unique(const char* id, size_t idLen) {
-        size_t len = CStringBuilder(nameBuf, sizeof(nameBuf))
-            .append(id, std::min(idLen, MAX_ID_LEN))
-            .append(".")
-            .append(counter)
-            .getLengthWith0();
-        
-        counter++;
-
-        return CStringBuilder(allocator.allocate(len))
-            .append(nameBuf)
-            .getString();
-    }
-
     char nameBuf[MAX_ID_LEN + 16];
     Allocator& allocator;
     int counter = 0;

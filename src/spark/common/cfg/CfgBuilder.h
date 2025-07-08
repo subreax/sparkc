@@ -60,12 +60,12 @@ private:
             visited.emplace(block->getIdx());
 
             if (block->hasJump()) {
-                const char* jumpLabel = block->getJumpOrBranchLabel();
+                auto jumpLabel = block->getJumpOrBranchLabel();
                 auto* nextNode = findBlockByLabel(jumpLabel);
                 graph->connect(block, nextNode);
             }
             else if (block->hasBranch()) {
-                const char* jumpLabel = block->getJumpOrBranchLabel();
+                auto jumpLabel = block->getJumpOrBranchLabel();
                 auto* jumpNode = findBlockByLabel(jumpLabel);
                 graph->connect(block, jumpNode);
                 graph->connect(block, blocks[i + 1]);
@@ -76,15 +76,15 @@ private:
         }
     }
 
-    CfgBlock<I*>* findBlockByLabel(const char* label) {
+    CfgBlock<I*>* findBlockByLabel(StringRef label) {
         const auto& nodes = graph->getBlocks();
         for (auto* node : nodes) {
             if (node->isEmpty() || !node->isLabeled()) {
                 continue;
             }
 
-            const char* nodeLabel = node->getLabel();
-            if (strncmp(label, nodeLabel, 128) == 0) {
+            StringRef nodeLabel = node->getLabel();
+            if (label == nodeLabel) {
                 return node;
             }
         }

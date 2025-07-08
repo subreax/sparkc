@@ -3,7 +3,7 @@
 
 class RvaCall : public RvaInstruction {
 public:
-    RvaCall(const char* funName) 
+    RvaCall(StringRef funName) 
         : RvaInstruction(Kind::Call) 
         , funName(funName) {  }
 
@@ -11,8 +11,8 @@ public:
         listing.addWithLabel(Rv32I::jal(RvReg::RA), funName);
     }
 
-    const char* getFunName() const { return funName; }
+    StringRef getFunName() const { return funName; }
 
 private:
-    const char* funName;
+    StringRef funName;
 };

@@ -1,9 +1,10 @@
 #pragma once
 #include "../common/BoundArray.h"
+#include "../common/StringRef.h"
 
 class SymbolType {
 public:
-    enum class Kind { Integer, Float, Pointer, Function };
+    enum class Kind { Integer, Float, Pointer, Function, Structure };
 
     SymbolType(Kind kind) : kind(kind) {  }
 
@@ -58,4 +59,14 @@ public:
 
 private:
     SymbolType* varType;
+};
+
+class SymbolStructureType : public SymbolType {
+public:
+    SymbolStructureType(StringRef tag) : SymbolType(Kind::Structure), tag(tag) {  }
+
+    StringRef getTag() const { return tag; }
+
+private:
+    StringRef tag;
 };

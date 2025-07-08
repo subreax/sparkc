@@ -1,25 +1,29 @@
 #pragma once
+#include "AstProgItem.h"
 #include <vector>
 #include "AstBlockItem.h"
 #include "AstFunParam.h"
 #include "AstBlock.h"
 #include "../../common/BoundArray.h"
 
-class AstFunction {
+class AstFunction : public AstProgItem {
 public:
-    AstFunction(const char* name, SymbolType* retType, BoundArray<AstFunParam*> params, AstBlock* block)
-        : name(name)
+    AstFunction(StringRef name, SymbolType* retType, BoundArray<AstFunParam*> params, AstBlock* block)
+        : AstProgItem(Kind::Function)
+        , name(name)
         , retType(retType)
         , params(params)
         , block(block) {  }
 
-    const char* getName() const { return name; }
+    StringRef getName() const { return name; }
     SymbolType* getReturnType() const { return retType; }
     const BoundArray<AstFunParam*>& getParams() const { return params; }
+
+    AstBlock* getBlock() { return block; }
     const AstBlock* getBlock() const { return block; }
 
 private:
-    const char* name;
+    StringRef name;
     SymbolType* retType;
     BoundArray<AstFunParam*> params;
     AstBlock* block;

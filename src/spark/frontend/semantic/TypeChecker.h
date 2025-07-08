@@ -1,5 +1,6 @@
 #pragma once
 #include "../../symbol/SymbolTable.h"
+#include "../../type/TypeTable.h"
 #include "../../common/Error.h"
 #include "../ast/AstProgram.h"
 #include "../ast/declaration/AstVarDeclaration.h"
@@ -9,13 +10,22 @@
 
 class TypeChecker {
 public:
-    TypeChecker(SymbolTable& table, Allocator& astAllocator) 
-        : table(table) 
+    TypeChecker(SymbolTable& symbolTable, TypeTable& typeTable, Allocator& astAllocator) 
+        : symbolTable(symbolTable) 
+        , typeTable(typeTable)
         , allocator(astAllocator) {  }
 
     void typeCheck(AstProgram* prog) {
-        for (auto* func : prog->functions) {
-            typeCheck(func->getBlock(), func->getReturnType());
+        for (auto* item : prog->items) {
+            if (item->kind == AstProgItem::Kind::Function) {
+                auto* func = (AstFunction*) item;
+                typeCheck(func->getBlock(), func->getReturnType());
+            }
+            else if (item->kind == AstProgItem::Kind::Struct) {
+            }
+            else {
+                sparkError("TypeChecker", "Unknown AstProgItem: %d", item->kind);
+            }
         }
     }
 
@@ -98,15 +108,16 @@ private:
         case AstExp::Kind::Var: typeCheck((AstVar*) exp); break;
         case AstExp::Kind::Assignment: typeCheck((AstAssignment*) exp); break;
         case AstExp::Kind::FunCall: typeCheck((AstFunCall*) exp); break;
+        case AstExp::Kind::Dot: typeCheck((AstDot*) exp); break;
         default:
             sparkError("TypeChecker", "Unhandled AstExp: %s (%d)", AstExp::kindToString(kind), kind);
         }
     }
 
     void typeCheck(AstVar* var) {
-        auto* type = table.get(var->getIdentifier());
+        auto* type = symbolTable.get(var->getId());
         if (type->kind == SymbolType::Kind::Function) {
-            throw TypeException("Using variable as a function: '" + std::string(var->getIdentifier()) + "'");
+            throw TypeException("Using variable as a function: '" + var->getId().toString() + "'");
         }
 
         var->type = type;
@@ -123,16 +134,16 @@ private:
     }
 
     void typeCheck(AstFunCall* call) {
-        auto* funType = (SymbolFunctionType*) table.get(call->getFunName());
+        auto* funType = (SymbolFunctionType*) symbolTable.get(call->getFunName());
         if (funType->kind != SymbolType::Kind::Function) {
-            throw TypeException("Function '" + std::string(call->getFunName()) + "' doesn't exist");
+            throw TypeException("Function '" + call->getFunName().toString() + "' doesn't exist");
         }
 
         auto params = funType->getParams();
         auto paramsCount = params.size();
         auto args = call->getArgs();
         if (args.size() != paramsCount) {
-            throw TypeException("Function '" + std::string(call->getFunName()) + "' called with wrong number of arguments");
+            throw TypeException("Function '" + call->getFunName().toString() + "' called with wrong number of arguments");
         }
 
         for (size_t i = 0; i < args.size(); i++) {
@@ -147,8 +158,8 @@ private:
 
     void typeCheck(AstAssignment* ass) {
         auto kind = ass->getVar()->kind;
-        if (kind != AstExp::Kind::Var) {
-            throw TypeException(std::string("Expressions can only be assigned to variables, not to a ") + AstExp::kindToString(kind));
+        if (kind != AstExp::Kind::Var && kind != AstExp::Kind::Dot) {
+            throw TypeException(std::string("Expressions can only be assigned to variables or dots, not to a ") + AstExp::kindToString(kind));
         }
 
         typeCheck(ass->getVar());
@@ -157,6 +168,33 @@ private:
 
         typeCheck(ass->getExp());
         ass->setExp(cast(ass->getExp(), ass->type));
+    }
+
+    void typeCheck(AstDot* it) {
+        typeCheck(it->getFrom());
+        it->setFrom(dereference(it->getFrom()));
+        auto* fromType = it->getFrom()->type;
+        if (fromType->kind != SymbolType::Kind::Structure) {
+            throw TypeException("Trying to access a struct member on a non-struct type");
+        }
+
+        if (it->getField()->kind != AstExp::Kind::Var) {
+            throw TypeException("Wtf is hapenned around a struct var");
+        }
+
+        auto accessedField = ((AstVar*) it->getField())->getId();
+
+        auto* structType = (SymbolStructureType*) fromType;
+        const auto& structFields = typeTable.get(structType->getTag());
+        for (auto field : structFields) {
+            if (field.name == accessedField) {
+                it->getField()->type = field.type;
+                it->type = field.type;
+                return;
+            }
+        }
+
+        throw TypeException("Trying to access unknown struct field");
     }
 
     static SymbolType* getCommonType(AstExp* e1, AstExp* e2) {
@@ -237,6 +275,7 @@ private:
         return true;
     }
 
-    SymbolTable& table;
+    SymbolTable& symbolTable;
+    TypeTable& typeTable;
     Allocator& allocator;
 };

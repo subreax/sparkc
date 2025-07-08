@@ -14,6 +14,7 @@ public:
     static StringRef readIfKeyword(const char* src) { return readKeyword(src, "if"); }
     static StringRef readElseKeyword(const char* src) { return readKeyword(src, "else"); }
     static StringRef readWhileKeyword(const char* src) { return readKeyword(src, "while"); }
+    static StringRef readStructKeyword(const char* src) { return readKeyword(src, "struct"); }
 
     static StringRef readIdentifier(const char* src) {
         char first = src[0];
@@ -99,6 +100,7 @@ public:
     static StringRef readLessOrEq(const char* src) { return readString(src, "<="); }
     static StringRef readGreaterOrEq(const char* src) { return readString(src, ">="); }
     static StringRef readComma(const char* src) { return readChar(src, ','); }
+    static StringRef readPeriod(const char* src) { return readChar(src, '.'); }
     static StringRef readAmp(const char* src) { return readChar(src, '&'); }
     static StringRef readEOF(const char* src) { return readChar(src, '\0'); }
 

@@ -1,6 +1,7 @@
 #pragma once
-#include "../../common/StringRef.h"
 #include <iostream>
+#include <cstdint>
+#include "../../common/StringRef.h"
 
 enum TokenKind {
     T_INT_KEYWORD, //
@@ -8,7 +9,8 @@ enum TokenKind {
     T_RETURN_KEYWORD,//
     T_IF_KEYWORD,//
     T_ELSE_KEYWORD,//
-    T_WHILE_KEYWORD,
+    T_WHILE_KEYWORD,//
+    T_STRUCT_KEYWORD,//
     T_IDENTIFIER,//
     T_OPEN_PAR,//
     T_CLOSE_PAR,//
@@ -32,6 +34,7 @@ enum TokenKind {
     T_LESS_OR_EQ,//
     T_GREATER_THAN,//
     T_GREATER_OR_EQ,//
+    T_PERIOD,//
     T_COMMA,//
     T_EOF,//
     T_BAD
@@ -39,10 +42,10 @@ enum TokenKind {
 
 struct TokenPos {
     TokenPos() = default;
-    TokenPos(int line, int col) : line(line), col(col) {  }
+    TokenPos(uint16_t line, uint16_t col) : line(line), col(col) {  }
 
-    int line = 0;
-    int col = 0;
+    uint16_t line = 0;
+    uint16_t col = 0;
 };
 
 struct Token {

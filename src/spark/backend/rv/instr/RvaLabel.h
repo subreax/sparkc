@@ -3,14 +3,14 @@
 
 class RvaLabel : public RvaInstruction {
 public:
-    RvaLabel(const char* value) : RvaInstruction(Kind::Label), value(value) {  }
+    RvaLabel(StringRef value) : RvaInstruction(Kind::Label), value(value) {  }
 
     void emit(RvListing& listing) override {
         listing.addLabel(value);
     }
 
-    const char* getValue() const { return value; }
+    StringRef getValue() const { return value; }
 
 private:
-    const char* value;
+    StringRef value;
 };

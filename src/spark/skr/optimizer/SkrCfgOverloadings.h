@@ -9,13 +9,13 @@ bool isLabel(SkrInstruction* ptr) {
 }
 
 template<>
-const char* getLabel(SkrInstruction* ptr) {
+StringRef getLabel(SkrInstruction* ptr) {
     switch (ptr->kind) {
     case SkrInstruction::Kind::Label:   return ((SkrLabel*) ptr)->getLabel();
     case SkrInstruction::Kind::Jump:    return ((SkrJump*) ptr)->getLabel();
     case SkrInstruction::Kind::Branch:  return ((SkrBranch*) ptr)->getLabel();
     default:
-        return "";
+        return StringRef::nullInstance();
     }
 }
 

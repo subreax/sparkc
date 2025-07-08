@@ -4,16 +4,22 @@
 
 class Semantic {
 public:
-    Semantic(SymbolTable& table, Allocator& astAlloc)
-        : table(table)
-        , astAlloc(astAlloc) {  }
+    Semantic(SymbolTable& symbolTable, TypeTable& typeTable, IdentifierGen& idGen, Allocator& astAlloc, size_t scopeMem)
+        : symbolTable(symbolTable)
+        , typeTable(typeTable)
+        , idGen(idGen)
+        , astAlloc(astAlloc)
+        , scopeMem(scopeMem) {  }
 
     void process(AstProgram* prog) {
-        IdentifierResolution(table).resolve(prog);
-        TypeChecker(table, astAlloc).typeCheck(prog);
+        IdentifierResolution(symbolTable, typeTable, idGen, scopeMem).resolve(prog);
+        TypeChecker(symbolTable, typeTable, astAlloc).typeCheck(prog);
     }
     
 private:
-    SymbolTable& table;
+    SymbolTable& symbolTable;
+    TypeTable& typeTable;
+    IdentifierGen& idGen;
     Allocator& astAlloc;
+    size_t scopeMem;
 };

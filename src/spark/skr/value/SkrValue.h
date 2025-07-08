@@ -50,11 +50,11 @@ private:
 
 class SkrVar : public SkrValue {
 public:
-    SkrVar(const char* id) : SkrValue(Kind::Var), id(id) {  }
+    SkrVar(StringRef id) : SkrValue(Kind::Var), id(id) {  }
 
-    const char* getId() const { return id; }
+    StringRef getId() const { return id; }
 
 private:
-    const char* id;
+    StringRef id;
 };
 

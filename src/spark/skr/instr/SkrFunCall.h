@@ -5,18 +5,18 @@
 
 class SkrFunCall : public SkrInstruction {
 public:
-    SkrFunCall(const char* name, BoundArray<SkrValue*> args, const SkrVar* retVar)
+    SkrFunCall(StringRef name, BoundArray<SkrValue*> args, const SkrVar* retVar)
         : SkrInstruction(Kind::FunCall)
         , name(name)
         , retVar(retVar)
         , args(args) {  }
 
-    const char* getName() const { return name; }
+    StringRef getName() const { return name; }
     const SkrVar* getRetVar() const { return retVar; }
     const BoundArray<SkrValue*>& getArgs() const { return args; }
 
 private:
-    const char* name;
+    StringRef name;
     const SkrVar* retVar;
     BoundArray<SkrValue*> args;
 };

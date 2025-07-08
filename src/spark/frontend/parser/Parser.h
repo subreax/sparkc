@@ -4,7 +4,6 @@
 #include "../../common/IdentifierGen.h"
 #include "../lexer/Lexer.h"
 #include "../ast/everything.h"
-#include "Scope.h"
 #include "except/everything.h"
 
 class Parser {
@@ -12,40 +11,64 @@ public:
     Parser(
         Lexer& lexer, 
         Allocator& allocator, 
-        Allocator& typeAlloc,
-        IdentifierGen& idGen,
-        Scope& scope
+        Allocator& typeAlloc
     )
         : lexer(lexer)
         , allocator(allocator)
         , typeAlloc(typeAlloc)
-        , idGen(idGen)
-        , scope(scope)
     {
         takeToken();
     }
 
     AstProgram* parseProgram() {
-        std::vector<AstFunction*> functions;
+        std::vector<AstProgItem*> items;
         while (hasNext()) {
-            auto func = parseFunction();
-            functions.emplace_back(func);
+            auto* st = tryParseStruct();
+            if (st != nullptr) {
+                items.emplace_back(st);
+                continue;
+            }
+
+            items.emplace_back(parseFunction());
         }
-        auto arrFunctions = BoundArray<AstFunction*>::fromVector(functions, allocator);
-        auto* prog = allocator.create<AstProgram>(arrFunctions);
-        return prog;
+        auto arrFunctions = BoundArray<AstProgItem*>::fromVector(items, allocator);
+        return allocator.create<AstProgram>(arrFunctions);
+    }
+
+    bool hasNext() const { return current.kind != T_EOF; }
+
+private:
+    AstStruct* tryParseStruct() {
+        if (current.kind == T_STRUCT_KEYWORD) {
+            takeToken();
+            StringRef tag = expect(T_IDENTIFIER).value;
+            regType(tag);
+            expect(T_OPEN_PAR);
+            std::vector<AstStructField*> fields;
+            while (hasNext() && current.kind != T_CLOSE_PAR) {
+                auto* type = parseType();
+                auto name = expect(T_IDENTIFIER).value;
+                fields.emplace_back(allocator.create<AstStructField>(type, name));
+                if (current.kind == T_COMMA) {
+                    takeToken();
+                }
+            }
+            expect(T_CLOSE_PAR);
+            expect(T_SEMICOLON);
+
+            return allocator.create<AstStruct>(tag, BoundArray<AstStructField*>::fromVector(fields, allocator));
+        }
+        return nullptr;
     }
 
     AstFunction* parseFunction() {
         auto* retType = parseType();
         Token idToken = expect(T_IDENTIFIER);
-        const char* funName = idGen.copy(idToken.value);
-
-        scope.openScope();
+        StringRef funName = idToken.value;
 
         expect(T_OPEN_PAR);
         std::vector<AstFunParam*> params;
-        while (current.kind != T_CLOSE_PAR) {
+        while (hasNext() && current.kind != T_CLOSE_PAR) {
             params.emplace_back(parseFunParam());
             if (current.kind == T_COMMA) {
                 takeToken();
@@ -55,31 +78,22 @@ public:
 
         AstBlock* block = parseBlock();
 
-        scope.closeScope();
-
         auto paramsBa = BoundArray<AstFunParam*>::fromVector(params, allocator);
         return allocator.create<AstFunction>(funName, retType, paramsBa, block);
     }
 
-    bool hasNext() const { return current.kind != T_EOF; }
-
-private:
     AstFunParam* parseFunParam() {
         auto* type = parseType();
-        auto id = scope.declare(expect(T_IDENTIFIER));
+        auto id = expect(T_IDENTIFIER).value;
         return allocator.create<AstFunParam>(id, type);
     }
 
     AstBlock* parseBlock() {
         expect(T_OPEN_BRACE);
-        scope.openScope();
-
         std::vector<AstBlockItem*> items;
-        while (current.kind != T_CLOSE_BRACE) {
+        while (hasNext() && current.kind != T_CLOSE_BRACE) {
             items.emplace_back(parseBlockItem());
         }
-        
-        scope.closeScope();
         expect(T_CLOSE_BRACE);
 
         auto itemsBa = BoundArray<AstBlockItem*>::fromVector(items, allocator);
@@ -97,7 +111,7 @@ private:
     AstDeclaration* tryParseDeclaration() {
         SymbolType* type = tryParseType();
         if (type != nullptr) {
-            const char* varName = scope.declare(expect(T_IDENTIFIER));
+            StringRef varName = expect(T_IDENTIFIER).value;
             AstExp* initializer = nullptr;
             if (current.kind == T_EQUALS) {
                 takeToken();
@@ -155,12 +169,17 @@ private:
         int precedence = getPrecedence(current.kind);
         while (precedence >= prevPrecedence) {
             auto op = takeToken();
-            if (op.kind != T_EQUALS) {
-                AstExp* right = parseExpression(precedence + 1);
-                left = allocator.create<AstBinaryExp>(left, AstBinaryExp::toBinaryOperator(op.kind), right);
-            } else {
+            if (op.kind == T_EQUALS) {
                 AstExp* right = parseExpression(precedence);
                 left = allocator.create<AstAssignment>(left, right);
+            }
+            else if (op.kind == T_PERIOD) {
+                AstExp* right = parseExpression(precedence + 1);
+                left = allocator.create<AstDot>(left, right);
+            }
+            else {
+                AstExp* right = parseExpression(precedence + 1);
+                left = allocator.create<AstBinaryExp>(left, AstBinaryExp::toBinaryOperator(op.kind), right);
             }
             precedence = getPrecedence(current.kind);
         }
@@ -186,19 +205,18 @@ private:
             return exp;
         }
         else if (current.kind == T_IDENTIFIER) {
-            auto nameToken = takeToken();
+            auto id = takeToken().value;
             if (current.kind == T_OPEN_PAR) {
                 takeToken();
                 std::vector<AstExp*> args;
                 parseFunArgs(args);
                 expect(T_CLOSE_PAR);
 
-                const char* funName = idGen.copy(nameToken.value);
                 auto argsBA = BoundArray<AstExp*>::fromVector(args, allocator);
-                return allocator.create<AstFunCall>(funName, argsBA);
+                return allocator.create<AstFunCall>(id, argsBA);
             }
             else {
-                return allocator.create<AstVar>(scope.resolve(nameToken));
+                return allocator.create<AstVar>(id);
             }
         }
         else {
@@ -207,7 +225,7 @@ private:
     }
 
     void parseFunArgs(std::vector<AstExp*>& outArgs) {
-        while (current.kind != T_CLOSE_PAR) {
+        while (hasNext() && current.kind != T_CLOSE_PAR) {
             outArgs.emplace_back(parseExpression());
             if (current.kind == T_COMMA) {
                 takeToken();
@@ -264,6 +282,10 @@ private:
             takeToken();
             type = SymbolFloatType::getInstance();
         }
+        else if (current.kind == T_IDENTIFIER && isTypeExist(current.value)) {
+            auto token = takeToken();
+            type = typeAlloc.create<SymbolStructureType>(token.value);
+        }
         else {
             return nullptr;
         }
@@ -293,6 +315,9 @@ private:
     int getPrecedence(TokenKind tk) {
         switch (tk)
         {
+        case T_PERIOD:
+            return 100;
+
         case T_ASTERISK:
         case T_FWD_SLASH:
         case T_PERCENT:
@@ -326,10 +351,26 @@ private:
         }
     }
 
+    void regType(StringRef type) {
+        if (isTypeExist(type)) {
+            sparkError("Parser", "Type %d is already declared", type); // todo: replace
+        }
+        types.emplace_back(type);
+    }
+
+    bool isTypeExist(StringRef type) {
+        for (auto t : types) {
+            if (t == type) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    std::vector<StringRef> types;
+
     Token current;
     Lexer& lexer;
     Allocator& allocator;
     Allocator& typeAlloc;
-    IdentifierGen& idGen;
-    Scope& scope;
 };

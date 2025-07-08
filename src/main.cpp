@@ -5,6 +5,7 @@
 #include "spark/frontend/lexer/Lexer.h"
 #include "spark/frontend/parser/Parser.h"
 #include "spark/frontend/semantic/Semantic.h"
+#include "spark/type/TypeTable.h"
 #include "spark/skr/SkrEmitter.h"
 #include "spark/skr/optimizer/SkrOptimizer.h"
 #include "spark/backend/rv/Skr2RvaPseudo.h"
@@ -32,8 +33,8 @@ class CfgGraphPrinter : public SkrOptimizer::OnGraphCreatedListener {
 public:
     CfgGraphPrinter(SymbolTable& table) : table(table) {  }
 
-    void onCreated(const char* funName, int iteration, CfGraph<SkrInstruction*>* graph) override {
-        writeMermaidControlFlow(*graph, table, std::string(funName) + "." + std::to_string(iteration) + ".md");
+    void onCreated(StringRef funName, int iteration, CfGraph<SkrInstruction*>* graph) override {
+        writeMermaidControlFlow(*graph, table, funName.toString() + "." + std::to_string(iteration) + ".md");
     }
 
 private:
@@ -51,18 +52,16 @@ int main(int argc, char** argv) {
 
     LinearAllocator astAlloc(2048);
     LinearAllocator idAlloc(2048, true);
-    LinearAllocator scopeAlloc(2048, true);
-    LinearAllocator typeAlloc(512);
+    LinearAllocator typeAlloc(2048);
 
     IdentifierGen idGen(idAlloc);
     LabelGen labelGen(idAlloc);
     SymbolTable symbolTable(typeAlloc);
-    Scope scope(idGen, scopeAlloc);
-    Parser parser(lexer, astAlloc, symbolTable.getTypeAllocator(), idGen, scope);
+    TypeTable typeTable(typeAlloc);
     AstProgram* program;
     try {
-        program = parser.parseProgram();
-        Semantic(symbolTable, astAlloc).process(program);
+        program = Parser(lexer, astAlloc, symbolTable.getTypeAllocator()).parseProgram();
+        Semantic(symbolTable, typeTable, idGen, astAlloc, 1024).process(program);
     } catch (ParseException& e) {
         printError(e, source);
         return 1;
@@ -79,10 +78,12 @@ int main(int argc, char** argv) {
 
     std::vector<SkrFunction*> skrFunctions;
     std::vector<SkrInstruction*> skrsBuf;
-    for (AstFunction* astFunc : program->functions) {
-        SkrFunction* func = SkrEmitter::emit(astFunc, skrAlloc, symbolTable, idGen, labelGen, skrsBuf);
-        skrFunctions.emplace_back(func);
-        skrsBuf.clear();
+    for (AstProgItem* item : program->items) {
+        if (item->kind == AstProgItem::Kind::Function) {
+            SkrFunction* func = SkrEmitter::emit((AstFunction*) item, skrAlloc, symbolTable, typeTable, idGen, labelGen, skrsBuf);
+            skrFunctions.emplace_back(func);
+            skrsBuf.clear();
+        }
     }
 
     cout << "== skr ==" << endl;
@@ -102,7 +103,7 @@ int main(int argc, char** argv) {
     }
     cout << endl; */
 
-    size_t rva1Peak = 0;
+    /* size_t rva1Peak = 0;
     std::vector<RvaInstruction*> rva;
     std::vector<RvaInstruction*> rvaFixed;
     for (auto* skrFunc : skrFunctions) {
@@ -126,22 +127,21 @@ int main(int argc, char** argv) {
 
     cout << "== external labels ==" << endl;
     for (auto& label : externalLabels) {
-        cout << label.value << ": " << label.offset << endl;
+        cout << label.value.toString() << ": " << label.offset << endl;
     }
-    cout << endl;
+    cout << endl; */
 
     cout << "== memory stats ==" << endl;
-    printAllocatorStats("symbol", typeAlloc);
+    printAllocatorStats("symbol/type", typeAlloc);
     printAllocatorStats("ast", astAlloc);
     printAllocatorStats("id", idAlloc);
     printAllocatorStats("skr", skrAlloc);
-    printMemoryUsage("rva1 peak", rva1Peak, rvaAlloc1.getCapacity());
+    //printMemoryUsage("rva1 peak", rva1Peak, rvaAlloc1.getCapacity());
     printAllocatorStats("rva2", rvaAlloc2);
-    printMemoryUsage("program", sz, sizeof(bin));
+    //printMemoryUsage("program", sz, sizeof(bin));
 
     dump(idAlloc, "idAlloc.bin");
-    dump(scopeAlloc, "scope.bin");
-    dump(bin, sz, "out.bin");
+    //dump(bin, sz, "out.bin");
     return 0;
 }
 

@@ -3,10 +3,11 @@
 
 class AstVar : public AstExp {
 public:
-    AstVar(const char* identifier) : AstExp(Kind::Var), identifier(identifier) {  }
+    AstVar(StringRef id) : AstExp(Kind::Var), id(id) {  }
 
-    const char* getIdentifier() const { return identifier; }
+    StringRef getId() const { return id; }
+    void setId(StringRef id) { this-> id = id; }
 
 private:
-    const char* identifier;
+    StringRef id;
 };

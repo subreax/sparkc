@@ -14,7 +14,7 @@ public:
         GreaterOrEqual
     };
 
-    SkrBranch(SkrValue* left, Operator op, SkrValue* right, const char* label) 
+    SkrBranch(SkrValue* left, Operator op, SkrValue* right, StringRef label) 
         : SkrInstruction(Kind::Branch)
         , left(left)
         , op(op)
@@ -24,11 +24,11 @@ public:
     SkrValue* getLeft() const { return left; }
     Operator getOperator() const { return op; }
     SkrValue* getRight() const { return right; }
-    const char* getLabel() const { return label; }
+    StringRef getLabel() const { return label; }
 
 private:
     SkrValue* left;
     Operator op;
     SkrValue* right;
-    const char* label;
+    StringRef label;
 };

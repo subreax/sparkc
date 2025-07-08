@@ -12,6 +12,10 @@ public:
         return StringRef(nullptr, 0);
     }
 
+    static StringRef cstr(const char* str) {
+        return StringRef(str, lengthOf(str));
+    }
+
     static size_t lengthOf(const char* str, size_t maxLen = 1024) {
         return strnlen(str, maxLen);
     }
@@ -53,13 +57,28 @@ public:
         return std::string(buf);
     }
 
+    bool operator==(const StringRef& other) const {
+        if (getLength() != other.getLength()) {
+            return false;
+        }
+
+        const char* s2 = other.getReference();
+        for (size_t i = 0; i < length; i++) {
+            if (str[i] != s2[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    bool operator!=(const StringRef& other) const {
+        return !(*this == other);
+    }
+
 private:
     const char* str;
     size_t length;
 };
-
-bool operator==(const StringRef& r1, const StringRef& r2);
-bool operator!=(const StringRef& r1, const StringRef& r2);
 
 std::string operator+(const std::string& s1, StringRef s2);
 std::string operator+(StringRef s1, const std::string& s2);

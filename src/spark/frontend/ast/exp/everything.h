@@ -8,3 +8,4 @@
 #include "AstCast.h"
 #include "AstDereference.h"
 #include "AstAddrOf.h"
+#include "AstDot.h"

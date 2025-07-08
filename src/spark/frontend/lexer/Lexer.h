@@ -62,6 +62,7 @@ private:
         { T_IF_KEYWORD, TokenReaders::readIfKeyword },
         { T_ELSE_KEYWORD, TokenReaders::readElseKeyword },
         { T_WHILE_KEYWORD, TokenReaders::readWhileKeyword },
+        { T_STRUCT_KEYWORD, TokenReaders::readStructKeyword },
         { T_IDENTIFIER, TokenReaders::readIdentifier },
         { T_FLOAT_CONSTANT, TokenReaders::readFloatConstant },
         { T_INT_CONSTANT, TokenReaders::readIntConstant },
@@ -87,6 +88,7 @@ private:
         { T_GREATER_OR_EQ, TokenReaders::readGreaterOrEq },
         { T_GREATER_THAN, TokenReaders::readGreaterThan },
         { T_COMMA, TokenReaders::readComma },
+        { T_PERIOD, TokenReaders::readPeriod },
         { T_EOF, TokenReaders::readEOF }
     };
 

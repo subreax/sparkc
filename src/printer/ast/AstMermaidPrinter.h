@@ -16,6 +16,12 @@ private:
             printer.declare(*this);
         }
 
+        Node(AstMermaidPrinter& printer, const std::string& kind, std::vector<std::string> fields)
+            : id(genId()), kind(kind), fields(fields)
+        {
+            printer.declare(*this);
+        }
+
         std::string id;
         std::string kind;
         std::vector<std::string> fields;
@@ -32,16 +38,49 @@ public:
 
     void toMermaid(AstProgram* prog) {
         auto node = Node(*this, "program");
-        for (auto* func : prog->functions) {
-            connect(node, toMermaid(func));
+        for (auto* item : prog->items) {
+            connect(node, toMermaid(item));
         }
     }
 
-    std::string toMermaid(AstFunction* func) {
-        auto node = Node(*this, "function", { "name", func->getName(), "retType", type2string(func->getReturnType()) });
-        for (auto* param : func->getParams()) {
-            connect(node, toMermaid(param));
+    std::string toMermaid(AstProgItem* item) {
+        if (item->kind == AstProgItem::Kind::Function) {
+            return toMermaid((AstFunction*) item);
         }
+        else if (item->kind == AstProgItem::Kind::Struct) {
+            return toMermaid((AstStruct*) item);
+        }
+
+        sparkError("AstMermaidPrinter", "Unknown AstProgItem: %d", item->kind);
+        return "";
+    }
+
+    std::string toMermaid(AstStruct* st) {
+        std::vector<std::string> nodeFields;
+        nodeFields.emplace_back("tag");
+        nodeFields.emplace_back(st->getTag().toString());
+        for (auto* field : st->getFields()) {
+            nodeFields.emplace_back(field->getName().toString());
+            nodeFields.emplace_back(type2string(field->getType()));
+        }
+
+        auto node = Node(*this, "struct", nodeFields);
+        return node.id;
+    }
+
+    std::string toMermaid(AstFunction* func) {
+        std::vector<std::string> nodeFields;
+        nodeFields.emplace_back("name");
+        nodeFields.emplace_back(func->getName().toString());
+        nodeFields.emplace_back("returns");
+        nodeFields.emplace_back(type2string(func->getReturnType()));
+
+        for (auto* param : func->getParams()) {
+            nodeFields.emplace_back(param->getId().toString());
+            nodeFields.emplace_back(type2string(param->getType()));
+        }
+
+        auto node = Node(*this, "function", nodeFields);
         connect(node, toMermaid(func->getBlock()));
         return node.id;
     }
@@ -55,7 +94,7 @@ public:
     }
 
     std::string toMermaid(AstFunParam* param) {
-        auto node = Node(*this, "param", { "value", param->getIdentifier(), "type", type2string(param->getType()) });
+        auto node = Node(*this, "param", { "value", param->getId().toString(), "type", type2string(param->getType()) });
         return node.id;
     }
 
@@ -75,7 +114,7 @@ public:
     std::string toMermaid(AstDeclaration* decl) {
         if (decl->kind == AstDeclaration::Kind::Var) {
             auto* it = (AstVarDeclaration*) decl;
-            auto node = Node(*this, "var decl", { "name", it->getName(), "type", type2string(it->getType()) });
+            auto node = Node(*this, "var decl", { "name", it->getId().toString(), "type", type2string(it->getType()) });
             if (it->getInitializer() != nullptr) {
                 connect(node, toMermaid(it->getInitializer()));
             }
@@ -147,7 +186,7 @@ public:
         }
         else if (kind == AstExp::Kind::Var) {
             auto* var = (AstVar*) exp;
-            auto node = Node(*this, kindStr, { "value", var->getIdentifier(), "type", type2string(var) });
+            auto node = Node(*this, kindStr, { "value", var->getId().toString(), "type", type2string(var) });
             return node.id;
         }
         else if (kind == AstExp::Kind::Assignment) {
@@ -159,7 +198,7 @@ public:
         }
         else if (kind == AstExp::Kind::FunCall) {
             auto* call = (AstFunCall*) exp;
-            auto node = Node(*this, kindStr, { "fn", call->getFunName(), "type", type2string(call) });
+            auto node = Node(*this, kindStr, { "fn", call->getFunName().toString(), "type", type2string(call) });
             const auto& args = call->getArgs();
             for (size_t i = 0; i < args.size(); i++) {
                 connect(node, toMermaid(args[i]));
@@ -184,8 +223,15 @@ public:
             connect(node, toMermaid(addrOf->getExpression()));
             return node.id;
         }
+        else if (kind == AstExp::Kind::Dot) {
+            auto* dot = (AstDot*) exp;
+            Node node(*this, kindStr, { "type", type2string(dot) });
+            connect(node, toMermaid(dot->getFrom()));
+            connect(node, toMermaid(dot->getField()));
+            return node.id;
+        }
         else {
-            sparkError("AstMermaidPrinter", "Unknown AstExp");
+            sparkError("AstMermaidPrinter", "Unknown AstExp: %d", kind);
             return "";
         }
     }

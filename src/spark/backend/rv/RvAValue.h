@@ -25,12 +25,12 @@ private:
 
 class RvaPseudoReg : public RvaValue {
 public:
-    RvaPseudoReg(const char* id) : RvaValue(Kind::PseudoReg), id(id) {  }
+    RvaPseudoReg(StringRef id) : RvaValue(Kind::PseudoReg), id(id) {  }
 
-    const char* getId() const { return id; }
+    StringRef getId() const { return id; }
 
 private:
-    const char* id;
+    StringRef id;
 };
 
 

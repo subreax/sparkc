@@ -34,12 +34,20 @@ public:
         throw std::out_of_range("Peek failed: out of range");
     }
 
+    const T& peek(size_t offset = 0) const {
+        if (offset < sz) {
+            return *(getTopElement() - offset);
+        }
+        throw std::out_of_range("Peek failed: out of range");
+    }
+
     bool isNotEmpty() const {
         return sz > 0;
     }
 
 private:
     inline T* getTopElement() { return ((T*) allocator.getPtr()) - 1; }
+    inline const T* getTopElement() const { return ((T*) allocator.getPtr()) - 1; }
 
     LinearAllocator& allocator;
     size_t sz = 0;

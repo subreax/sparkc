@@ -1,8 +1,9 @@
 #pragma once
-#include "AstFunction.h"
+#include "../../common/BoundArray.h"
+#include "AstProgItem.h"
 
 struct AstProgram {
-    AstProgram(BoundArray<AstFunction*> functions) : functions(functions) {  }
+    AstProgram(const BoundArray<AstProgItem*>& items) : items(items) {  }
 
-    BoundArray<AstFunction*> functions;
+    BoundArray<AstProgItem*> items;
 };

@@ -5,15 +5,15 @@
 
 class AstFunCall : public AstExp {
 public:
-    AstFunCall(const char* funName, const BoundArray<AstExp*>& args)
+    AstFunCall(StringRef funName, const BoundArray<AstExp*>& args)
         : AstExp(Kind::FunCall)
         , funName(funName)
         , args(args) {  }
 
-    const char* getFunName() const { return funName; }
+    StringRef getFunName() const { return funName; }
     BoundArray<AstExp*>& getArgs() { return args; }
 
 private:
-    const char* funName;
+    StringRef funName;
     BoundArray<AstExp*> args;
 };

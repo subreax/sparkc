@@ -7,7 +7,7 @@ class RvaBranch : public RvaInstruction {
 public:
     enum class Operator { Equals, NotEquals, LessThan, LessOrEqual, GreaterThan, GreaterOrEqual };
 
-    RvaBranch(RvaValue* left, Operator op, RvaValue* right, const char* label) 
+    RvaBranch(RvaValue* left, Operator op, RvaValue* right, StringRef label) 
         : RvaInstruction(Kind::Branch)
         , left(left)
         , op(op)
@@ -47,5 +47,5 @@ public:
     RvaValue* left;
     Operator op;
     RvaValue* right;
-    const char* label;
+    StringRef label;
 };

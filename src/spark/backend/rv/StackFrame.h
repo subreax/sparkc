@@ -22,14 +22,13 @@ public:
         return rvaAlloc.create<RvaMemory>(RvReg::S0, -localSize);
     }
 
-    RvaMemory* getOrPush(const char* id) {
-        StringRef idRef(id, StringRef::lengthOf(id));
-        auto it = var2stack.find(idRef);
+    RvaMemory* getOrPush(StringRef id) {
+        auto it = var2stack.find(id);
         if (it != var2stack.end()) {
             return it->second;
         } else {
             auto* rvaMem = allocate(4);
-            var2stack[idRef] = rvaMem;
+            var2stack[id] = rvaMem;
             return rvaMem;
         }
     }
@@ -41,9 +40,8 @@ public:
         return mem;
     }
 
-    void bindParam(const char* param) {
-        StringRef paramRef(param, StringRef::lengthOf(param));
-        var2stack[paramRef] = rvaAlloc.create<RvaMemory>(RvReg::S0, boundParamsOffset);
+    void bindParam(StringRef param) {
+        var2stack[param] = rvaAlloc.create<RvaMemory>(RvReg::S0, boundParamsOffset);
         boundParamsOffset += 4;
     }
 

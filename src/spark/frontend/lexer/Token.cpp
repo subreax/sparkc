@@ -7,6 +7,7 @@ static constexpr const char* _TokenKind2String[] = {
     "if",
     "else",
     "while",
+    "struct",
     "<identifier>",
     "open par",
     "close par",
@@ -30,6 +31,7 @@ static constexpr const char* _TokenKind2String[] = {
     "<=",
     ">",
     ">=",
+    ".",
     ",",
     "<eof>",
     "<bad>"

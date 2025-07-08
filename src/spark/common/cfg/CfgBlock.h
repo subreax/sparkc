@@ -7,7 +7,7 @@ bool isLabel(I* ptr);
 
 // return empty string if instruction doesn't have labels or jumps
 template<typename I>
-const char* getLabel(I* ptr);
+StringRef getLabel(I* ptr);
 
 template<typename I>
 bool isJump(I* ptr);
@@ -57,11 +57,11 @@ public:
         return !body.empty() && cfg::isBranch(body.back());
     }
 
-    const char* getLabel() const {
+    StringRef getLabel() const {
         return cfg::getLabel(body.front());
     }
 
-    const char* getJumpOrBranchLabel() const {
+    StringRef getJumpOrBranchLabel() const {
         return cfg::getLabel(body.back());
     }
 

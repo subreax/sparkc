@@ -39,9 +39,9 @@ private:
             auto* next = blocks[i + 1];
 
             if (graph->isConnected(curr, next) && curr->hasJump() && next->isLabeled()) {
-                auto* jumpLabel = curr->getJumpOrBranchLabel();
-                auto* blockLabel = next->getLabel();
-                if (strncmp(jumpLabel, blockLabel, 128) == 0) {
+                auto jumpLabel = curr->getJumpOrBranchLabel();
+                auto blockLabel = next->getLabel();
+                if (jumpLabel == blockLabel) {
                     curr->getBody().erase(curr->getBody().end() - 1);
                 }
             }

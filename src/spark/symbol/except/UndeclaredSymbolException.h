@@ -3,7 +3,7 @@
 
 class UndeclaredSymbolException : public SparkRuntimeException {
 public:
-    UndeclaredSymbolException(const char* name)
+    UndeclaredSymbolException(StringRef name)
         : SparkRuntimeException(std::string("Undeclared symbol: '") + name + "'") {  }
 
 };

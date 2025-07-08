@@ -3,10 +3,10 @@
 
 class SkrJump : public SkrInstruction {
 public:
-    SkrJump(const char* label) : SkrInstruction(Kind::Jump), label(label) {  }
+    SkrJump(StringRef label) : SkrInstruction(Kind::Jump), label(label) {  }
 
-    const char* getLabel() { return label; }
+    StringRef getLabel() { return label; }
 
 private:
-    const char* label;
+    StringRef label;
 };

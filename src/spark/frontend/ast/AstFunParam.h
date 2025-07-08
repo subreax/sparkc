@@ -3,12 +3,14 @@
 
 class AstFunParam {
 public:
-    AstFunParam(const char* id, SymbolType* type) : id(id), type(type) {  }
+    AstFunParam(StringRef id, SymbolType* type) : id(id), type(type) {  }
 
-    const char* getIdentifier() const { return id; }
+    StringRef getId() const { return id; }
+    void setId(StringRef id) { this->id = id; }
+
     SymbolType* getType() const { return type; }
 
 private:
-    const char* id;
+    StringRef id;
     SymbolType* type;
 };

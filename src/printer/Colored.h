@@ -4,11 +4,11 @@
 
 class Colored {
 public:
-    static std::string label(const char* label) {
-        if (LabelGen::isInternal(label)) {
-            return std::string("\033[32m") + label + "\033[0m";
+    static std::string label(StringRef s) {
+        if (LabelGen::isInternal(s)) {
+            return "\033[32m" + s.toString() + "\033[0m";
         } else {
-            return std::string("\033[31m") + label + "\033[0m";
+            return "\033[31m" + s.toString() + "\033[0m";
         }
     }
 };

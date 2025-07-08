@@ -9,11 +9,10 @@
 class RvaInstruction {
 public:
     enum class Kind {
-        Prologue, Epilogue, Binary, Move, Load, Store, Jump, Label, Ret, Branch, Call, GetAddress
+        Prologue, Epilogue, Binary, Move, Load, Store, Jump, Label, Ret, Branch, Call, GetAddress, CopyToOffset
     };
 
     RvaInstruction(Kind kind) : kind(kind) { }
-    virtual ~RvaInstruction() = default;
 
     virtual void emit(RvListing& listing) = 0;
 

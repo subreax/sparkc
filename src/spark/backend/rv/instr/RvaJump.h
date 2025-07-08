@@ -3,14 +3,14 @@
 
 class RvaJump : public RvaInstruction {
 public:
-    RvaJump(const char* label) : RvaInstruction(Kind::Jump), label(label) {  }
+    RvaJump(StringRef label) : RvaInstruction(Kind::Jump), label(label) {  }
 
     void emit(RvListing& listing) override {
         listing.addWithLabel(Rv32I::jal(RvReg::ZERO), label);
     }
 
-    const char* getLabel() const { return label; }
+    StringRef getLabel() const { return label; }
 
 private:
-    const char* label;
+    StringRef label;
 };

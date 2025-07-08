@@ -23,7 +23,7 @@ public:
     class OnGraphCreatedListener {
     public:
         virtual ~OnGraphCreatedListener() = default;
-        virtual void onCreated(const char* funName, int iteration, CfGraph<SkrInstruction*>* graph) = 0;
+        virtual void onCreated(StringRef funName, int iteration, CfGraph<SkrInstruction*>* graph) = 0;
     };
 
     SkrOptimizer(Allocator& a1, SkrFunction* rawFunc, OnGraphCreatedListener* onGraphCreated = nullptr)
@@ -81,7 +81,7 @@ public:
     }
 
 private:
-    void notifyGraphCreated(const char* funName, int iteration, CfGraph<SkrInstruction*>* graph) {
+    void notifyGraphCreated(StringRef funName, int iteration, CfGraph<SkrInstruction*>* graph) {
         if (onGraphCreatedListener != nullptr) {
             onGraphCreatedListener->onCreated(funName, iteration, graph);
         }

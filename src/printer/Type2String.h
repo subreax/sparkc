@@ -15,7 +15,11 @@ public:
             auto* refType = (SymbolPointerType*) t;
             return run(refType->getVarType()) + std::string("*");
         }
-        default: return "<unknown>";
+        case SymbolType::Kind::Structure: {
+            auto* structType = (SymbolStructureType*) t;
+            return structType->getTag().toString();
+        }
+        default: return "???";
         }
     }
 };

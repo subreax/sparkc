@@ -8,30 +8,40 @@
 
 class SymbolTable {
 public:
-    SymbolTable(Allocator& typeAllocator) : typeAllocator(typeAllocator) {  }
+    SymbolTable(Allocator& allocator) : allocator(allocator) {  }
 
-    void declare(const char* name, SymbolType* type) {
-        StringRef name1(name, StringRef::lengthOf(name));
-        auto it = table.find(name1);
+    void declare(StringRef name, SymbolType* type) {
+        auto it = table.find(name);
         if (it != table.end()) {
             throw DuplicateSymbolDeclarationException(name, type);
         }
 
-        table.emplace(name1, type);
+        table.emplace(name, type);
     }
 
-    SymbolType* get(const char* name) const {
-        StringRef name1(name, StringRef::lengthOf(name));
-        auto it = table.find(name1);
+    void declareFunc(StringRef name, SymbolType* retType, const std::vector<SymbolType*>& params) {
+        BoundArray<SymbolType*> paramTypes = BoundArray<SymbolType*>::fromVector(params, allocator);
+        auto* type = allocator.create<SymbolFunctionType>(retType, paramTypes);
+
+        auto it = table.find(name);
+        if (it != table.end()) {
+            throw DuplicateSymbolDeclarationException(name, type);
+        }
+
+        table.emplace(name, type);
+    }
+
+    SymbolType* get(StringRef name) const {
+        auto it = table.find(name);
         if (it == table.end()) {
             throw UndeclaredSymbolException(name);
         }
         return it->second;
     }
 
-    Allocator& getTypeAllocator() const { return typeAllocator; }
+    Allocator& getTypeAllocator() const { return allocator; }
 
 private:
     std::unordered_map<StringRef, SymbolType*> table;
-    Allocator& typeAllocator;
+    Allocator& allocator;
 };

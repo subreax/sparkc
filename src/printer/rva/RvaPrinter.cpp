@@ -59,7 +59,7 @@ std::ostream& operator<<(std::ostream& os, const RvaValue& value) {
         break;
 
     case RvaValue::Kind::PseudoReg:
-        os << "p(" << ((const RvaPseudoReg*) &value)->getId() << ")";
+        os << "p(" << ((const RvaPseudoReg*) &value)->getId().toString() << ")";
         break;
     
     case RvaValue::Kind::Register:

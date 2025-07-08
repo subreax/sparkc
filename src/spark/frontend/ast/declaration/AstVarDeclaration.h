@@ -4,13 +4,14 @@
 
 class AstVarDeclaration : public AstDeclaration {
 public:
-    AstVarDeclaration(const char* name, SymbolType* type, AstExp* init = nullptr)
+    AstVarDeclaration(StringRef id, SymbolType* type, AstExp* init = nullptr)
         : AstDeclaration(Kind::Var)
-        , name(name)
+        , id(id)
         , type(type)
         , init(init) { }
 
-    const char* getName() const { return name; }
+    StringRef getId() const { return id; }
+    void setId(StringRef id) { this->id = id; }
     
     AstExp* getInitializer() { return init; }
     void setInitializer(AstExp* init) { this->init = init; }
@@ -18,7 +19,7 @@ public:
     SymbolType* getType() { return type; }
 
 private:
-    const char* name;
+    StringRef id;
     SymbolType* type;
     AstExp* init;
 };
