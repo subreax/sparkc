@@ -10,7 +10,15 @@ public:
     static SkrExpRes field(SkrValue* base, int offset) { return SkrExpRes(Kind::Field, base, offset); }
 
     SkrValue* get() const { return _val; }
-    SkrValue* getBase() const { return _val; }
+
+    SkrVar* getBase() const {
+        if (_val->isVar()) {
+            return _val->toSkrVar();
+        }
+        sparkError("SkrExpRes", "getBase(): _val is not a SkrVar");
+        return nullptr;
+    }
+
     int getOffset() const { return _offset; }
 
     const Kind kind;

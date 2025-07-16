@@ -9,7 +9,7 @@
 class RvaInstruction {
 public:
     enum class Kind {
-        Prologue, Epilogue, Binary, Move, Load, Store, Jump, Label, Ret, Branch, Call, GetAddress, CopyToOffset
+        Prologue, Epilogue, Binary, Move, Load, Store, Jump, Label, Ret, Branch, Call, GetAddress
     };
 
     RvaInstruction(Kind kind) : kind(kind) { }

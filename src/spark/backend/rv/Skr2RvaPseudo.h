@@ -20,7 +20,8 @@ private:
         , idGen(idGen)
         , table(symbolTable)
         , frame(frame)
-        , out(out) {  }
+        , out(out)
+        , tempReg(allocator.create<RvaRegister>(RvReg::T6)) {  }
 
     void emit(SkrFunction* func) {
         auto* prologue = allocator.create<RvaPrologue>();
@@ -90,6 +91,14 @@ private:
 
             case SkrInstruction::Kind::GetAddr:
                 emitGetAddr((SkrGetAddr*) skr);
+                break;
+
+            case SkrInstruction::Kind::OffsetLoad:
+                emitOffsetLoad((SkrOffsetLoad*) skr);
+                break;
+
+            case SkrInstruction::Kind::OffsetStore:
+                emitOffsetStore((SkrOffsetStore*) skr);
                 break;
 
             default:
@@ -181,15 +190,31 @@ private:
     }
 
     void emitLoad(SkrLoad* it) {
-        add<RvaLoad>(toPseudo(it->getTo()), toPseudo(it->getFrom()));
+        add<RvaMov>(tempReg, toPseudo(it->getFrom()));
+        auto* mem = allocator.create<RvaMemory>(tempReg->getReg(), 0);
+        add<RvaLoad>(toPseudo(it->getTo()), mem);
     }
 
     void emitStore(SkrStore* it) {
-        add<RvaStore>(toPseudo(it->getTo()), toPseudo(it->getFrom()));
+        add<RvaMov>(tempReg, toPseudo(it->getTo()));
+        auto* mem = allocator.create<RvaMemory>(tempReg->getReg(), 0);
+        add<RvaStore>(mem, toPseudo(it->getFrom()));
     }
 
     void emitGetAddr(SkrGetAddr* it) {
         add<RvaGetAddress>(toPseudo(it->getTo()), toPseudo(it->getVar()));
+    }
+
+    void emitOffsetLoad(SkrOffsetLoad* it) {
+        add<RvaMov>(tempReg, toPseudo(it->getFrom()));
+        auto* mem = allocator.create<RvaMemory>(tempReg->getReg(), it->getFromOffset());
+        add<RvaLoad>(toPseudo(it->getTo()), mem);
+    }
+
+    void emitOffsetStore(SkrOffsetStore* it) {
+        add<RvaMov>(tempReg, toPseudo(it->getTo()));
+        auto* mem = allocator.create<RvaMemory>(tempReg->getReg(), it->getToOffset());
+        add<RvaStore>(mem, toPseudo(it->getFrom()));
     }
 
     template<typename T, typename... Args>
@@ -268,4 +293,5 @@ private:
     SymbolTable& table;
     StackFrame& frame;
     std::vector<RvaInstruction*>& out;
+    RvaRegister* tempReg;
 };

@@ -3,16 +3,15 @@
 
 class RvaLoad : public RvaInstruction {
 public:
-    RvaLoad(RvaValue* to, RvaValue* fromAddr) 
+    RvaLoad(RvaValue* to, RvaMemory* from) 
         : RvaInstruction(Kind::Load)
         , to(to)
-        , fromAddr(fromAddr) {}
+        , from(from) {}
 
     void emit(RvListing& listing) override {
-        auto* mem = expectMem(fromAddr);
-        listing += Rv32I::lw(expectReg(to), mem->getBase(), mem->getOffset());
+        listing += Rv32I::lw(expectReg(to), from->getBase(), from->getOffset());
     }
 
     RvaValue* to;
-    RvaValue* fromAddr;
+    RvaMemory* from;
 };

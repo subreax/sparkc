@@ -108,12 +108,12 @@ void printJump(std::ostream& os, const RvaJump* it) {
 
 void printLoad(std::ostream& os, const RvaLoad* it) {
     printType(os, "load");
-    os << *it->fromAddr << " --> " << *it->to;
+    os << *it->from << " --> " << *it->to;
 }
 
 void printStore(std::ostream& os, const RvaStore* it) {
     printType(os, "store");
-    os << *it->from << " --> " << *it->toAddr;
+    os << *it->from << " --> " << *it->to;
 }
 
 void printRet(std::ostream& os, const RvaRet* it) {

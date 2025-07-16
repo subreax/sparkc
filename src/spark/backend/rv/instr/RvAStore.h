@@ -3,16 +3,15 @@
 
 class RvaStore : public RvaInstruction {
 public:
-    RvaStore(RvaValue* toAddr, RvaValue* from) 
+    RvaStore(RvaMemory* to, RvaValue* from) 
         : RvaInstruction(Kind::Store)
-        , toAddr(toAddr)
+        , to(to)
         , from(from) { }
     
     void emit(RvListing& listing) override {
-        auto* mem = expectMem(toAddr);
-        listing += Rv32I::sw(mem->getBase(), mem->getOffset(), expectReg(from));
+        listing += Rv32I::sw(to->getBase(), to->getOffset(), expectReg(from));
     }
 
-    RvaValue* toAddr;
+    RvaMemory* to;
     RvaValue* from;
 };

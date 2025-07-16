@@ -50,7 +50,7 @@ int main(int argc, char** argv) {
     string source = readFile(argv[1]);
     Lexer lexer(source.c_str());
 
-    LinearAllocator astAlloc(2048);
+    LinearAllocator astAlloc(4096);
     LinearAllocator idAlloc(2048, true);
     LinearAllocator typeAlloc(2048);
 
@@ -72,9 +72,9 @@ int main(int argc, char** argv) {
 
     writeMermaidAst(program, "ast.md");
 
-    LinearAllocator skrAlloc(2048);
-    LinearAllocator rvaAlloc1(2048);
-    LinearAllocator rvaAlloc2(4096);
+    LinearAllocator skrAlloc(4096);
+    LinearAllocator rvaAlloc1(4096);
+    LinearAllocator rvaAlloc2(8192);
 
     std::vector<SkrFunction*> skrFunctions;
     std::vector<SkrInstruction*> skrsBuf;
@@ -103,12 +103,16 @@ int main(int argc, char** argv) {
     }
     cout << endl; */
 
-    /* size_t rva1Peak = 0;
+    size_t rva1Peak = 0;
     std::vector<RvaInstruction*> rva;
     std::vector<RvaInstruction*> rvaFixed;
     for (auto* skrFunc : skrFunctions) {
         StackFrame frame(rvaAlloc1);
         Skr2RvaPseudo::emit(skrFunc, rvaAlloc1, idGen, symbolTable, frame, rva);
+        /* cout << "== rva ==" << endl;
+        RvaPrinter::print(cout, rva);
+        cout << endl; */
+
         RvaPseudoReplacer::replace(rva, frame);
         RvaFixer::fix(rva, rvaFixed, rvaAlloc2);
 
@@ -121,7 +125,7 @@ int main(int argc, char** argv) {
     RvaPrinter::print(cout, rvaFixed);
     cout << endl;
 
-    uint8_t bin[512];
+    uint8_t bin[1024];
     std::vector<RvListing::Label> externalLabels;
     auto sz = RvAssembler::assemble(rvaFixed, bin, sizeof(bin), externalLabels);
 
@@ -129,19 +133,19 @@ int main(int argc, char** argv) {
     for (auto& label : externalLabels) {
         cout << label.value.toString() << ": " << label.offset << endl;
     }
-    cout << endl; */
+    cout << endl;
 
     cout << "== memory stats ==" << endl;
     printAllocatorStats("symbol/type", typeAlloc);
     printAllocatorStats("ast", astAlloc);
     printAllocatorStats("id", idAlloc);
     printAllocatorStats("skr", skrAlloc);
-    //printMemoryUsage("rva1 peak", rva1Peak, rvaAlloc1.getCapacity());
+    printMemoryUsage("rva1 peak", rva1Peak, rvaAlloc1.getCapacity());
     printAllocatorStats("rva2", rvaAlloc2);
-    //printMemoryUsage("program", sz, sizeof(bin));
+    printMemoryUsage("program", sz, sizeof(bin));
 
     dump(idAlloc, "idAlloc.bin");
-    //dump(bin, sz, "out.bin");
+    dump(bin, sz, "out.bin");
     return 0;
 }
 

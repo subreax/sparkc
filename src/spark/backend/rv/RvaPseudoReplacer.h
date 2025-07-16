@@ -64,11 +64,9 @@ private:
 
     void replace(RvaLoad* it) {
         replace(&it->to);
-        replace(&it->fromAddr);
     }
     
     void replace(RvaStore* it) {
-        replace(&it->toAddr);
         replace(&it->from);
     }
 

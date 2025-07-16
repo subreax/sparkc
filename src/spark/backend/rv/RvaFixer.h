@@ -50,7 +50,7 @@ private:
                 add(allocator.create<RvaMov>(clone(it->to), clone(it->from)));
             }
             else if (fromKind == RvaValue::Kind::Memory) {
-                add(allocator.create<RvaLoad>(clone(it->to), clone(it->from)));
+                add(allocator.create<RvaLoad>(clone(it->to), (RvaMemory*) clone(it->from)));
             }
             else {
                 sparkError("RvaFixer", "Failed to fix RvaMov: unknown 'from' param: %d", fromKind);
@@ -58,7 +58,7 @@ private:
         }
         else if (toKind == RvaValue::Kind::Memory) {
             auto* regFrom = moveToReg(it->from, RvReg::T0);
-            add(allocator.create<RvaStore>(clone(it->to), regFrom));
+            add(allocator.create<RvaStore>((RvaMemory*) clone(it->to), regFrom));
         }
         else {
             add(allocator.create<RvaMov>(clone(it->to), clone(it->from)));
@@ -86,17 +86,15 @@ private:
 
     void fix(RvaLoad* it) {
         auto* toReg = getRegisterOrNew(it->to, RvReg::T0);
-        auto* fromAddrReg = moveToReg(it->fromAddr, RvReg::T1);
-        auto* fromMem = allocator.create<RvaMemory>(fromAddrReg->getReg(), 0);
-        add(allocator.create<RvaLoad>(toReg, fromMem));
+        auto* from = (RvaMemory*) clone(it->from);
+        add(allocator.create<RvaLoad>(toReg, from));
         storeIfNeeded(it->to, toReg);
     }
 
     void fix(RvaStore* it) {
         auto* fromReg = moveToReg(it->from, RvReg::T0);
-        auto* toAddrReg = moveToReg(it->toAddr, RvReg::T1);
-        auto* toMem = allocator.create<RvaMemory>(toAddrReg->getReg(), 0);
-        add(allocator.create<RvaStore>(toMem, fromReg));
+        auto* mem = (RvaMemory*) clone(it->to);
+        add(allocator.create<RvaStore>(mem, fromReg));
     }
 
     void fix(RvaGetAddress* it) {
@@ -117,7 +115,7 @@ private:
 
     void storeIfNeeded(RvaValue* initial, RvaRegister* reg) {
         if (initial->kind == RvaValue::Kind::Memory) {
-            add(allocator.create<RvaStore>(clone(initial), reg));
+            add(allocator.create<RvaStore>((RvaMemory*) clone(initial), reg));
         }
     }
 
