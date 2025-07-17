@@ -217,16 +217,14 @@ private:
         else if (k1 == SymbolType::Kind::Float && k2 == SymbolType::Kind::Integer) {
             return t1;
         }
-        else if (k1 == SymbolType::Kind::Pointer || k2 == SymbolType::Kind::Pointer) {
-            if (dereference(t1)->kind != dereference(t2)->kind) {
-                throw TypeException("Can't reference to a variable with another type");
-            }
-            return t1;
+
+        auto* t1deref = dereference(t1);
+        auto* t2deref = dereference(t2);
+        if (t1deref->kind != t2deref->kind) {
+            throw TypeException("References should have the same base type");
         }
-        else {
-            sparkError("TypeChecker", "Can't figure out common type: %d %d", k1, k2);
-            return t1;
-        }
+
+        return t1deref;
     }
 
     static SymbolType* dereference(SymbolType* t) {

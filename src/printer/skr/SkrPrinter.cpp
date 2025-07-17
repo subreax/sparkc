@@ -140,23 +140,15 @@ void SkrPrinter::print(std::ostream& os, SkrInstruction* skr, SymbolTable& table
     }
     else if (kind == SkrInstruction::Kind::Load) {
         auto* it = (SkrLoad*) skr;
-        os << *it->getTo() << " = *" << *it->getFrom();
+        os << *it->getTo() << " = " << it->getFromOffset() << "(" << *it->getFrom() << ")";
     }
     else if (kind == SkrInstruction::Kind::Store) {
         auto* it = (SkrStore*) skr;
-        os << "*" << *it->getTo() << " = " << *it->getFrom();
+        os << it->getToOffset() << "(" << *it->getTo() << ") = " << *it->getFrom();
     }
     else if (kind == SkrInstruction::Kind::GetAddr) {
         auto* it = (SkrGetAddr*) skr;
         os << *it->getTo() << " = addrOf(" << *it->getVar() << ")";
-    }
-    else if (kind == SkrInstruction::Kind::OffsetLoad) {
-        auto* it = (SkrOffsetLoad*) skr;
-        os << *it->getTo() << " = " << it->getFromOffset() << "(" << *it->getFrom() << ")";
-    }
-    else if (kind == SkrInstruction::Kind::OffsetStore) {
-        auto* it = (SkrOffsetStore*) skr;
-        os << it->getToOffset() << "(" << *it->getTo() << ") = " << *it->getFrom();
     }
     else {
         os << "unknown skr: " << (int) kind;

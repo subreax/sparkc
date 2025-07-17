@@ -196,11 +196,11 @@ private:
             SkrExpRes left = emit(ass->getVar());
             SkrValue* right = emitAndConvert(ass->getExp());
             if (left.kind == SkrExpRes::Kind::Ptr) {
-                out.emplace_back(allocator.create<SkrStore>(left.get(), right));
+                out.emplace_back(allocator.create<SkrStore>(left.get(), 0, right));
                 return left;
             }
             else if (left.kind == SkrExpRes::Kind::Field) {
-                out.emplace_back(allocator.create<SkrOffsetStore>(left.getBase(), left.getOffset(), right));
+                out.emplace_back(allocator.create<SkrStore>(left.getBase(), left.getOffset(), right));
                 return SkrExpRes::val(right);
             }
             else {
@@ -320,12 +320,12 @@ private:
         }
         else if (res.kind == SkrExpRes::Kind::Ptr) {
             SkrValue* tmpVar = createVar("deref", exp->type);
-            out.emplace_back(allocator.create<SkrLoad>(tmpVar, res.get()));
+            out.emplace_back(allocator.create<SkrLoad>(tmpVar, res.get(), 0));
             return tmpVar;
         }
         else if (res.kind == SkrExpRes::Kind::Field) {
             SkrValue* tmpVar = createVar("field", exp->type);
-            out.emplace_back(allocator.create<SkrOffsetLoad>(tmpVar, res.getBase(), res.getOffset()));
+            out.emplace_back(allocator.create<SkrLoad>(tmpVar, res.getBase(), res.getOffset()));
             return tmpVar;
         }
 

@@ -93,14 +93,6 @@ private:
                 emitGetAddr((SkrGetAddr*) skr);
                 break;
 
-            case SkrInstruction::Kind::OffsetLoad:
-                emitOffsetLoad((SkrOffsetLoad*) skr);
-                break;
-
-            case SkrInstruction::Kind::OffsetStore:
-                emitOffsetStore((SkrOffsetStore*) skr);
-                break;
-
             default:
                 sparkError("Skr2RvaPseudo", "Unknown skr kind: %d", skr->kind);
             }
@@ -191,30 +183,18 @@ private:
 
     void emitLoad(SkrLoad* it) {
         add<RvaMov>(tempReg, toPseudo(it->getFrom()));
-        auto* mem = allocator.create<RvaMemory>(tempReg->getReg(), 0);
+        auto* mem = allocator.create<RvaMemory>(tempReg->getReg(), it->getFromOffset());
         add<RvaLoad>(toPseudo(it->getTo()), mem);
     }
 
     void emitStore(SkrStore* it) {
         add<RvaMov>(tempReg, toPseudo(it->getTo()));
-        auto* mem = allocator.create<RvaMemory>(tempReg->getReg(), 0);
+        auto* mem = allocator.create<RvaMemory>(tempReg->getReg(), it->getToOffset());
         add<RvaStore>(mem, toPseudo(it->getFrom()));
     }
 
     void emitGetAddr(SkrGetAddr* it) {
         add<RvaGetAddress>(toPseudo(it->getTo()), toPseudo(it->getVar()));
-    }
-
-    void emitOffsetLoad(SkrOffsetLoad* it) {
-        add<RvaMov>(tempReg, toPseudo(it->getFrom()));
-        auto* mem = allocator.create<RvaMemory>(tempReg->getReg(), it->getFromOffset());
-        add<RvaLoad>(toPseudo(it->getTo()), mem);
-    }
-
-    void emitOffsetStore(SkrOffsetStore* it) {
-        add<RvaMov>(tempReg, toPseudo(it->getTo()));
-        auto* mem = allocator.create<RvaMemory>(tempReg->getReg(), it->getToOffset());
-        add<RvaStore>(mem, toPseudo(it->getFrom()));
     }
 
     template<typename T, typename... Args>

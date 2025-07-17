@@ -4,7 +4,7 @@
 class SkrInstruction {
 public:
     enum class Kind {
-        Binary, Copy, Jump, Label, Branch, FunCall, Int2Float, Float2Int, Load, Store, GetAddr, OffsetLoad, OffsetStore
+        Binary, Copy, Jump, Label, Branch, FunCall, Int2Float, Float2Int, Load, Store, GetAddr
     };
 
     SkrInstruction(Kind kind) : kind(kind) {  }
