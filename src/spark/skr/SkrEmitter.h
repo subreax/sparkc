@@ -173,7 +173,7 @@ private:
         else if (kind == AstExp::Kind::Dereference) {
             auto* it = (AstDereference*) exp;
             SkrValue* innerRes = emitAndConvert(it->getExpression());
-            return SkrExpRes::ptr(innerRes);
+            return SkrExpRes::ptr(innerRes, 0);
         }
         else if (kind == AstExp::Kind::AddrOf) {
             auto* it = (AstAddrOf*) exp;
@@ -196,11 +196,11 @@ private:
             SkrExpRes left = emit(ass->getVar());
             SkrValue* right = emitAndConvert(ass->getExp());
             if (left.kind == SkrExpRes::Kind::Ptr) {
-                out.emplace_back(allocator.create<SkrStore>(left.get(), 0, right));
+                out.emplace_back(allocator.create<SkrStore>(left.get(), left.getOffset(), right));
                 return left;
             }
             else if (left.kind == SkrExpRes::Kind::Field) {
-                out.emplace_back(allocator.create<SkrStore>(left.getBase(), left.getOffset(), right));
+                out.emplace_back(allocator.create<SkrCopyToOffset>(left.getBase(), left.getOffset(), right));
                 return SkrExpRes::val(right);
             }
             else {
@@ -237,7 +237,11 @@ private:
             int offset = typeTable.getField(tag, field).offset;
 
             auto inner = emit(it->getFrom());
-            return SkrExpRes::field(inner.get(), inner.getOffset() + offset);
+            if (inner.kind == SkrExpRes::Kind::Ptr) {
+                return SkrExpRes::ptr(inner.get(), inner.getOffset() + offset);
+            } else {
+                return SkrExpRes::field(inner.getBase(), inner.getOffset() + offset);
+            }
         }
         else {
             sparkError("SkrEmitter", "Unknown AstExp: %d", kind);
@@ -320,12 +324,12 @@ private:
         }
         else if (res.kind == SkrExpRes::Kind::Ptr) {
             SkrValue* tmpVar = createVar("deref", exp->type);
-            out.emplace_back(allocator.create<SkrLoad>(tmpVar, res.get(), 0));
+            out.emplace_back(allocator.create<SkrLoad>(tmpVar, res.get(), res.getOffset()));
             return tmpVar;
         }
         else if (res.kind == SkrExpRes::Kind::Field) {
             SkrValue* tmpVar = createVar("field", exp->type);
-            out.emplace_back(allocator.create<SkrLoad>(tmpVar, res.getBase(), res.getOffset()));
+            out.emplace_back(allocator.create<SkrCopyFromOffset>(tmpVar, res.getBase(), res.getOffset()));
             return tmpVar;
         }
 

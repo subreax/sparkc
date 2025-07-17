@@ -22,14 +22,22 @@ public:
         return rvaAlloc.create<RvaMemory>(RvReg::S0, -localSize);
     }
 
-    RvaMemory* getOrPush(StringRef id) {
+    RvaMemory* getOrPush(StringRef id, int size = 4, int offset = 0) {
         auto it = var2stack.find(id);
+        RvaMemory* mem;
         if (it != var2stack.end()) {
-            return it->second;
+            mem = it->second;
         } else {
-            auto* rvaMem = allocate(4);
+            auto* rvaMem = allocate(size);
             var2stack[id] = rvaMem;
-            return rvaMem;
+            mem = rvaMem;
+        }
+
+        if (offset == 0) {
+            return mem;
+        }
+        else {
+            return rvaAlloc.create<RvaMemory>(mem->getBase(), mem->getOffset() + offset);
         }
     }
 

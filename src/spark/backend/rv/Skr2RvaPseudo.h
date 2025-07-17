@@ -93,6 +93,14 @@ private:
                 emitGetAddr((SkrGetAddr*) skr);
                 break;
 
+            case SkrInstruction::Kind::CopyToOffset:
+                emitCopyToOffset((SkrCopyToOffset*) skr);
+                break;
+
+            case SkrInstruction::Kind::CopyFromOffset:
+                emitCopyFromOffset((SkrCopyFromOffset*) skr);
+                break;
+
             default:
                 sparkError("Skr2RvaPseudo", "Unknown skr kind: %d", skr->kind);
             }
@@ -197,6 +205,24 @@ private:
         add<RvaGetAddress>(toPseudo(it->getTo()), toPseudo(it->getVar()));
     }
 
+    void emitCopyToOffset(SkrCopyToOffset* it) {
+        if (!it->getTo()->isVar()) {
+            sparkError("Skr2RvaPseudo", "SkrCopyToOffset: 'to' is not a var");
+        }
+        
+        auto id = it->getTo()->toSkrVar()->getId();
+        add<RvaMov>(newPseudoMem(id, it->getToOffset()), toPseudo(it->getFrom()));
+    }
+
+    void emitCopyFromOffset(SkrCopyFromOffset* it) {
+        if (!it->getFrom()->isVar()) {
+            sparkError("Skr2RvaPseudo", "SkrCopyFromOffset: 'from' is not a var");
+        }
+        
+        auto id = it->getFrom()->toSkrVar()->getId();
+        add<RvaMov>(toPseudo(it->getTo()), newPseudoMem(id, it->getFromOffset()));
+    }
+
     template<typename T, typename... Args>
     inline void add(Args... args) {
         out.emplace_back(allocator.create<T>(args...));
@@ -241,6 +267,10 @@ private:
 
     inline RvaPseudoReg* newPseudo(const char* name) {
         return allocator.create<RvaPseudoReg>(idGen.unique(name));
+    }
+
+    inline RvaPseudoMem* newPseudoMem(StringRef id, int offset) {
+        return allocator.create<RvaPseudoMem>(id, offset);
     }
 
     RvaValue* getArgDst(int argIndex) {

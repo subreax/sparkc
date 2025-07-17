@@ -1,7 +1,9 @@
 struct color(float r, float g, float b, float a);
-struct data(float t, float& x, color& out);
 
-int pixel(data& d) {
-    d.x = 0.0;
-    return 0;
+int pixel() {
+    color c1;
+    c1.a = 1.0;
+
+    color c2;
+    c2.g = c1.a;
 }

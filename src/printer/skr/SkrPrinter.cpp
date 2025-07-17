@@ -150,6 +150,14 @@ void SkrPrinter::print(std::ostream& os, SkrInstruction* skr, SymbolTable& table
         auto* it = (SkrGetAddr*) skr;
         os << *it->getTo() << " = addrOf(" << *it->getVar() << ")";
     }
+    else if (kind == SkrInstruction::Kind::CopyToOffset) {
+        auto* it = (SkrCopyToOffset*) skr;
+        os << "CopyToOffset " << it->getToOffset() << "(" << *it->getTo() << ") = " << *it->getFrom();
+    }
+    else if (kind == SkrInstruction::Kind::CopyFromOffset) {
+        auto* it = (SkrCopyFromOffset*) skr;
+        os << "CopyFromOffset " << *it->getTo() << " = " << it->getFromOffset() << "(" << *it->getFrom() << ")";
+    }
     else {
         os << "unknown skr: " << (int) kind;
     }

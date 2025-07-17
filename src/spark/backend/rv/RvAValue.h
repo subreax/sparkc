@@ -5,7 +5,7 @@
 
 class RvaValue {
 public:
-    enum class Kind { Imm, PseudoReg, Register, Memory };
+    enum class Kind { Imm, PseudoReg, PseudoMem, Register, Memory };
 
     RvaValue(Kind kind) : kind(kind) {  }
 
@@ -31,6 +31,18 @@ public:
 
 private:
     StringRef id;
+};
+
+class RvaPseudoMem : public RvaValue {
+public:
+    RvaPseudoMem(StringRef id, int offset) : RvaValue(Kind::PseudoMem), id(id), offset(offset) {  }
+
+    StringRef getId() const { return id; }
+    int getOffset() const { return offset; }
+
+private:
+    StringRef id;
+    int offset;
 };
 
 

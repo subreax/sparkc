@@ -113,7 +113,7 @@ int main(int argc, char** argv) {
         RvaPrinter::print(cout, rva);
         cout << endl; */
 
-        RvaPseudoReplacer::replace(rva, frame);
+        RvaPseudoReplacer::replace(rva, frame, symbolTable, typeTable);
         RvaFixer::fix(rva, rvaFixed, rvaAlloc2);
 
         rva1Peak = max(rva1Peak, rvaAlloc1.getUsedSize());

@@ -13,11 +13,13 @@ public:
 
     StringRef unique(StringRef id, const char* prefix) {
         char buf[MAX_ID_LEN];
-        StringBuilder(buf, sizeof(buf))
-            .append(StringRef::cstr(prefix))
-            .append(StringRef::cstr("_"))
-            .append(id);
-        return unique(buf);
+        return unique(
+            StringBuilder(buf, sizeof(buf))
+                .append(StringRef::cstr(prefix))
+                .append(StringRef::cstr("_"))
+                .append(id)
+                .toString()
+        );
     }
 
     StringRef unique(StringRef id) {

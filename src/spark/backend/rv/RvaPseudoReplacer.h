@@ -3,15 +3,20 @@
 #include "instr/everything.h"
 #include "StackFrame.h"
 #include "../../common/Error.h"
+#include "../../symbol/SymbolTable.h"
+#include "../../type/TypeTable.h"
 
 class RvaPseudoReplacer {
 public:
-    static void replace(std::vector<RvaInstruction*>& rvas, StackFrame& frame) {
-        RvaPseudoReplacer(frame).replace(rvas);
+    static void replace(std::vector<RvaInstruction*>& rvas, StackFrame& frame, SymbolTable& symbolTable, TypeTable& typeTable) {
+        RvaPseudoReplacer(frame, symbolTable, typeTable).replace(rvas);
     }
 
 private:
-    RvaPseudoReplacer(StackFrame& frame) : frame(frame) {  }
+    RvaPseudoReplacer(StackFrame& frame, SymbolTable& symbolTable, TypeTable& typeTable) 
+        : frame(frame)
+        , symbolTable(symbolTable)
+        , typeTable(typeTable) {  }
 
     void replace(std::vector<RvaInstruction*>& rvas) {
         for (auto* it : rvas) 
@@ -80,7 +85,19 @@ private:
             auto* pseudo = (RvaPseudoReg*) *v;
             *v = frame.getOrPush(pseudo->getId());
         }
+        else if ((*v)->kind == RvaValue::Kind::PseudoMem) {
+            auto* pseudo = (RvaPseudoMem*) *v;
+            auto* type = (SymbolStructureType*) symbolTable.get(pseudo->getId());
+            if (type->kind != SymbolType::Kind::Structure) {
+                sparkError("RvaPseudoReplacer", "Symbol is not a structure: " + pseudo->getId().toString());
+            }
+
+            int size = typeTable.getStructSize(type->getTag());
+            *v = frame.getOrPush(pseudo->getId(), size, pseudo->getOffset());
+        }
     }
 
     StackFrame& frame;
+    SymbolTable& symbolTable;
+    TypeTable& typeTable;
 };

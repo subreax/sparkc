@@ -11,3 +11,5 @@
 #include "SkrLoad.h"
 #include "SkrStore.h"
 #include "SkrGetAddr.h"
+#include "SkrCopyToOffset.h"
+#include "SkrCopyFromOffset.h"
