@@ -196,7 +196,7 @@ private:
             SkrExpRes left = emit(ass->getVar());
             SkrValue* right = emitAndConvert(ass->getExp());
             if (left.kind == SkrExpRes::Kind::Ptr) {
-                out.emplace_back(allocator.create<SkrStore>(left.get(), left.getOffset(), right));
+                out.emplace_back(allocator.create<SkrStore>(left.getBase(), left.getOffset(), right));
                 return left;
             }
             else if (left.kind == SkrExpRes::Kind::Field) {
@@ -311,7 +311,7 @@ private:
         for (size_t i = 0; i < astArgs.size(); i++) {
             skrArgs[i] = emitAndConvert(astArgs[i]);
         }
-        auto* result = allocator.create<SkrVar>(idGen.unique(call->getFunName(), "r"));
+        auto* result = createVar(call->getFunName(), "r", call->type);
         auto* skrCall = allocator.create<SkrFunCall>(call->getFunName(), skrArgs, result);
         out.emplace_back(skrCall);
         return result;

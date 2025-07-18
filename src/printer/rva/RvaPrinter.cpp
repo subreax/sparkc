@@ -59,7 +59,13 @@ std::ostream& operator<<(std::ostream& os, const RvaValue& value) {
         break;
 
     case RvaValue::Kind::PseudoReg:
-        os << "p(" << ((const RvaPseudoReg*) &value)->getId().toString() << ")";
+        os << "pr(" << ((const RvaPseudoReg*) &value)->getId().toString() << ")";
+        break;
+
+    case RvaValue::Kind::PseudoMem: {
+        auto* it = (const RvaPseudoMem*) &value;
+        os << "pm(" << it->getId().toString() << sign(it->getOffset()) << it->getOffset() << ")";
+    }
         break;
     
     case RvaValue::Kind::Register:

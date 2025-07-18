@@ -4,21 +4,24 @@
 #include "../../common/Error.h"
 #include "../../skr/instr/everything.h"
 #include "../../skr/SkrFunction.h"
+#include "../../symbol/SymbolTable.h"
+#include "../../size/SymbolSize.h"
 #include "instr/everything.h"
 #include "StackFrame.h"
 #include "FixedUtils.h"
 
 class Skr2RvaPseudo {
 public:
-    static void emit(SkrFunction* func, Allocator& allocator, IdentifierGen& idGen, SymbolTable& table, StackFrame& frame, std::vector<RvaInstruction*>& buf) {
-        Skr2RvaPseudo(allocator, idGen, table, frame, buf).emit(func);
+    static void emit(SkrFunction* func, Allocator& allocator, IdentifierGen& idGen, SymbolTable& table, SymbolSize& ss, StackFrame& frame, std::vector<RvaInstruction*>& buf) {
+        Skr2RvaPseudo(allocator, idGen, table, ss, frame, buf).emit(func);
     }
 
 private:
-    Skr2RvaPseudo(Allocator& allocator, IdentifierGen& idGen, SymbolTable& symbolTable, StackFrame& frame, std::vector<RvaInstruction*>& out) 
+    Skr2RvaPseudo(Allocator& allocator, IdentifierGen& idGen, SymbolTable& symbolTable, SymbolSize& ss, StackFrame& frame, std::vector<RvaInstruction*>& out) 
         : allocator(allocator)
         , idGen(idGen)
-        , table(symbolTable)
+        , symbolTable(symbolTable)
+        , symbolSize(ss)
         , frame(frame)
         , out(out)
         , tempReg(allocator.create<RvaRegister>(RvReg::T6)) {  }
@@ -39,7 +42,7 @@ private:
         auto params = func->getParams();
         for (size_t i = 0; i < params.size(); i++) {
             if (i < 8) {
-                auto* to = frame.getOrPush(params[i]->getId());
+                auto* to = toPseudo(params[i]);
                 auto* from = allocator.create<RvaRegister>(getArgReg(i));
                 add<RvaMov>(to, from);
             } else {
@@ -114,7 +117,7 @@ private:
     }
 
     void emitBinary(SkrBinary* it) {
-        auto dstType = table.get(it->getDst()->getId())->kind;
+        auto dstType = symbolTable.get(it->getDst()->getId())->kind;
         auto op = it->getOperator();
         if (dstType == SymbolType::Kind::Float && op == SkrBinary::Operator::Mul) {
             emitFixedMul(it);
@@ -134,7 +137,7 @@ private:
 
     void emitFixedMul(SkrBinary* it) {
         auto* dst = toPseudo(it->getDst());
-        auto* dstH = newPseudo("tmp");
+        auto* dstH = tempReg;
         auto* left = toPseudo(it->getLeft());
         auto* right = toPseudo(it->getRight());
         add<RvaBinary>(dst, left, RvaBinary::Operator::Mul, right);
@@ -145,7 +148,7 @@ private:
     }
 
     void emitCopy(SkrCopy* it) {
-        add<RvaMov>(toPseudo(it->getTo()), toPseudo(it->getFrom()));
+        copy(it->getTo(), it->getFrom());
     }
 
     void emitJump(SkrJump* it) {
@@ -191,14 +194,12 @@ private:
 
     void emitLoad(SkrLoad* it) {
         add<RvaMov>(tempReg, toPseudo(it->getFrom()));
-        auto* mem = allocator.create<RvaMemory>(tempReg->getReg(), it->getFromOffset());
-        add<RvaLoad>(toPseudo(it->getTo()), mem);
+        loadBytes(it->getTo(), tempReg, it->getFromOffset());
     }
 
     void emitStore(SkrStore* it) {
         add<RvaMov>(tempReg, toPseudo(it->getTo()));
-        auto* mem = allocator.create<RvaMemory>(tempReg->getReg(), it->getToOffset());
-        add<RvaStore>(mem, toPseudo(it->getFrom()));
+        storeBytes(tempReg, it->getToOffset(), it->getFrom());
     }
 
     void emitGetAddr(SkrGetAddr* it) {
@@ -232,7 +233,7 @@ private:
         out.emplace_back(instr);
     }
 
-    inline RvaValue* toPseudo(const SkrValue* value) {
+    RvaValue* toPseudo(const SkrValue* value, int offsetIfMem = 0) {
         auto kind = value->kind;
 
         switch (kind) {
@@ -253,7 +254,11 @@ private:
         }
         case SkrValue::Kind::Var: {
             auto* it = (const SkrVar*) value;
-            return allocator.create<RvaPseudoReg>(it->getId());
+            if (isStructure(it)) {
+                return allocator.create<RvaPseudoMem>(it->getId(), offsetIfMem);
+            } else {
+                return allocator.create<RvaPseudoReg>(it->getId());
+            }
         }
         default:
             sparkError("Skr2RvaPseudo", "Unknown Skrvalue kind: %d", kind);
@@ -271,6 +276,10 @@ private:
 
     inline RvaPseudoMem* newPseudoMem(StringRef id, int offset) {
         return allocator.create<RvaPseudoMem>(id, offset);
+    }
+
+    inline RvaMemory* newMemory(RvaRegister* base, int offset) {
+        return allocator.create<RvaMemory>(base->getReg(), offset);
     }
 
     RvaValue* getArgDst(int argIndex) {
@@ -298,9 +307,52 @@ private:
         return false;
     }
 
+    bool isStructure(const SkrValue* val) const {
+        return val->isVar() && isStructure(val->toSkrVar()->getId());
+    }
+
+    bool isStructure(StringRef id) const {
+        return symbolTable.get(id)->kind == SymbolType::Kind::Structure;
+    }
+
+    int getSize(SkrValue* val) const {
+        if (val->isConst()) {
+            return 4;
+        }
+        else if (val->isVar()) {
+            return symbolSize.get(val->toSkrVar()->getId());
+        }
+
+        sparkError("Skr2RvaPseudo", "getSize(): Unreachable");
+        return 0;
+    }
+
+    void copy(SkrValue* to, SkrValue* from) {
+        auto sz = getSize(to);
+        for (size_t off = 0; off < sz; off += 4) {
+            add<RvaMov>(toPseudo(to, off), toPseudo(from, off));
+        }
+    }
+
+    void storeBytes(RvaRegister* toAddrReg, int offset, SkrValue* from) {
+        size_t sz = getSize(from);
+        for (size_t off = 0; off < sz; off += 4) {
+            add<RvaMov>(newMemory(toAddrReg, offset + off), toPseudo(from, off));
+        }
+    }
+
+    void loadBytes(SkrValue* to, RvaRegister* fromAddrReg, int offset) {
+        size_t sz = getSize(to);
+        for (size_t off = 0; off < sz; off += 4) {
+            add<RvaMov>(toPseudo(to, off), newMemory(fromAddrReg, offset + off));
+        }
+    }
+
+
     Allocator& allocator;
     IdentifierGen& idGen;
-    SymbolTable& table;
+    SymbolTable& symbolTable;
+    SymbolSize& symbolSize;
     StackFrame& frame;
     std::vector<RvaInstruction*>& out;
     RvaRegister* tempReg;

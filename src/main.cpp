@@ -58,6 +58,7 @@ int main(int argc, char** argv) {
     LabelGen labelGen(idAlloc);
     SymbolTable symbolTable(typeAlloc);
     TypeTable typeTable(typeAlloc);
+    SymbolSize symbolSize(symbolTable, typeTable);
     AstProgram* program;
     try {
         program = Parser(lexer, astAlloc, symbolTable.getTypeAllocator()).parseProgram();
@@ -108,12 +109,12 @@ int main(int argc, char** argv) {
     std::vector<RvaInstruction*> rvaFixed;
     for (auto* skrFunc : skrFunctions) {
         StackFrame frame(rvaAlloc1);
-        Skr2RvaPseudo::emit(skrFunc, rvaAlloc1, idGen, symbolTable, frame, rva);
+        Skr2RvaPseudo::emit(skrFunc, rvaAlloc1, idGen, symbolTable, symbolSize, frame, rva);
         /* cout << "== rva ==" << endl;
         RvaPrinter::print(cout, rva);
         cout << endl; */
 
-        RvaPseudoReplacer::replace(rva, frame, symbolTable, typeTable);
+        RvaPseudoReplacer::replace(rva, frame, symbolSize);
         RvaFixer::fix(rva, rvaFixed, rvaAlloc2);
 
         rva1Peak = max(rva1Peak, rvaAlloc1.getUsedSize());
