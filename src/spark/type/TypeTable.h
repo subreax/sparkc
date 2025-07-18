@@ -63,7 +63,8 @@ public:
         size_t sz = 0;
         for (auto& field : fields) {
             if (field.type->kind == SymbolType::Kind::Structure) {
-                sz += getStructSize(field.name);
+                auto* structType = (SymbolStructureType*) field.type;
+                sz += getStructSize(structType->getTag());
             } else {
                 sz += 4;
             }

@@ -110,9 +110,9 @@ int main(int argc, char** argv) {
     for (auto* skrFunc : skrFunctions) {
         StackFrame frame(rvaAlloc1);
         Skr2RvaPseudo::emit(skrFunc, rvaAlloc1, idGen, symbolTable, symbolSize, frame, rva);
-        /* cout << "== rva ==" << endl;
+        cout << "== rva ==" << endl;
         RvaPrinter::print(cout, rva);
-        cout << endl; */
+        cout << endl;
 
         RvaPseudoReplacer::replace(rva, frame, symbolSize);
         RvaFixer::fix(rva, rvaFixed, rvaAlloc2);

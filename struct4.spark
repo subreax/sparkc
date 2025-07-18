@@ -1,0 +1,8 @@
+struct color(float r, float g, float b, float a);
+struct data(float f, color c);
+
+int pixel() {
+    data d;
+    color c = d.c;
+    return 0;
+}

@@ -148,7 +148,7 @@ private:
     }
 
     void emitCopy(SkrCopy* it) {
-        copy(it->getTo(), it->getFrom());
+        copy(it->getTo(), 0, it->getFrom(), 0);
     }
 
     void emitJump(SkrJump* it) {
@@ -207,21 +207,11 @@ private:
     }
 
     void emitCopyToOffset(SkrCopyToOffset* it) {
-        if (!it->getTo()->isVar()) {
-            sparkError("Skr2RvaPseudo", "SkrCopyToOffset: 'to' is not a var");
-        }
-        
-        auto id = it->getTo()->toSkrVar()->getId();
-        add<RvaMov>(newPseudoMem(id, it->getToOffset()), toPseudo(it->getFrom()));
+        copy(it->getTo(), it->getToOffset(), it->getFrom(), 0);
     }
 
     void emitCopyFromOffset(SkrCopyFromOffset* it) {
-        if (!it->getFrom()->isVar()) {
-            sparkError("Skr2RvaPseudo", "SkrCopyFromOffset: 'from' is not a var");
-        }
-        
-        auto id = it->getFrom()->toSkrVar()->getId();
-        add<RvaMov>(toPseudo(it->getTo()), newPseudoMem(id, it->getFromOffset()));
+        copy(it->getTo(), 0, it->getFrom(), it->getFromOffset());
     }
 
     template<typename T, typename... Args>
@@ -327,10 +317,10 @@ private:
         return 0;
     }
 
-    void copy(SkrValue* to, SkrValue* from) {
-        auto sz = getSize(to);
+    void copy(SkrValue* to, int toOffset, SkrValue* from, int fromOffset) {
+        auto sz = getSize(from) - fromOffset;
         for (size_t off = 0; off < sz; off += 4) {
-            add<RvaMov>(toPseudo(to, off), toPseudo(from, off));
+            add<RvaMov>(toPseudo(to, toOffset + off), toPseudo(from, fromOffset + off));
         }
     }
 
