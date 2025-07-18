@@ -109,6 +109,7 @@ private:
         case AstExp::Kind::Assignment: typeCheck((AstAssignment*) exp); break;
         case AstExp::Kind::FunCall: typeCheck((AstFunCall*) exp); break;
         case AstExp::Kind::Dot: typeCheck((AstDot*) exp); break;
+        case AstExp::Kind::StructInit: typeCheck((AstStructInit*) exp); break;
         default:
             sparkError("TypeChecker", "Unhandled AstExp: %s (%d)", AstExp::kindToString(kind), kind);
         }
@@ -195,6 +196,24 @@ private:
         }
 
         throw TypeException("Trying to access unknown struct field");
+    }
+
+    void typeCheck(AstStructInit* it) {
+        auto tag = it->getTag();
+        auto args = it->getArgs();
+        auto fields = typeTable.get(tag);
+        if (args.size() != fields.size()) {
+            throw TypeException("Structure '" + tag.toString() + "' initialized with wrong number of arguments");
+        }
+
+        for (size_t i = 0; i < args.size(); i++) {
+            auto* arg = args[i];
+            auto* fieldType = fields[i].type;
+            typeCheck(arg);
+            args[i] = cast(arg, fieldType);
+        }
+
+        it->type = symbolTable.getTypeAllocator().create<SymbolStructureType>(tag);
     }
 
     static SymbolType* getCommonType(AstExp* e1, AstExp* e2) {

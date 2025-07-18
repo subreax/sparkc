@@ -69,7 +69,15 @@ private:
         if (decl->kind == AstDeclaration::Kind::Var) {
             auto* it = (AstVarDeclaration*) decl;
             auto* initializer = it->getInitializer();
-            if (it->getType()->kind != SymbolType::Kind::Structure && initializer != nullptr) {
+            if (initializer == nullptr) {
+                return;
+            }
+
+            if (initializer->kind == AstExp::Kind::StructInit) {
+                auto* skrVar = allocator.create<SkrVar>(it->getId());
+                emitStructInit((AstStructInit*) initializer, skrVar);
+            }
+            else {
                 auto* initRes = emitAndConvert(initializer);
                 auto* skrVar = allocator.create<SkrVar>(it->getId());
                 out.emplace_back(allocator.create<SkrCopy>(skrVar, initRes));
@@ -243,6 +251,10 @@ private:
                 return SkrExpRes::field(inner.getBase(), inner.getOffset() + offset);
             }
         }
+        else if (kind == AstExp::Kind::StructInit) {
+            auto* res = emitStructInit((AstStructInit*) exp);
+            return SkrExpRes::val(res);
+        }
         else {
             sparkError("SkrEmitter", "Unknown AstExp: %d", kind);
             return SkrExpRes::val(nullptr);
@@ -314,6 +326,24 @@ private:
         auto* result = createVar(call->getFunName(), "r", call->type);
         auto* skrCall = allocator.create<SkrFunCall>(call->getFunName(), skrArgs, result);
         out.emplace_back(skrCall);
+        return result;
+    }
+
+    SkrValue* emitStructInit(AstStructInit* it, SkrVar* result = nullptr) {
+        auto tag = it->getTag();
+        auto args = it->getArgs();
+
+        if (result == nullptr) {
+            result = createVar(tag, it->type);
+        }
+
+        const auto& fields = typeTable.get(tag);
+        for (size_t i = 0; i < args.size(); i++) {
+            auto* arg = emitAndConvert(args[i]);
+            int offset = fields[i].offset;
+            auto* instr = allocator.create<SkrCopyToOffset>(result, offset, arg);
+            out.emplace_back(instr);
+        }
         return result;
     }
 

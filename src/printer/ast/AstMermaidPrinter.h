@@ -230,6 +230,15 @@ public:
             connect(node, toMermaid(dot->getField()));
             return node.id;
         }
+        else if (kind == AstExp::Kind::StructInit) {
+            auto* it = (AstStructInit*) exp;
+            auto node = Node(*this, kindStr, { "type", type2string(it) });
+            const auto& args = it->getArgs();
+            for (size_t i = 0; i < args.size(); i++) {
+                connect(node, toMermaid(args[i]));
+            }
+            return node.id;
+        }
         else {
             sparkError("AstMermaidPrinter", "Unknown AstExp: %d", kind);
             return "";

@@ -175,6 +175,13 @@ private:
             auto* it = (AstDot*) exp;
             resolve(it->getFrom());
         }
+        else if (kind == AstExp::Kind::StructInit) {
+            auto* it = (AstStructInit*) exp;
+            checkDeclaration(it->getTag(), ScopeItem::Kind::Struct);
+            for (auto* arg : it->getArgs()) {
+                resolve(arg);
+            }
+        }
         else {
             sparkError("IdentifierResolution", "Unknown AstExp: %d", kind);
         }

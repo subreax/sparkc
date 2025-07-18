@@ -1,0 +1,22 @@
+struct color(float r, float g, float b, float a);
+
+int pixel(color& out, float x) {
+    color c1 = color(1.0, 0.5, 0.0, 1.0);
+    color c2 = color(0.5, 0.1, 0.2, 1.0);
+    mix(out, c1, c2, x);
+    return 0;
+}
+
+int mix(color& out, color& c1, color& c2, float val) {
+    out = color(
+        lerp(c1.r, c2.r, val),
+        lerp(c1.g, c2.g, val),
+        lerp(c1.b, c2.b, val),
+        lerp(c1.a, c2.a, val)
+    );
+    return 0;
+}
+
+float lerp(float a, float b, float val) {
+    return a + (b - a) * val;
+}

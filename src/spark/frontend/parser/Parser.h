@@ -213,7 +213,11 @@ private:
                 expect(T_CLOSE_PAR);
 
                 auto argsBA = BoundArray<AstExp*>::fromVector(args, allocator);
-                return allocator.create<AstFunCall>(id, argsBA);
+                if (isTypeExist(id)) {
+                    return allocator.create<AstStructInit>(id, argsBA);
+                } else {
+                    return allocator.create<AstFunCall>(id, argsBA);
+                }
             }
             else {
                 return allocator.create<AstVar>(id);
