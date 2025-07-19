@@ -39,7 +39,7 @@ public:
         }
     }
 
-    void reset() {
+    void reset() override {
         ptr = begin;
     }
 

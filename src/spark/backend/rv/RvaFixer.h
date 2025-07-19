@@ -1,18 +1,18 @@
 #pragma once
 #include <vector>
 #include "instr/everything.h"
-#include "../../common/alloc/LinearAllocator.h"
+#include "../../common/alloc/Allocator.h"
 #include "../../common/Error.h"
 #include "RvReg.h"
 
 class RvaFixer {
 public:
-    static void fix(const std::vector<RvaInstruction*>& orig, std::vector<RvaInstruction*>& out, LinearAllocator& rvaAllocator) {
+    static void fix(const std::vector<RvaInstruction*>& orig, std::vector<RvaInstruction*>& out, Allocator& rvaAllocator) {
         RvaFixer(orig, out, rvaAllocator).fix();
     }
 
 private:
-    RvaFixer(const std::vector<RvaInstruction*>& orig, std::vector<RvaInstruction*>& out, LinearAllocator& rvaAllocator)
+    RvaFixer(const std::vector<RvaInstruction*>& orig, std::vector<RvaInstruction*>& out, Allocator& rvaAllocator)
         : orig(orig)
         , out(out)
         , allocator(rvaAllocator) { }
@@ -224,5 +224,5 @@ private:
     RvaRegister* zeroReg = nullptr;
     const std::vector<RvaInstruction*>& orig;
     std::vector<RvaInstruction*>& out;
-    LinearAllocator& allocator;
+    Allocator& allocator;
 };

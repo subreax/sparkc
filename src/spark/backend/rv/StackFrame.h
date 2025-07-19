@@ -3,11 +3,11 @@
 #include <functional>
 #include "RvaValue.h"
 #include "../../common/StringRef.h"
-#include "../../common/alloc/LinearAllocator.h"
+#include "../../common/alloc/Allocator.h"
 
 class StackFrame {
 public:
-    StackFrame(LinearAllocator& rvaAlloc) : rvaAlloc(rvaAlloc) {  }
+    StackFrame(Allocator& rvaAlloc) : rvaAlloc(rvaAlloc) {  }
 
     void occupy(int bytes) {
         if (localSize == 0) {
@@ -64,7 +64,7 @@ public:
 
 private:
     std::unordered_map<StringRef, RvaMemory*> var2stack;
-    LinearAllocator& rvaAlloc;
+    Allocator& rvaAlloc;
     int localSize = 0;
     int argsSize = 0;
     int maxSize = 0;

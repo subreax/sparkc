@@ -6,6 +6,7 @@ class Allocator {
 public:
     virtual ~Allocator() = default;
     virtual MemBlock allocate(size_t sz) = 0;
+    virtual void reset() = 0;
 
     template<typename T, typename... Args>
     inline T* create(Args... args) {
