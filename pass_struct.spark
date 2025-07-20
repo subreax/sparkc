@@ -1,0 +1,5 @@
+struct color(float r, float g, float b, float a);
+
+int passColor(color c) {
+    return c.r + c.a;
+}

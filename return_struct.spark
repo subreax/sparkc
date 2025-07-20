@@ -1,0 +1,5 @@
+struct color(float r, float g, float b, float a);
+
+color pixel(float x) {
+    return color(1.0 * x, 0.4 * x, 0.0, 1.0);
+}
