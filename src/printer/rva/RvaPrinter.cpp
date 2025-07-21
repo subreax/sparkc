@@ -10,7 +10,7 @@ static constexpr const char* _REG_STR[] = {
     "t5", "t6"
 };
 
-static constexpr const char* _RVA_BINARY_OP[] = { "+", "-", "*", "mulh", "/", "%", "==", "!=", "<", "<=", ">", ">=", "<<", ">>", "|" };
+static constexpr const char* _RVA_BINARY_OP[] = { "+", "-", "*", "mulh", "/", "%", "==", "!=", "<", "<=", ">", ">=", "<<", ">>", "|", "fixmul" };
 static constexpr int _RVA_BINARY_OP_SZ = sizeof(_RVA_BINARY_OP) / sizeof(const char*);
 
 static constexpr const char* _RVA_BRANCH_OP[] = { "==", "!=", "<", "<=", ">", ">=" };

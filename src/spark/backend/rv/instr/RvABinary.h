@@ -20,7 +20,8 @@ public:
         GreaterOrEqual,
         ShiftLeft,
         ShiftRight,
-        Or
+        Or,
+        FixedMul
     };
 
     RvaBinary(RvaValue* dst, RvaValue* left, Operator op, RvaValue* right)

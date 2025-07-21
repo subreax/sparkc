@@ -8,16 +8,15 @@
 class RvaFixer {
 public:
     static void fix(const std::vector<RvaInstruction*>& orig, std::vector<RvaInstruction*>& out, Allocator& rvaAllocator) {
-        RvaFixer(orig, out, rvaAllocator).fix();
+        RvaFixer(out, rvaAllocator).fix(orig);
     }
 
 private:
-    RvaFixer(const std::vector<RvaInstruction*>& orig, std::vector<RvaInstruction*>& out, Allocator& rvaAllocator)
-        : orig(orig)
-        , out(out)
+    RvaFixer(std::vector<RvaInstruction*>& out, Allocator& rvaAllocator)
+        : out(out)
         , allocator(rvaAllocator) { }
 
-    void fix() {
+    void fix(const std::vector<RvaInstruction*>& orig) {
         for (RvaInstruction* rva : orig) {
             auto kind = rva->kind;
             switch (kind) {
@@ -79,7 +78,19 @@ private:
         } else {
             right = moveToReg(it->right, RvReg::T2);
         }
-        add(allocator.create<RvaBinary>(dstReg, leftReg, it->op, right));
+
+        if (it->op != RvaBinary::Operator::FixedMul) {
+            add(allocator.create<RvaBinary>(dstReg, leftReg, it->op, right));
+        }
+        else {
+            auto* temp = getReg(RvReg::T6);
+            add(allocator.create<RvaBinary>(dstReg, leftReg, RvaBinary::Operator::Mul, right));
+            add(allocator.create<RvaBinary>(temp, leftReg, RvaBinary::Operator::MulH, right));
+            add(allocator.create<RvaBinary>(dstReg, dstReg, RvaBinary::Operator::ShiftRight, newImm(15)));
+            add(allocator.create<RvaBinary>(temp, temp, RvaBinary::Operator::ShiftLeft, newImm(17)));
+            add(allocator.create<RvaBinary>(dstReg, temp, RvaBinary::Operator::Or, dstReg));
+        }
+
         storeIfNeeded(it->dst, dstReg);
     }
 
@@ -165,6 +176,10 @@ private:
         return nullptr;
     }
 
+    RvaImm* newImm(int32_t value) {
+        return allocator.create<RvaImm>(value);
+    }
+
     void clone(RvaCall* call) {
         add(allocator.create<RvaCall>(call->getFunName()));
     }
@@ -215,7 +230,6 @@ private:
         out.emplace_back(instr);
     }
 
-    const std::vector<RvaInstruction*>& orig;
     std::vector<RvaInstruction*>& out;
     Allocator& allocator;
 };

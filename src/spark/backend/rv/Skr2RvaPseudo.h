@@ -117,7 +117,12 @@ private:
         auto dstType = symbolTable.get(it->getDst()->getId())->kind;
         auto op = it->getOperator();
         if (dstType == SymbolType::Kind::Float && op == SkrBinary::Operator::Mul) {
-            emitFixedMul(it);
+            add<RvaBinary>(
+                toPseudo(it->getDst()), 
+                toPseudo(it->getLeft()), 
+                RvaBinary::Operator::FixedMul, 
+                toPseudo(it->getRight())
+            );
         }
         else if (dstType == SymbolType::Kind::Float && op == SkrBinary::Operator::Div) {
             sparkError("Skr2RvaPseudo", "Fixed division is not implemented");
