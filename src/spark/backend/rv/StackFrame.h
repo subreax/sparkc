@@ -1,5 +1,6 @@
 #pragma once
 #include <unordered_map>
+#include <unordered_set>
 #include <functional>
 #include "RvaValue.h"
 #include "../../common/StringRef.h"
@@ -10,16 +11,11 @@ public:
     StackFrame(Allocator& rvaAlloc) : rvaAlloc(rvaAlloc) {  }
 
     void occupy(int bytes) {
-        if (localSize == 0) {
-            localSize = 4; // s0
+        if (s0size == 0) {
+            s0size = 4; // save s0
         }
 
-        localSize += bytes;
-    }
-
-    RvaMemory* allocate(int bytes) {
-        occupy(bytes);
-        return rvaAlloc.create<RvaMemory>(RvReg::S0, -localSize);
+        s0size += bytes;
     }
 
     RvaMemory* getOrPush(StringRef id, int size = 4, int offset = 0) {
@@ -28,6 +24,9 @@ public:
         if (it != var2stack.end()) {
             mem = it->second;
         } else {
+            if (isTemp) {
+                temporaries.emplace(id);
+            }
             auto* rvaMem = allocate(size);
             var2stack[id] = rvaMem;
             mem = rvaMem;
@@ -42,13 +41,21 @@ public:
     }
 
     void save() {
-        savedLocalSize = localSize;
+        savedS0Size = s0size;
+        isTemp = true;
     }
 
     void restore() {
-        maxSize = std::max(maxSize, localSize + spArgsSize);
-        localSize = savedLocalSize;
+        for (const StringRef& tempId : temporaries) {
+            var2stack.erase(tempId);
+        }
+        temporaries.clear();
+
+        maxSize = std::max(maxSize, s0size + spArgsSize);
+        s0size = savedS0Size;
         spArgsSize = 0;
+        savedS0Size = 0;
+        isTemp = false;
     }
 
     RvaMemory* pushArg() {
@@ -59,15 +66,23 @@ public:
     }
 
     int getSize() const {
-        return std::max(maxSize, localSize + spArgsSize);
+        return std::max(maxSize, s0size + spArgsSize);
     }
+
     int getSizeAligned16() const { return ((getSize() + 15) / 16) * 16; }
 
 private:
+    RvaMemory* allocate(int bytes) {
+        occupy(bytes);
+        return rvaAlloc.create<RvaMemory>(RvReg::S0, -s0size);
+    }
+
     std::unordered_map<StringRef, RvaMemory*> var2stack;
+    std::unordered_set<StringRef> temporaries;
     Allocator& rvaAlloc;
-    int localSize = 0;
+    int s0size = 0;
     int spArgsSize = 0;
     int maxSize = 0;
-    int savedLocalSize = 0;
+    int savedS0Size = 0;
+    bool isTemp = false;
 };

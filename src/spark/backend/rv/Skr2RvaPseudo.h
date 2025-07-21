@@ -1,6 +1,6 @@
 #pragma once
 #include <vector>
-#include <set>
+#include <unordered_set>
 #include "../../common/alloc/Allocator.h"
 #include "../../common/Error.h"
 #include "../../skr/instr/everything.h"
@@ -193,14 +193,12 @@ private:
                 argIdx++;
             }
         }
-
+        add<RvaEndTempStack>();
         add<RvaCall>(func->getName());
 
         if (!retInMem) {
             add<RvaMov>(retVar, getArgReg(0)); // todo: support 4-8 bytes
         }
-
-        add<RvaEndTempStack>();
     }
 
     void placeArgOnStack(const SkrValue* skrArg, size_t sz, int regIdx) {
@@ -288,7 +286,7 @@ private:
     }
 
     inline RvaRegister* newRegister(RvReg reg) {
-        return allocator.create<RvaRegister>(reg);
+        return RvaRegister::get(reg);
     }
 
     inline RvaPseudoReg* newPseudo(const char* name) {
@@ -418,8 +416,7 @@ private:
     }
 
     void setReplacedToPtr(const SkrVar* var) {
-        // todo: check for unique
-        replacedToPtr.emplace_back(var->getId());
+        replacedToPtr.emplace(var->getId());
     }
 
     bool isReplacedToPtr(const SkrValue* val) {
@@ -427,7 +424,7 @@ private:
     }
 
     bool isReplacedToPtr(const SkrVar* var) {
-        return std::find(replacedToPtr.begin(), replacedToPtr.end(), var->getId()) != replacedToPtr.end();
+        return replacedToPtr.find(var->getId()) != replacedToPtr.end();
     }
 
     SymbolType* getType(const SkrValue* val) {
@@ -451,5 +448,5 @@ private:
     RvaRegister* tempReg;
     bool _retInMem;
 
-    std::vector<StringRef> replacedToPtr;
+    std::unordered_set<StringRef> replacedToPtr;
 };
