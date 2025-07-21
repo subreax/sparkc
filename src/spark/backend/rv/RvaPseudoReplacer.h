@@ -46,6 +46,15 @@ private:
         case RvaInstruction::Kind::Load:        replace((RvaLoad*) it); break;
         case RvaInstruction::Kind::Store:       replace((RvaStore*) it); break;
         case RvaInstruction::Kind::GetAddress:  replace((RvaGetAddress*) it); break;
+        case RvaInstruction::Kind::ReserveOnStack: replace((RvaReserveOnStack*) it); break;
+
+        case RvaInstruction::Kind::BeginTempStack:
+            frame.save(); 
+            break;
+
+        case RvaInstruction::Kind::EndTempStack:
+            frame.restore();
+            break;
         }
     }
 
@@ -76,6 +85,10 @@ private:
     void replace(RvaGetAddress* it) {
         replace(&it->to);
         replace(&it->of);
+    }
+
+    void replace(RvaReserveOnStack* it) {
+        replace(&it->mem);
     }
 
     inline void replace(RvaValue** v) {

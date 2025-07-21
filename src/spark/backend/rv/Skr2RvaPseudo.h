@@ -28,7 +28,7 @@ private:
         , tempReg(newRegister(RvReg::T6)) {  }
 
     void emit(SkrFunction* func) {
-        retInMem = getSize(func->getRetVar()) > 8;
+        _retInMem = getSize(func->getRetVar()) > 8;
 
         auto* prologue = allocator.create<RvaPrologue>();
         auto* epilogue = allocator.create<RvaEpilogue>();
@@ -103,7 +103,7 @@ private:
             }
         }
 
-        if (!retInMem) {
+        if (!_retInMem) {
             auto* resultPseudoReg = toPseudo(func->getRetVar());
             auto* a0Reg = getArgReg(0);
             add<RvaMov>(a0Reg, resultPseudoReg);
@@ -165,19 +165,51 @@ private:
         );
     }
 
-    void emitFunCall(SkrFunCall* it) {
-        const auto& skrArgs = it->getArgs();
-        for (size_t i = 0; i < skrArgs.size(); i++) {
-            auto* to = getArgDst(i);
-            auto* from = toPseudo(skrArgs[i]);
-            add<RvaMov>(to, from);
+    void emitFunCall(SkrFunCall* func) {
+        bool retInMem = getSize(func->getRetVar()) > 8;
+
+        const auto& skrArgs = func->getArgs();
+        int argIdx = 0;
+        RvaValue* retVar = toPseudo(func->getRetVar());
+        if (retInMem) {
+            add<RvaReserveOnStack>(retVar);
+            add<RvaGetAddress>(getArgReg(0), retVar);
+            argIdx++;
         }
 
-        auto* retVal = toPseudo(it->getRetVar());
-        add<RvaCall>(it->getName());
-        add<RvaMov>(retVal, getArgReg(0));
+        add<RvaBeginTempStack>();
+        for (auto* arg : skrArgs) {
+            size_t argSz = getSize(arg);
+            if (argSz > 8) {
+                placeArgOnStack(arg, argSz, argIdx);
+                argIdx++;
+            }
+            else if (argSz > 4) {
+                // todo
+                sparkError("Skr2RvaPseudo", "Not implemented");
+            }
+            else {
+                add<RvaMov>(getArgDst(argIdx), toPseudo(arg));
+                argIdx++;
+            }
+        }
 
-        frame.popArgs();
+        add<RvaCall>(func->getName());
+
+        if (!retInMem) {
+            add<RvaMov>(retVar, getArgReg(0)); // todo: support 4-8 bytes
+        }
+
+        add<RvaEndTempStack>();
+    }
+
+    void placeArgOnStack(const SkrValue* skrArg, size_t sz, int regIdx) {
+        StringRef argId = idGen.unique("arg");
+        symbolTable.declare(argId, getType(skrArg));
+        SkrVar* arg = allocator.create<SkrVar>(argId);
+
+        copy(arg, 0, skrArg, 0);
+        add<RvaGetAddress>(getArgDst(regIdx), toPseudo(arg));
     }
 
     void emitInt2Float(SkrInt2Float* it) {
@@ -328,7 +360,7 @@ private:
         return 0;
     }
 
-    void copy(SkrValue* to, int toOffset, SkrValue* from, int fromOffset) {
+    void copy(const SkrValue* to, int toOffset, const SkrValue* from, int fromOffset) {
         if (isReplacedToPtr(to)) {
             if (fromOffset != 0) {
                 sparkError("Skr2RvaPseudo", "Store value from offset is not supported");
@@ -349,7 +381,7 @@ private:
         }
     }
 
-    void storeBytes(SkrValue* to, int offset, SkrValue* from) {
+    void storeBytes(const SkrValue* to, int offset, const SkrValue* from) {
         add<RvaMov>(tempReg, toPseudo(to));
         size_t sz = getSize(from);
         for (size_t off = 0; off < sz; off += 4) {
@@ -357,7 +389,7 @@ private:
         }
     }
 
-    void loadBytes(SkrValue* to, SkrValue* from, int offset) {
+    void loadBytes(const SkrValue* to, const SkrValue* from, int offset) {
         add<RvaMov>(tempReg, toPseudo(from));
         size_t sz = getSize(to);
         for (size_t off = 0; off < sz; off += 4) {
@@ -367,7 +399,7 @@ private:
 
     void saveParams(SkrFunction* func) {
         int argRegIdx = 0;
-        if (retInMem) {
+        if (_retInMem) {
             setReplacedToPtr(func->getRetVar());
             add<RvaMov>(toPseudo(func->getRetVar()), getArgReg(0));
             argRegIdx++;
@@ -398,6 +430,17 @@ private:
         return std::find(replacedToPtr.begin(), replacedToPtr.end(), var->getId()) != replacedToPtr.end();
     }
 
+    SymbolType* getType(const SkrValue* val) {
+        if (val->isConst()) {
+            return val->toSkrConst()->getConst()->type;
+        }
+        else if (val->isVar()) {
+            return symbolTable.get(val->toSkrVar()->getId());
+        }
+        sparkError("Skr2RvaPseudo", "Unknown SkrVar kind: %d", val->kind);
+        return nullptr;
+    }
+
 
     Allocator& allocator;
     IdentifierGen& idGen;
@@ -406,7 +449,7 @@ private:
     StackFrame& frame;
     std::vector<RvaInstruction*>& out;
     RvaRegister* tempReg;
-    bool retInMem;
+    bool _retInMem;
 
     std::vector<StringRef> replacedToPtr;
 };

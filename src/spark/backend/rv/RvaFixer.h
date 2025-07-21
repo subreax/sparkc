@@ -34,6 +34,11 @@ private:
             case RvaInstruction::Kind::Jump:        clone((RvaJump*) rva); break;
             case RvaInstruction::Kind::Label:       clone((RvaLabel*) rva); break;
             case RvaInstruction::Kind::Ret:         add(allocator.create<RvaRet>()); break;
+
+            case RvaInstruction::Kind::BeginTempStack:
+            case RvaInstruction::Kind::EndTempStack:
+            case RvaInstruction::Kind::ReserveOnStack:
+                break;
             
             default:
                 sparkError("RvaFixer", "Unknown RvaInstruction: %d", kind);

@@ -153,6 +153,21 @@ void printCall(std::ostream& os, const RvaCall* it) {
     os << "call " << Colored::label(it->getFunName());
 }
 
+void printGetAddr(std::ostream& os, const RvaGetAddress* it) {
+    printType(os, "get_addr");
+    os << *it->to << " = addrOf(" << *it->of << ")";
+}
+
+void printComment(std::ostream& os, const std::string& comment) {
+    printType(os, "comment");
+    os << Colored::comment(comment);
+}
+
+void printAllocateOnStack(std::ostream& os, const RvaReserveOnStack* it) {
+    printType(os, "reserve");
+    os << "reserve " << *it->mem;
+}
+
 void RvaPrinter::print(std::ostream& os, const std::vector<RvaInstruction*>& instructions) {
     for (const auto* instr : instructions) {
         switch (instr->kind) {
@@ -198,6 +213,22 @@ void RvaPrinter::print(std::ostream& os, const std::vector<RvaInstruction*>& ins
 
         case RvaInstruction::Kind::Call:
             printCall(os, (const RvaCall*) instr);
+            break;
+
+        case RvaInstruction::Kind::GetAddress:
+            printGetAddr(os, (const RvaGetAddress*) instr);
+            break;
+
+        case RvaInstruction::Kind::BeginTempStack:
+            printComment(os, "begin temp stack");
+            break;
+
+        case RvaInstruction::Kind::EndTempStack:
+            printComment(os, "end temp stack");
+            break;
+
+        case RvaInstruction::Kind::ReserveOnStack:
+            printAllocateOnStack(os, (const RvaReserveOnStack*) instr);
             break;
 
         default: os << "unknown rva kind: " << (int) instr->kind;

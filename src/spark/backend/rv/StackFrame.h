@@ -41,32 +41,33 @@ public:
         }
     }
 
+    void save() {
+        savedLocalSize = localSize;
+    }
+
+    void restore() {
+        maxSize = std::max(maxSize, localSize + spArgsSize);
+        localSize = savedLocalSize;
+        spArgsSize = 0;
+    }
+
     RvaMemory* pushArg() {
         occupy(4);
-        auto* mem = rvaAlloc.create<RvaMemory>(RvReg::SP, argsSize);
-        argsSize += 4;
+        auto* mem = rvaAlloc.create<RvaMemory>(RvReg::SP, spArgsSize);
+        spArgsSize += 4;
         return mem;
     }
 
-    void bindParam(StringRef param) {
-        var2stack[param] = rvaAlloc.create<RvaMemory>(RvReg::S0, boundParamsOffset);
-        boundParamsOffset += 4;
+    int getSize() const {
+        return std::max(maxSize, localSize + spArgsSize);
     }
-
-    void popArgs() {
-        maxSize = std::max(maxSize, localSize);
-        localSize -= argsSize;
-        argsSize = 0;
-    }
-
-    int getSize() const { return localSize; }
-    int getSizeAligned16() const { return ((localSize + 15) / 16) * 16; }
+    int getSizeAligned16() const { return ((getSize() + 15) / 16) * 16; }
 
 private:
     std::unordered_map<StringRef, RvaMemory*> var2stack;
     Allocator& rvaAlloc;
     int localSize = 0;
-    int argsSize = 0;
+    int spArgsSize = 0;
     int maxSize = 0;
-    int boundParamsOffset = 0;
+    int savedLocalSize = 0;
 };

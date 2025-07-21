@@ -28,13 +28,7 @@ public:
         , dst(dst)
         , left(left)
         , op(op)
-        , right(right)
-    {
-        if (left->kind == RvaValue::Kind::Imm && right->kind != RvaValue::Kind::Imm) {
-            this->left = right;
-            this->right = left;
-        }
-    }
+        , right(right) {  }
 
     void emit(RvListing& listing) override {
         switch (op) {

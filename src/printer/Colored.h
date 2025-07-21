@@ -11,4 +11,8 @@ public:
             return "\033[31m" + s.toString() + "\033[0m";
         }
     }
+
+    static std::string comment(const std::string& s) {
+        return "\033[2m" + s + "\033[0m";
+    }
 };
