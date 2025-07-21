@@ -111,7 +111,7 @@ private:
         auto* mem = (RvaMemory*) it->of;
         add(allocator.create<RvaBinary>(
             toReg, 
-            allocator.create<RvaRegister>(mem->getBase()), 
+            RvaRegister::get(mem->getBase()), 
             RvaBinary::Operator::Plus,
             allocator.create<RvaImm>(mem->getOffset())
         ));
@@ -128,7 +128,7 @@ private:
         if (v->kind == RvaValue::Kind::Register) {
             return (RvaRegister*) clone(v);
         }
-        return newReg(reg);
+        return getReg(reg);
     }
 
     RvaValue* getImmOrMoveToReg(RvaValue* val, RvReg reg) {
@@ -147,16 +147,16 @@ private:
         if (kind == RvaValue::Kind::Imm) {
             int32_t immValue = ((RvaImm*) val)->getValue();
             if (immValue == 0) {
-                return getZeroReg();
+                return getReg(RvReg::ZERO);
             }
-            auto* r = newReg(reg);
+            auto* r = getReg(reg);
             add(allocator.create<RvaMov>(r, clone(val)));
             return r;
         }
 
         if (kind == RvaValue::Kind::Memory) {
             auto* mem = (RvaMemory*) clone(val);
-            auto* r = newReg(reg);
+            auto* r = getReg(reg);
             add(allocator.create<RvaLoad>(r, mem));
             return r;
         }
@@ -190,12 +190,12 @@ private:
         case RvaValue::Kind::Imm: {
             auto imm = ((RvaImm*) v)->getValue();
             if (imm == 0) {
-                return getZeroReg();
+                return getReg(RvReg::ZERO);
             } else {
                 return allocator.create<RvaImm>(imm);
             }
         }
-        case RvaValue::Kind::Register: return allocator.create<RvaRegister>(((RvaRegister*) v)->getReg());
+        case RvaValue::Kind::Register: return v;
         case RvaValue::Kind::Memory: {
             auto* mem = (RvaMemory*) v;
             return allocator.create<RvaMemory>(mem->getBase(), mem->getOffset());
@@ -207,26 +207,14 @@ private:
         }
     }
 
-    RvaRegister* newReg(RvReg reg) {
-        if (reg == RvReg::ZERO) {
-            return getZeroReg();
-        } else {
-            return allocator.create<RvaRegister>(reg);
-        }
-    }
-
-    RvaRegister* getZeroReg() {
-        if (zeroReg == nullptr) {
-            zeroReg = allocator.create<RvaRegister>(RvReg::ZERO);
-        }
-        return zeroReg;
+    RvaRegister* getReg(RvReg reg) {
+        return RvaRegister::get(reg);
     }
 
     void add(RvaInstruction* instr) {
         out.emplace_back(instr);
     }
 
-    RvaRegister* zeroReg = nullptr;
     const std::vector<RvaInstruction*>& orig;
     std::vector<RvaInstruction*>& out;
     Allocator& allocator;

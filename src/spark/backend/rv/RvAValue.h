@@ -52,6 +52,45 @@ public:
 
     RvReg getReg() const { return reg; }
 
+    static RvaRegister* get(RvReg reg) {
+        static RvaRegister regs[32] = {
+            RvaRegister(RvReg::ZERO),
+            RvaRegister(RvReg::RA),
+            RvaRegister(RvReg::SP),
+            RvaRegister(RvReg::GP),
+            RvaRegister(RvReg::TP),
+            RvaRegister(RvReg::T0),
+            RvaRegister(RvReg::T1),
+            RvaRegister(RvReg::T2),
+            RvaRegister(RvReg::S0),
+            RvaRegister(RvReg::S1),
+            RvaRegister(RvReg::A0),
+            RvaRegister(RvReg::A1),
+            RvaRegister(RvReg::A2),
+            RvaRegister(RvReg::A3),
+            RvaRegister(RvReg::A4),
+            RvaRegister(RvReg::A5),
+            RvaRegister(RvReg::A6),
+            RvaRegister(RvReg::A7),
+            RvaRegister(RvReg::S2),
+            RvaRegister(RvReg::S3),
+            RvaRegister(RvReg::S4),
+            RvaRegister(RvReg::S5),
+            RvaRegister(RvReg::S6),
+            RvaRegister(RvReg::S7),
+            RvaRegister(RvReg::S8),
+            RvaRegister(RvReg::S9),
+            RvaRegister(RvReg::S10),
+            RvaRegister(RvReg::S11),
+            RvaRegister(RvReg::T3),
+            RvaRegister(RvReg::T4),
+            RvaRegister(RvReg::T5),
+            RvaRegister(RvReg::T6)
+        };
+
+        return &regs[(int) reg];
+    }
+
 private:
     RvReg reg;
 };
