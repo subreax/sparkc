@@ -25,9 +25,11 @@ private:
         , symbolSize(ss)
         , frame(frame)
         , out(out)
-        , tempReg(allocator.create<RvaRegister>(RvReg::T6)) {  }
+        , tempReg(newRegister(RvReg::T6)) {  }
 
     void emit(SkrFunction* func) {
+        retInMem = getSize(func->getRetVar()) > 8;
+
         auto* prologue = allocator.create<RvaPrologue>();
         auto* epilogue = allocator.create<RvaEpilogue>();
         bool shouldSaveRa = hasFunctionCalls(func->getInstructions());
@@ -40,24 +42,7 @@ private:
         add<RvaLabel>(func->getName());
         addInstr(prologue);
 
-        bool retInMem = getSize(func->getRetVar()) > 8;
-        int argRegIdx = 0;
-        if (retInMem) {
-            setReplacedToPtr(func->getRetVar());
-            add<RvaMov>(toPseudo(func->getRetVar()), allocator.create<RvaRegister>(getArgReg(0)));
-            argRegIdx++;
-        }
-
-        auto params = func->getParams();
-        for (auto* param : params) {
-            if (getSize(param) > 8) {
-                setReplacedToPtr(param);
-            }
-
-            // todo: handle 2 regs
-            add<RvaMov>(toPseudo(param), getParam(argRegIdx));
-            argRegIdx++;
-        }
+        saveParams(func);
 
         for (const auto* skr : func->getInstructions()) {
             switch (skr->kind) {
@@ -120,7 +105,7 @@ private:
 
         if (!retInMem) {
             auto* resultPseudoReg = toPseudo(func->getRetVar());
-            auto* a0Reg = allocator.create<RvaRegister>(RvReg::A0);
+            auto* a0Reg = getArgReg(0);
             add<RvaMov>(a0Reg, resultPseudoReg);
         }
 
@@ -190,7 +175,7 @@ private:
 
         auto* retVal = toPseudo(it->getRetVar());
         add<RvaCall>(it->getName());
-        add<RvaMov>(retVal, allocator.create<RvaRegister>(RvReg::A0));
+        add<RvaMov>(retVal, getArgReg(0));
 
         frame.popArgs();
     }
@@ -270,6 +255,10 @@ private:
         return allocator.create<RvaImm>(val);
     }
 
+    inline RvaRegister* newRegister(RvReg reg) {
+        return allocator.create<RvaRegister>(reg);
+    }
+
     inline RvaPseudoReg* newPseudo(const char* name) {
         return allocator.create<RvaPseudoReg>(idGen.unique(name));
     }
@@ -288,7 +277,7 @@ private:
 
     RvaValue* getArgDst(int argIndex) {
         if (argIndex < 8) {
-            return allocator.create<RvaRegister>(getArgReg(argIndex));
+            return getArgReg(argIndex);
         } else {
             return frame.pushArg();
         }
@@ -296,18 +285,18 @@ private:
 
     RvaValue* getParam(int argIndex) {
         if (argIndex < 8) {
-            return allocator.create<RvaRegister>(getArgReg(argIndex));
+            return getArgReg(argIndex);
         } else {
             return newMemory(RvReg::S0, (argIndex - 8) * 4);
         }
     }
 
-    RvReg getArgReg(int idx) {
+    RvaRegister* getArgReg(int idx) {
         if (idx < 8) {
-            return (RvReg) ((int) RvReg::A0 + idx);
+            return newRegister((RvReg) ((int) RvReg::A0 + idx));
         }
         sparkError("Skr2RvaPseudo", "getArgReg(idx): idx should be in range [0; 7]");
-        return RvReg::ZERO;
+        return newRegister(RvReg::ZERO);
     }
 
     bool hasFunctionCalls(const BoundArray<SkrInstruction*>& skrs) const {
@@ -376,6 +365,26 @@ private:
         }
     }
 
+    void saveParams(SkrFunction* func) {
+        int argRegIdx = 0;
+        if (retInMem) {
+            setReplacedToPtr(func->getRetVar());
+            add<RvaMov>(toPseudo(func->getRetVar()), getArgReg(0));
+            argRegIdx++;
+        }
+
+        auto params = func->getParams();
+        for (auto* param : params) {
+            if (getSize(param) > 8) {
+                setReplacedToPtr(param);
+            }
+
+            // todo: handle 2 regs
+            add<RvaMov>(toPseudo(param), getParam(argRegIdx));
+            argRegIdx++;
+        }
+    }
+
     void setReplacedToPtr(const SkrVar* var) {
         // todo: check for unique
         replacedToPtr.emplace_back(var->getId());
@@ -397,6 +406,7 @@ private:
     StackFrame& frame;
     std::vector<RvaInstruction*>& out;
     RvaRegister* tempReg;
+    bool retInMem;
 
     std::vector<StringRef> replacedToPtr;
 };

@@ -22,12 +22,15 @@ using namespace std;
 string readFile(const char* path);
 void writeMermaidAst(AstProgram* exp, const char* outFile);
 void writeMermaidControlFlow(CfGraph<SkrInstruction*>& graph, SymbolTable& table, std::string funName);
-void dump(const LinearAllocator& allocator, const char* outFile);
-void dump(const uint8_t* block, size_t sz, const char* outFile);
+void dump(const LinearAllocator& allocator, const string& outFile);
+void dump(const uint8_t* block, size_t sz, const string& outFile);
 void printMemoryUsage(const char* name, size_t used, size_t cap);
 void printAllocatorStats(const char* name, const LinearAllocator& allocator);
 void printError(ParseException& e, const string& source);
 string getLine(const string& src, int lineNo);
+int getLastSlashPos(const string& path);
+string getFileName(const string& path);
+string changeExtension(const string& path, const string& newExt);
 
 class CfgGraphPrinter : public SkrOptimizer::OnGraphCreatedListener {
 public:
@@ -47,7 +50,9 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    string source = readFile(argv[1]);
+    const char* srcFile = argv[1];
+    cout << "Compiling " << srcFile << endl;
+    string source = readFile(srcFile);
     Lexer lexer(source.c_str());
 
     LinearAllocator astAlloc(4096);
@@ -146,8 +151,35 @@ int main(int argc, char** argv) {
     printMemoryUsage("program", sz, sizeof(bin));
 
     dump(idAlloc, "idAlloc.bin");
-    dump(bin, sz, "out.bin");
+    dump(bin, sz, changeExtension(getFileName(srcFile), "bin"));
     return 0;
+}
+
+int getLastSlashPos(const string& path) {
+    size_t slash = path.rfind('/');
+    if (slash != string::npos) {
+        return slash;
+    }
+
+    slash = path.rfind('\\');
+    if (slash != string::npos) {
+        return slash;
+    }
+
+    return -1;
+}
+
+string getFileName(const string& path) {
+    return path.substr(getLastSlashPos(path) + 1);
+}
+
+string changeExtension(const string& path, const string& newExt) {
+    int dot = path.rfind('.');
+    if (dot == string::npos) {
+        return path + "." + newExt;
+    }
+
+    return path.substr(0, dot) + "." + newExt;
 }
 
 
@@ -224,16 +256,16 @@ void writeMermaidControlFlow(CfGraph<SkrInstruction*>& graph, SymbolTable& table
     astOut.close();
 }
 
-void dump(const uint8_t* block, size_t sz, const char* outFile) {
+void dump(const uint8_t* block, size_t sz, const string& outFile) {
     FILE* f;
-    fopen_s(&f, outFile, "wb");
+    fopen_s(&f, outFile.c_str(), "wb");
     for (size_t i = 0; i < sz; i++) {
         fputc(block[i], f);
     }
     fclose(f);
 }
 
-void dump(const LinearAllocator& allocator, const char* outFile) {
+void dump(const LinearAllocator& allocator, const string& outFile) {
     dump(allocator.getBlock(), allocator.getFreeSize(), outFile);
 }
 
