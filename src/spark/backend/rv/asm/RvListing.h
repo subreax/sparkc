@@ -4,7 +4,6 @@
 #include <cstring>
 #include "Rv32Base.h"
 #include "../../../common/Error.h"
-#include "../../../common/alloc/NoMemoryException.h"
 #include "../../../common/LabelGen.h"
 
 class RvListing {
@@ -80,7 +79,7 @@ private:
         if (offset + 4 < cap) {
             *((uint32_t*) (out + offset)) = instr;
         } else {
-            throw NoMemoryException("Not enough memory to write compiled program");
+            sparkError("RvListing", "Not enough memory to write compiled program");
         }
     }
 

@@ -25,7 +25,7 @@ void writeMermaidControlFlow(CfGraph<SkrInstruction*>& graph, SymbolTable& table
 void dump(const LinearAllocator& allocator, const string& outFile);
 void dump(const uint8_t* block, size_t sz, const string& outFile);
 void printMemoryUsage(const char* name, size_t used, size_t cap);
-void printAllocatorStats(const char* name, const LinearAllocator& allocator);
+void printAllocatorStats(const LinearAllocator& allocator);
 void printError(ParseException& e, const string& source);
 string getLine(const string& src, int lineNo);
 int getLastSlashPos(const string& path);
@@ -55,9 +55,9 @@ int main(int argc, char** argv) {
     string source = readFile(srcFile);
     Lexer lexer(source.c_str());
 
-    LinearAllocator astAlloc(4096);
-    LinearAllocator idAlloc(2048, true);
-    LinearAllocator typeAlloc(2048);
+    LinearAllocator astAlloc("ast", 4096);
+    LinearAllocator idAlloc("id", 2048, true);
+    LinearAllocator typeAlloc("symbol/type", 2048);
 
     IdentifierGen idGen(idAlloc);
     LabelGen labelGen(idAlloc);
@@ -78,9 +78,9 @@ int main(int argc, char** argv) {
 
     writeMermaidAst(program, "ast.md");
 
-    LinearAllocator skrAlloc(4096);
-    LinearAllocator rvaAlloc1(4096);
-    LinearAllocator rvaAlloc2(8192);
+    LinearAllocator skrAlloc("skr", 4096);
+    LinearAllocator rvaAlloc1("rva1", 4096);
+    LinearAllocator rvaAlloc2("rva2", 8192);
 
     std::vector<SkrFunction*> skrFunctions;
     std::vector<SkrInstruction*> skrsBuf;
@@ -99,15 +99,20 @@ int main(int argc, char** argv) {
     }
     cout << endl;
 
-    /* CfgGraphPrinter graphPrinter(symbolTable);
+    CfgGraphPrinter graphPrinter(symbolTable);
 
     cout << "== skr optimized ==" << endl;
+    SkrOptimizer::Config optimizerConf;
+    optimizerConf.constantFolding = true;
+    optimizerConf.deadCodeElimination = true;
+    optimizerConf.copyPropagation = true;
+    optimizerConf.deadStoreElimination = false;
     for (int i = 0; i < skrFunctions.size(); i++) {
-        skrFunctions[i] = SkrOptimizer(skrAlloc, skrFunctions[i], &graphPrinter).optimize(SkrOptimizer::Config());
+        skrFunctions[i] = SkrOptimizer(skrAlloc, skrFunctions[i], &graphPrinter).optimize(optimizerConf);
         SkrPrinter::print(cout, skrFunctions[i], symbolTable);
         cout << endl;
     }
-    cout << endl; */
+    cout << endl;
 
     size_t rva1Peak = 0;
     std::vector<RvaInstruction*> rva;
@@ -142,12 +147,12 @@ int main(int argc, char** argv) {
     cout << endl;
 
     cout << "== memory stats ==" << endl;
-    printAllocatorStats("symbol/type", typeAlloc);
-    printAllocatorStats("ast", astAlloc);
-    printAllocatorStats("id", idAlloc);
-    printAllocatorStats("skr", skrAlloc);
+    printAllocatorStats(typeAlloc);
+    printAllocatorStats(astAlloc);
+    printAllocatorStats(idAlloc);
+    printAllocatorStats(skrAlloc);
     printMemoryUsage("rva1 peak", rva1Peak, rvaAlloc1.getCapacity());
-    printAllocatorStats("rva2", rvaAlloc2);
+    printAllocatorStats(rvaAlloc2);
     printMemoryUsage("program", sz, sizeof(bin));
 
     dump(idAlloc, "idAlloc.bin");
@@ -204,8 +209,8 @@ void printMemoryUsage(const char* name, size_t used, size_t cap) {
     cout << "] " << endl;
 }
 
-void printAllocatorStats(const char* name, const LinearAllocator& allocator) {
-    printMemoryUsage(name, allocator.getUsedSize(), allocator.getCapacity());
+void printAllocatorStats(const LinearAllocator& allocator) {
+    printMemoryUsage(allocator.getName(), allocator.getUsedSize(), allocator.getCapacity());
 }
 
 string readFile(const char* path) {

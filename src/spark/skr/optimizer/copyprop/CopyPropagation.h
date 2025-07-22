@@ -54,21 +54,44 @@ private:
                 return allocator.create<SkrCopy>(it->getTo(), from);
             }
         }
+        else if (instr->kind == SkrInstruction::Kind::CopyToOffset) {
+            // CopyToOffset  4(color) = x
+            // CopyToOffset  4(color) = 2
+
+            auto* it = (SkrCopyToOffset*) instr;
+            auto* from = replace(it->getFrom(), copies);
+            if (*from != *it->getFrom()) {
+                return allocator.create<SkrCopyToOffset>(it->getTo(), it->getToOffset(), from);
+            }
+        }
+        else if (instr->kind == SkrInstruction::Kind::CopyFromOffset) {
+            // CopyFromOffset   x = 4(color)
+            // CopyFromOffset   x = 4(replaced)
+
+            auto* it = (SkrCopyFromOffset*) instr;
+            auto* from = replace(it->getFrom(), copies);
+            if (*from != *it->getFrom()) {
+                return allocator.create<SkrCopyFromOffset>(it->getTo(), from, it->getFromOffset());
+            }
+        }
         else if (instr->kind == SkrInstruction::Kind::FunCall) {
             auto* it = (SkrFunCall*) instr;
-            auto newArgs = replace(it->getArgs(), copies);
-            return allocator.create<SkrFunCall>(it->getName(), newArgs, it->getRetVar());
+
+            std::vector<SkrValue*> newArgs;
+            replace(it->getArgs(), copies, newArgs);
+            if (it->getArgs() != newArgs) {
+                return allocator.create<SkrFunCall>(it->getName(), BoundArray<SkrValue*>::fromVector(newArgs, allocator), it->getRetVar());
+            }
         }
 
         return instr;
     }
 
-    BoundArray<SkrValue*> replace(const BoundArray<SkrValue*>& arr, const std::vector<SkrCopy*>& copies) {
-        auto newArr = BoundArray<SkrValue*>::create(arr.size(), allocator);
-        for (size_t i = 0; i < arr.size(); i++) {
-            newArr.set(i, replace(arr[i], copies));
+    void replace(const BoundArray<SkrValue*>& values, const std::vector<SkrCopy*>& copies, std::vector<SkrValue*>& out) {
+        out.reserve(values.size());
+        for (size_t i = 0; i < values.size(); i++) {
+            out.emplace_back(replace(values[i], copies));
         }
-        return newArr;
     }
 
     static SkrValue* replace(SkrValue* value, const std::vector<SkrCopy*>& copies) {

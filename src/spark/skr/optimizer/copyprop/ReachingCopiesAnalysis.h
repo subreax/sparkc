@@ -24,16 +24,17 @@ public:
             pendingBlocks.add(i);
         }
 
+        std::vector<SkrCopy*> incomingCopies;
         while (pendingBlocks.isNotEmpty()) {
             size_t blockIdx = pendingBlocks.peek();
             pendingBlocks.pop();
-            RCABlock* ab = getAnnotated(blockIdx);
+            RCABlock* annotation = getAnnotated(blockIdx);
+            incomingCopies.clear();
 
-            RCABlock oldAb = *ab;
-            std::vector<SkrCopy*> incomingCopies;
+            RCABlock oldAnnotation = *annotation;
             meet(blockIdx, allCopies, incomingCopies);
             transfer(blockIdx, incomingCopies);
-            if (*ab != oldAb) {
+            if (*annotation != oldAnnotation) {
                 addAllSuccessors(blockIdx, pendingBlocks);
             }
         }
@@ -68,12 +69,12 @@ private:
 
             if (instr->kind == SkrInstruction::Kind::Copy) {
                 auto* copyInstr = (SkrCopy*) instr;
-                currentCopies.kill(copyInstr->getTo()->toSkrVar());
+                currentCopies.kill(copyInstr->getTo());
                 currentCopies.add(copyInstr);
             }
             else if (instr->kind == SkrInstruction::Kind::Binary) {
                 auto* binInstr = (SkrBinary*) instr;
-                currentCopies.kill(binInstr->getDst()->toSkrVar());
+                currentCopies.kill(binInstr->getDst());
             }
             else if (instr->kind == SkrInstruction::Kind::FunCall) {
                 auto* callInstr = (SkrFunCall*) instr;
@@ -81,11 +82,25 @@ private:
             }
             else if (instr->kind == SkrInstruction::Kind::Float2Int) {
                 auto* it = (SkrFloat2Int*) instr;
-                currentCopies.kill(it->getDst()->toSkrVar());
+                currentCopies.kill(it->getDst());
             }
             else if (instr->kind == SkrInstruction::Kind::Int2Float) {
                 auto* it = (SkrInt2Float*) instr;
-                currentCopies.kill(it->getDst()->toSkrVar());
+                currentCopies.kill(it->getDst());
+            }
+            else if (instr->kind == SkrInstruction::Kind::CopyToOffset) {
+                auto* it = (SkrCopyToOffset*) instr;
+                currentCopies.kill(it->getTo()->toSkrVar());
+            }
+            else if (instr->kind == SkrInstruction::Kind::CopyFromOffset) {
+                auto* it = (SkrCopyFromOffset*) instr;
+                currentCopies.kill(it->getTo()->toSkrVar());
+            }
+            else if (instr->kind == SkrInstruction::Kind::Load) {
+                sparkError("ReachingCopiesAnalysis", "Load is not implemented");
+            }
+            else if (instr->kind == SkrInstruction::Kind::Store) {
+                sparkError("ReachingCopiesAnalysis", "Store is not implemented");
             }
         }
         annotated->blockCopies = currentCopies.getCopies();
@@ -98,12 +113,12 @@ private:
         }
     }
 
-    void getAllCopies(CfgBlock<SkrInstruction*>* block, std::vector<SkrCopy*>& inOut) {
+    void getAllCopies(CfgBlock<SkrInstruction*>* block, std::vector<SkrCopy*>& out) {
         for (auto* skr : block->getBody()) {
             if (skr->kind == SkrInstruction::Kind::Copy) {
                 auto* skrCopy = (SkrCopy*) skr;
-                if (!ReachingCopiesUtils::contains(inOut, skrCopy)) {
-                    inOut.emplace_back(skrCopy);
+                if (!ReachingCopiesUtils::contains(out, skrCopy)) {
+                    out.emplace_back(skrCopy);
                 }
             }
         }

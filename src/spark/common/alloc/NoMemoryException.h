@@ -3,7 +3,5 @@
 
 class NoMemoryException : public SparkRuntimeException {
 public:
-    NoMemoryException() : SparkRuntimeException("Failed to allocate memory") { }
-    NoMemoryException(const char* msg) : SparkRuntimeException(msg) { }
-    NoMemoryException(const std::string& msg) : SparkRuntimeException(msg) { }
+    NoMemoryException(const char* allocatorName) : SparkRuntimeException("Failed to allocate memory in allocator " + std::string(allocatorName)) { }
 };

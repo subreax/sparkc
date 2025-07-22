@@ -83,7 +83,7 @@ void SkrPrinter::print(std::ostream& os, SkrInstruction* skr, SymbolTable& table
     }
     else if (kind == SkrInstruction::Kind::Copy) {
         auto* it = (SkrCopy*) skr;
-        os << *it->getTo() << " = " << *it->getFrom();
+        os << "copy " << *it->getTo() << " = " << *it->getFrom();
     }
     else if (kind == SkrInstruction::Kind::Jump) {
         auto* it = (SkrJump*) skr;
@@ -140,11 +140,11 @@ void SkrPrinter::print(std::ostream& os, SkrInstruction* skr, SymbolTable& table
     }
     else if (kind == SkrInstruction::Kind::Load) {
         auto* it = (SkrLoad*) skr;
-        os << *it->getTo() << " = " << it->getFromOffset() << "(" << *it->getFrom() << ")";
+        os << "load " << *it->getTo() << " = " << it->getFromOffset() << "(" << *it->getFrom() << ")";
     }
     else if (kind == SkrInstruction::Kind::Store) {
         auto* it = (SkrStore*) skr;
-        os << it->getToOffset() << "(" << *it->getTo() << ") = " << *it->getFrom();
+        os << "store " << it->getToOffset() << "(" << *it->getTo() << ") = " << *it->getFrom();
     }
     else if (kind == SkrInstruction::Kind::GetAddr) {
         auto* it = (SkrGetAddr*) skr;
@@ -152,11 +152,11 @@ void SkrPrinter::print(std::ostream& os, SkrInstruction* skr, SymbolTable& table
     }
     else if (kind == SkrInstruction::Kind::CopyToOffset) {
         auto* it = (SkrCopyToOffset*) skr;
-        os << "CopyToOffset " << it->getToOffset() << "(" << *it->getTo() << ") = " << *it->getFrom();
+        os << "copy " << it->getToOffset() << "(" << *it->getTo() << ") = " << *it->getFrom();
     }
     else if (kind == SkrInstruction::Kind::CopyFromOffset) {
         auto* it = (SkrCopyFromOffset*) skr;
-        os << "CopyFromOffset " << *it->getTo() << " = " << it->getFromOffset() << "(" << *it->getFrom() << ")";
+        os << "copy " << *it->getTo() << " = " << it->getFromOffset() << "(" << *it->getFrom() << ")";
     }
     else {
         os << "unknown skr: " << (int) kind;

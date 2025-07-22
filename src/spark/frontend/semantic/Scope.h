@@ -23,7 +23,7 @@ struct ScopeItem {
 class Scope {
 public:
     Scope(SymbolTable& table, TypeTable& typeTable, size_t memSize) 
-        : allocator(memSize)
+        : allocator("scope", memSize)
         , stack(allocator)
         , symbolTable(table)
         , typeTable(typeTable) {  }

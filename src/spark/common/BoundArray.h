@@ -95,8 +95,9 @@ public:
     void set(size_t idx, const T& value) {
         if (idx < itemsCount) {
             mem[idx] = value;
+        } else {
+            throw std::out_of_range("BoundArray index is out of range");
         }
-        throw std::out_of_range("BoundArray index is out of range");
     }
 
     size_t size() const { return itemsCount; }
@@ -117,7 +118,53 @@ public:
         return ConstIterator(mem + itemsCount);
     }
 
+    bool operator==(const BoundArray<T>& other) const {
+        if (itemsCount != other.itemsCount) {
+            return false;
+        }
+
+        for (size_t i = 0; i < itemsCount; i++) {
+            if (mem[i] != other.mem[i]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    bool operator!=(const BoundArray<T>& other) const {
+        return !(*this == other);
+    }
+
 private:
     T* mem;
     size_t itemsCount;
 };
+
+template<typename T>
+static bool operator==(const BoundArray<T>& ba, const std::vector<T>& vec) {
+    if (ba.size() != vec.size()) {
+        return false;
+    }
+
+    for (size_t i = 0; i < ba.size(); i++) {
+        if (ba[i] != vec[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+
+template<typename T>
+static bool operator==(const std::vector<T>& vec, const BoundArray<T>& ba) {
+    return ba == vec;
+}
+
+template<typename T>
+static bool operator!=(const BoundArray<T>& ba, const std::vector<T>& vec) {
+    return !(ba == vec);
+}
+
+template<typename T>
+static bool operator!=(const std::vector<T>& vec, const BoundArray<T>& ba) {
+    return (!ba == vec);
+}

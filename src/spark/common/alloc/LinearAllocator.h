@@ -6,8 +6,9 @@
 
 class LinearAllocator : public Allocator {
 public:
-    LinearAllocator(size_t sz, bool zeroMem = false)
-        : begin((uint8_t*) malloc(sz))
+    LinearAllocator(const char* name, size_t sz, bool zeroMem = false)
+        : name(name)
+        , begin((uint8_t*) malloc(sz))
         , ptr(begin)
         , end(begin + sz)
     {
@@ -20,6 +21,7 @@ public:
         ::free(begin);
     }
 
+    const char* getName() const { return name; }
 
     MemBlock allocate(size_t blockSz) {
         if (blockSz <= getFreeSize()) {
@@ -27,7 +29,7 @@ public:
             ptr += blockSz;
             return MemBlock(blockSz, block);
         } else {
-            throw NoMemoryException();
+            throw NoMemoryException(name);
         }
     }
 
@@ -60,6 +62,7 @@ public:
     const uint8_t* getPtr() const { return ptr; }
 
 private:
+    const char* name;
     uint8_t *const begin;
     uint8_t* ptr;
     uint8_t* end;

@@ -12,6 +12,8 @@
 class SkrOptimizer {
 public:
     struct Config {
+        Config() = default;
+
         bool constantFolding = true;
         bool deadCodeElimination = true;
         bool copyPropagation = true;
