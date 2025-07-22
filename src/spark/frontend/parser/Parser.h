@@ -294,12 +294,14 @@ private:
             return nullptr;
         }
 
-        if (current.kind == T_AMP) {
+        return type;
+
+        /* if (current.kind == T_AMP) {
             takeToken();
             return typeAlloc.create<SymbolPointerType>(type);
         } else {
             return type;
-        }
+        } */
     }
 
     Token takeToken() {

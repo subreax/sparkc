@@ -263,12 +263,12 @@ private:
 
     AstExp* cast(AstExp* exp, SymbolType* targetType) {
         if (exp->hasType(targetType)) {
-            if (!arePointersCompatible(exp->type, targetType)) {
+            /* if (!arePointersCompatible(exp->type, targetType)) {
                 throw TypeException("Can't cast pointer to another type");
-            }
+            } */
             return exp;
         }
-        else if (exp->hasType(SymbolType::Kind::Pointer)) {
+        /* else if (exp->hasType(SymbolType::Kind::Pointer)) {
             return cast(dereference(exp), targetType);
         }
         else if (targetType->kind == SymbolType::Kind::Pointer) {
@@ -281,16 +281,16 @@ private:
             } else {
                 throw TypeException("Can't reference to a variable with another type");
             }
-        }
+        } */
         return allocator.create<AstCast>(exp, targetType);
     }
 
-    bool arePointersCompatible(SymbolType* t1, SymbolType* t2) {
+    /* bool arePointersCompatible(SymbolType* t1, SymbolType* t2) {
         if (t1->kind == SymbolType::Kind::Pointer && t2->kind == SymbolType::Kind::Pointer) {
             return dereference(t1)->kind == dereference(t2)->kind;
         }
         return true;
-    }
+    } */
 
     SymbolTable& symbolTable;
     TypeTable& typeTable;
