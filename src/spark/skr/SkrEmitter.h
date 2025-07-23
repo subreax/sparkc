@@ -166,7 +166,7 @@ private:
             } else {
                 skrOp = SkrBranch::Operator::NotEquals;
             }
-            auto* branch = allocator.create<SkrBranch>(res, skrOp, getSkrConst(0), label);
+            auto* branch = allocator.create<SkrBranch>(res, skrOp, getSkrIntConst(0), label);
             out.emplace_back(branch);
         }
     }
@@ -279,12 +279,12 @@ private:
             emitInvertBranch(exp->getLeft(), falseLabel);
             emitInvertBranch(exp->getRight(), falseLabel);
             // true
-            out.emplace_back(allocator.create<SkrCopy>(result, getSkrConst(1)));
+            out.emplace_back(allocator.create<SkrCopy>(result, getSkrIntConst(1)));
             out.emplace_back(allocator.create<SkrJump>(endLabel));
 
             // false
             out.emplace_back(allocator.create<SkrLabel>(falseLabel));
-            out.emplace_back(allocator.create<SkrCopy>(result, getSkrConst(0)));
+            out.emplace_back(allocator.create<SkrCopy>(result, getSkrIntConst(0)));
 
             out.emplace_back(allocator.create<SkrLabel>(endLabel));
             return result;
@@ -297,12 +297,12 @@ private:
             emitBranch(exp->getLeft(), trueLabel);
             emitBranch(exp->getRight(), trueLabel);
             // false
-            out.emplace_back(allocator.create<SkrCopy>(result, getSkrConst(0)));
+            out.emplace_back(allocator.create<SkrCopy>(result, getSkrIntConst(0)));
             out.emplace_back(allocator.create<SkrJump>(endLabel));
 
             // true
             out.emplace_back(allocator.create<SkrLabel>(trueLabel));
-            out.emplace_back(allocator.create<SkrCopy>(result, getSkrConst(1)));
+            out.emplace_back(allocator.create<SkrCopy>(result, getSkrIntConst(1)));
 
             out.emplace_back(allocator.create<SkrLabel>(endLabel));
             return result;
@@ -536,14 +536,17 @@ private:
 
     SkrConst* getSkrConst(Constant* c) {
         if (c->isInt()) {
-            return getSkrConst(((IntConstant*) c)->val);
+            return getSkrIntConst(c->intValue());
         }
-        else {
-            return allocator.create<SkrConst>(c);
+        else if (c->isFloat()) {
+            auto* c1 = allocator.create<FloatConstant>(c->floatValue());
+            return allocator.create<SkrConst>(c1);
         }
+        sparkError("SkrEmitter", "Unknown Constant");
+        return nullptr;
     }
 
-    SkrConst* getSkrConst(int32_t v) {
+    SkrConst* getSkrIntConst(int32_t v) {
         if (v == 0) return getSkrZero();
         if (v == 1) return getSkrOne();
         return allocator.create<SkrConst>(allocator.create<IntConstant>(v));
