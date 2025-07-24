@@ -5,13 +5,30 @@
 
 class RvAssembler {
 public:
-    static size_t assemble(const std::vector<RvaInstruction*>& instructions, uint8_t* out, size_t cap, std::vector<RvListing::Label>& outExternalLabels) {
-        RvListing listing(out, cap);
-        for (RvaInstruction* it : instructions) {
+    RvAssembler(uint8_t* out, size_t cap)
+        : listing(out, cap) {  }
+
+    RvAssembler(const RvAssembler&) = delete;
+    RvAssembler& operator=(const RvAssembler&) = delete;
+
+    void compile(const std::vector<RvaInstruction*>& rvas) {
+        for (RvaInstruction* it : rvas) {
             it->emit(listing);
         }
-        listing.link();
-        listing.getExternalLabels(outExternalLabels);
-        return listing.getSize();
     }
+
+    void link() {
+        listing.link();
+        listing.getExternalLabels(externalLabels);
+    }
+
+    const std::vector<RvListing::Label>& getExternalLabels() const { 
+        return externalLabels;
+    }
+
+    size_t getSize() const { return listing.getSize(); }
+
+private:
+    RvListing listing;
+    std::vector<RvListing::Label> externalLabels;
 };

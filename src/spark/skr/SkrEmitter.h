@@ -358,7 +358,7 @@ private:
             return tmpVar;
         } */
         else if (res.kind == SkrExpRes::Kind::Field) {
-            SkrValue* tmpVar = createVar("field", exp->type);
+            auto* tmpVar = createVar("field", exp->type);
             out.emplace_back(allocator.create<SkrCopyFromOffset>(tmpVar, res.getBase(), res.getOffset()));
             return tmpVar;
         }

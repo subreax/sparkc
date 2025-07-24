@@ -123,6 +123,7 @@ private:
         }
         else if (st->kind == AstStatement::Kind::While) {
             auto* it = (AstWhileStatement*) st;
+            resolve(it->getCondition());
             resolve(it->getStatement());
         }
         else if (st->kind == AstStatement::Kind::Compound) {

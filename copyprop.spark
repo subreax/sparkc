@@ -1,6 +1,12 @@
-int pixel() {
-    int x = 1;
-    int y = x;
-    x = 2;
-    return x * y;
+int pixel(int arg) {
+    int y = 3;
+    int i = 0;
+    int incr = 2;
+    int sum = 0;
+    while (i < arg) {
+        sum = sum + y;
+        y = 5;
+        i = i + incr;
+    }
+    return sum;
 }

@@ -51,7 +51,6 @@ int main(int argc, char** argv) {
     }
 
     const char* srcFile = argv[1];
-    cout << "Compiling " << srcFile << endl;
     string source = readFile(srcFile);
     Lexer lexer(source.c_str());
 
@@ -106,7 +105,7 @@ int main(int argc, char** argv) {
     optimizerConf.constantFolding = true;
     optimizerConf.deadCodeElimination = true;
     optimizerConf.copyPropagation = true;
-    optimizerConf.deadStoreElimination = false;
+    optimizerConf.deadStoreElimination = true;
     for (int i = 0; i < skrFunctions.size(); i++) {
         skrFunctions[i] = SkrOptimizer(skrAlloc, skrFunctions[i], &graphPrinter).optimize(optimizerConf);
         SkrPrinter::print(cout, skrFunctions[i], symbolTable);
@@ -137,11 +136,12 @@ int main(int argc, char** argv) {
     cout << endl;
 
     uint8_t bin[1024];
-    std::vector<RvListing::Label> externalLabels;
-    auto sz = RvAssembler::assemble(rvaFixed, bin, sizeof(bin), externalLabels);
+    RvAssembler assembler(bin, sizeof(bin));
+    assembler.compile(rvaFixed);
+    assembler.link();
 
     cout << "== external labels ==" << endl;
-    for (auto& label : externalLabels) {
+    for (auto& label : assembler.getExternalLabels()) {
         cout << label.value.toString() << ": " << label.offset << endl;
     }
     cout << endl;
@@ -153,10 +153,10 @@ int main(int argc, char** argv) {
     printAllocatorStats(skrAlloc);
     printMemoryUsage("rva1 peak", rva1Peak, rvaAlloc1.getCapacity());
     printAllocatorStats(rvaAlloc2);
-    printMemoryUsage("program", sz, sizeof(bin));
+    printMemoryUsage("program", assembler.getSize(), sizeof(bin));
 
     dump(idAlloc, "idAlloc.bin");
-    dump(bin, sz, changeExtension(getFileName(srcFile), "bin"));
+    dump(bin, assembler.getSize(), changeExtension(getFileName(srcFile), "bin"));
     return 0;
 }
 

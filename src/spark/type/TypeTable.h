@@ -2,6 +2,7 @@
 #include <unordered_map>
 #include "../symbol/SymbolType.h"
 #include "../common/StringRef.h"
+#include "../common/Error.h"
 
 struct StructField {
     StructField(StringRef name, SymbolType* type, size_t offset = 0) : name(name), type(type), offset(offset) {  }

@@ -35,6 +35,14 @@ private:
             auto* it = (SkrCopy*) instr;
             return isNotRetVar(it->getTo()) && !annotation.contains(it->getTo());
         }
+        else if (instr->kind == SkrInstruction::Kind::CopyToOffset) {
+            auto* it = (SkrCopyToOffset*) instr;
+            return isNotRetVar(it->getTo()) && !annotation.contains(it->getTo());
+        }
+        else if (instr->kind == SkrInstruction::Kind::CopyFromOffset) {
+            auto* it = (SkrCopyFromOffset*) instr;
+            return isNotRetVar(it->getTo()) && !annotation.contains(it->getTo());
+        }
         else if (instr->kind == SkrInstruction::Kind::Binary) {
             auto* it = (SkrBinary*) instr;
             return isNotRetVar(it->getDst()) && !annotation.contains(it->getDst());

@@ -58,6 +58,16 @@ private:
                 vars.kill(it->getTo());
                 vars.generateIfVar(it->getFrom());
             }
+            else if (instr->kind == SkrInstruction::Kind::CopyToOffset) {
+                auto* it = (SkrCopyToOffset*) instr;
+                vars.generateIfVar(it->getTo());
+                vars.generateIfVar(it->getFrom());
+            }
+            else if (instr->kind == SkrInstruction::Kind::CopyFromOffset) {
+                auto* it = (SkrCopyFromOffset*) instr;
+                vars.kill(it->getTo());
+                vars.generateIfVar(it->getFrom());
+            }
             else if (instr->kind == SkrInstruction::Kind::Branch) {
                 auto* it = (SkrBranch*) instr;
                 vars.generateIfVar(it->getLeft());

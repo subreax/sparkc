@@ -3,18 +3,18 @@
 
 class SkrCopyToOffset : public SkrInstruction {
 public:
-    SkrCopyToOffset(SkrValue* to, int toOffset, SkrValue* from)
+    SkrCopyToOffset(SkrVar* to, int toOffset, SkrValue* from)
         : SkrInstruction(Kind::CopyToOffset)
         , to(to)
         , toOffset(toOffset)
         , from(from) {  }
 
-    SkrValue* getTo() const { return to; }
+    SkrVar* getTo() const { return to; }
     int getToOffset() const { return toOffset; }
     SkrValue* getFrom() const { return from; }
 
 private:
-    SkrValue* to;
+    SkrVar* to;
     int toOffset;
     SkrValue* from;
 };
