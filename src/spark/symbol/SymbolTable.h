@@ -41,6 +41,14 @@ public:
 
     Allocator& getTypeAllocator() const { return allocator; }
 
+    std::unordered_map<StringRef, SymbolType*>::const_iterator begin() const {
+        return table.begin();
+    }
+
+    std::unordered_map<StringRef, SymbolType*>::const_iterator end() const {
+        return table.end();
+    }
+
 private:
     std::unordered_map<StringRef, SymbolType*> table;
     Allocator& allocator;

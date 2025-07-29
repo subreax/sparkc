@@ -38,7 +38,7 @@ private:
         }
 
         funcRetVal = createVar("retval", func->getReturnType());
-        retLabel = labelGen.uniqueInternal("ret");
+        retLabel = labelGen.uniquePrivate("ret");
         emit(func->getBlock());
         out.emplace_back(allocator.create<SkrLabel>(retLabel));
 
@@ -102,13 +102,13 @@ private:
         }
         else if (kind == AstStatement::Kind::If) {
             auto* it = (AstIfStatement*) st;
-            auto ifFalseLabel = labelGen.uniqueInternal("false");
+            auto ifFalseLabel = labelGen.uniquePrivate("false");
             emitInvertBranch(it->getCondition(), ifFalseLabel);
             emit(it->getTrueBranch());
 
             auto* falseBranch = it->getFalseBranch();
             if (falseBranch != nullptr) {
-                auto endLabel = labelGen.uniqueInternal("end");
+                auto endLabel = labelGen.uniquePrivate("end");
                 out.emplace_back(allocator.create<SkrJump>(endLabel));
                 out.emplace_back(allocator.create<SkrLabel>(ifFalseLabel));
                 emit(falseBranch);
@@ -120,8 +120,8 @@ private:
         }
         else if (kind == AstStatement::Kind::While) {
             auto* it = (AstWhileStatement*) st;
-            auto startLabel = labelGen.uniqueInternal("start");
-            auto endLabel = labelGen.uniqueInternal("end");
+            auto startLabel = labelGen.uniquePrivate("start");
+            auto endLabel = labelGen.uniquePrivate("end");
             out.emplace_back(allocator.create<SkrLabel>(startLabel));
             emitInvertBranch(it->getCondition(), endLabel);
             emit(it->getStatement());
@@ -272,8 +272,8 @@ private:
     SkrValue* emitBinary(AstBinaryExp* exp) {
         auto astOp = exp->getOperator();
         if (astOp == AstBinaryExp::Operator::And) {
-            auto falseLabel = labelGen.uniqueInternal("and_false");
-            auto endLabel = labelGen.uniqueInternal("and_end");
+            auto falseLabel = labelGen.uniquePrivate("and_false");
+            auto endLabel = labelGen.uniquePrivate("and_end");
 
             SkrVar* result = createVar("and", SymbolIntType::getInstance());
             emitInvertBranch(exp->getLeft(), falseLabel);
@@ -290,8 +290,8 @@ private:
             return result;
         }
         else if (astOp == AstBinaryExp::Operator::Or) {
-            auto trueLabel = labelGen.uniqueInternal("or_true");
-            auto endLabel = labelGen.uniqueInternal("or_end");
+            auto trueLabel = labelGen.uniquePrivate("or_true");
+            auto endLabel = labelGen.uniquePrivate("or_end");
 
             SkrVar* result = createVar("or", SymbolIntType::getInstance());
             emitBranch(exp->getLeft(), trueLabel);

@@ -6,6 +6,7 @@
 
 struct StructField {
     StructField(StringRef name, SymbolType* type, size_t offset = 0) : name(name), type(type), offset(offset) {  }
+    StructField(const char* name, SymbolType* type) : StructField(StringRef::cstr(name), type) {  }
 
     StringRef name;
     SymbolType* type;
@@ -82,6 +83,14 @@ public:
         }
         sparkError("TypeTable", "Unknown struct field: " + id.toString());
         throw;
+    }
+
+    std::unordered_map<StringRef, BoundArray<StructField>>::const_iterator begin() const {
+        return table.begin();
+    }
+
+    std::unordered_map<StringRef, BoundArray<StructField>>::const_iterator end() const {
+        return table.end();
     }
 
 private:

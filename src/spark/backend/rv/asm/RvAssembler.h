@@ -11,6 +11,10 @@ public:
     RvAssembler(const RvAssembler&) = delete;
     RvAssembler& operator=(const RvAssembler&) = delete;
 
+    void addExternalLabel(StringRef label, void* ptr) {
+        listing.addExternalLabel(label, ptr);
+    }
+
     void compile(const std::vector<RvaInstruction*>& rvas) {
         for (RvaInstruction* it : rvas) {
             it->emit(listing);
@@ -19,16 +23,16 @@ public:
 
     void link() {
         listing.link();
-        listing.getExternalLabels(externalLabels);
+        listing.getPublicLabels(publicLabels);
     }
 
-    const std::vector<RvListing::Label>& getExternalLabels() const { 
-        return externalLabels;
+    const std::vector<RvListing::Label>& getPublicLabels() const { 
+        return publicLabels;
     }
 
     size_t getSize() const { return listing.getSize(); }
 
 private:
     RvListing listing;
-    std::vector<RvListing::Label> externalLabels;
+    std::vector<RvListing::Label> publicLabels;
 };

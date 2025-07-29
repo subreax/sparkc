@@ -120,12 +120,17 @@ private:
             add<RvaBinary>(
                 toPseudo(it->getDst()), 
                 toPseudo(it->getLeft()), 
-                RvaBinary::Operator::FixedMul, 
+                RvaBinary::Operator::_FixedMul, 
                 toPseudo(it->getRight())
             );
         }
         else if (dstType == SymbolType::Kind::Float && op == SkrBinary::Operator::Div) {
-            sparkError("Skr2RvaPseudo", "Fixed division is not implemented");
+            add<RvaBinary>(
+                toPseudo(it->getDst()), 
+                toPseudo(it->getLeft()), 
+                RvaBinary::Operator::_FixedDiv, 
+                toPseudo(it->getRight())
+            );
         }
         else {
             add<RvaBinary>(
@@ -135,18 +140,6 @@ private:
                 toPseudo(it->getRight())
             );
         }
-    }
-
-    void emitFixedMul(SkrBinary* it) {
-        auto* dst = toPseudo(it->getDst());
-        auto* dstH = tempReg;
-        auto* left = toPseudo(it->getLeft());
-        auto* right = toPseudo(it->getRight());
-        add<RvaBinary>(dst, left, RvaBinary::Operator::Mul, right);
-        add<RvaBinary>(dstH, left, RvaBinary::Operator::MulH, right);
-        add<RvaBinary>(dst, dst, RvaBinary::Operator::ShiftRight, newImm(15));
-        add<RvaBinary>(dstH, dstH, RvaBinary::Operator::ShiftLeft, newImm(17));
-        add<RvaBinary>(dst, dstH, RvaBinary::Operator::Or, dst);
     }
 
     void emitCopy(SkrCopy* it) {

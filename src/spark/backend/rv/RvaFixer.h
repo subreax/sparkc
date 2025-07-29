@@ -79,19 +79,30 @@ private:
             right = moveToReg(it->right, RvReg::T2);
         }
 
-        if (it->op != RvaBinary::Operator::FixedMul) {
-            add(allocator.create<RvaBinary>(dstReg, leftReg, it->op, right));
+        if (it->op == RvaBinary::Operator::_FixedMul) {
+            auto* tmpReg = getReg(RvReg::T6);
+            emitFixedMul(dstReg, leftReg, right, tmpReg);
+        }
+        else if (it->op == RvaBinary::Operator::_FixedDiv) {
+            emitFixedDiv(dstReg, leftReg, right);
         }
         else {
-            auto* temp = getReg(RvReg::T6);
-            add(allocator.create<RvaBinary>(dstReg, leftReg, RvaBinary::Operator::Mul, right));
-            add(allocator.create<RvaBinary>(temp, leftReg, RvaBinary::Operator::MulH, right));
-            add(allocator.create<RvaBinary>(dstReg, dstReg, RvaBinary::Operator::ShiftRight, newImm(15)));
-            add(allocator.create<RvaBinary>(temp, temp, RvaBinary::Operator::ShiftLeft, newImm(17)));
-            add(allocator.create<RvaBinary>(dstReg, temp, RvaBinary::Operator::Or, dstReg));
+            add(allocator.create<RvaBinary>(dstReg, leftReg, it->op, right));
         }
 
         storeIfNeeded(it->dst, dstReg);
+    }
+
+    void emitFixedMul(RvaRegister* dstReg, RvaRegister* leftReg, RvaValue* rightVal, RvaRegister* tmpReg) {
+        add(allocator.create<RvaBinary>(dstReg, leftReg, RvaBinary::Operator::Mul, rightVal));
+        add(allocator.create<RvaBinary>(tmpReg, leftReg, RvaBinary::Operator::MulH, rightVal));
+        add(allocator.create<RvaBinary>(dstReg, dstReg, RvaBinary::Operator::ShiftRight, newImm(15)));
+        add(allocator.create<RvaBinary>(tmpReg, tmpReg, RvaBinary::Operator::ShiftLeft, newImm(17)));
+        add(allocator.create<RvaBinary>(dstReg, tmpReg, RvaBinary::Operator::Or, dstReg));
+    }
+
+    void emitFixedDiv(RvaRegister* dstReg, RvaRegister* leftReg, RvaValue* rightVal) {
+        sparkError("RvaFixer", "Not implemented");
     }
 
     void fix(RvaBranch* it) {

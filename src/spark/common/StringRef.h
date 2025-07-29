@@ -12,8 +12,8 @@ public:
         return StringRef(nullptr, 0);
     }
 
-    static StringRef cstr(const char* str) {
-        return StringRef(str, lengthOf(str));
+    static StringRef cstr(const char* str, size_t maxLen = 1024) {
+        return StringRef(str, lengthOf(str, maxLen));
     }
 
     static size_t lengthOf(const char* str, size_t maxLen = 1024) {

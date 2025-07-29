@@ -49,6 +49,6 @@ private:
     }
 
     int32_t sext11(int32_t imm11) {
-        return imm11 << (20) >> 20;
+        return imm11 << 20 >> 20;
     }
 };

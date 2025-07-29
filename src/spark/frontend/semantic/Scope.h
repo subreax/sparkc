@@ -26,20 +26,22 @@ public:
         : allocator("scope", memSize)
         , stack(allocator)
         , symbolTable(table)
-        , typeTable(typeTable) {  }
+        , typeTable(typeTable) {
+        init();
+    }
 
     void declareVar(StringRef name, StringRef id, SymbolType* type) {
-        declareInScope(name, id, ScopeItem::Kind::Var);
+        declareVarInScope(name, id);
         symbolTable.declare(id, type);
     }
 
     void declareFunc(StringRef name, SymbolType* retType, const std::vector<SymbolType*>& params) {
-        declareInScope(name, name, ScopeItem::Kind::Func);
+        declareFuncInScope(name);
         symbolTable.declareFunc(name, retType, params);
     }
 
     void declareStruct(StringRef tag, const std::vector<StructField>& fields) {
-        declareInScope(tag, tag, ScopeItem::Kind::Struct);
+        declareStructInScope(tag);
         typeTable.declare(tag, fields);
     }
 
@@ -73,6 +75,18 @@ public:
     }
 
 private:
+    void declareVarInScope(StringRef name, StringRef id) {
+        declareInScope(name, id, ScopeItem::Kind::Var);
+    }
+
+    void declareFuncInScope(StringRef name) {
+        declareInScope(name, name, ScopeItem::Kind::Func);
+    }
+
+    void declareStructInScope(StringRef tag) {
+        declareInScope(tag, tag, ScopeItem::Kind::Struct);
+    }
+
     void declareInScope(StringRef name, StringRef id, ScopeItem::Kind kind) {
         for (size_t i = 0; i < stack.getSize(); i++) {
             auto& it = stack.peek(i);
@@ -86,6 +100,33 @@ private:
         }
 
         stack.push(ScopeItem(name, id, kind));
+    }
+
+    void init() {
+        for (const auto& structEntry : typeTable) {
+            declareStructInScope(structEntry.first);
+        }
+
+        for (const auto& entry : symbolTable) {
+            declareFuncInScope(entry.first);
+        }
+    }
+
+    static ScopeItem::Kind symbolKind2ScopeKind(SymbolType::Kind kind) {
+        switch (kind) {
+        case SymbolType::Kind::Integer:
+        case SymbolType::Kind::Float:
+        case SymbolType::Kind::Pointer:
+        case SymbolType::Kind::Structure:
+            return ScopeItem::Kind::Var;
+        
+        case SymbolType::Kind::Function:
+            return ScopeItem::Kind::Func;
+
+        default:
+            sparkError("Scope", "Unknown symbol kind: %d", kind);
+            return ScopeItem::Kind::Var;
+        }        
     }
 
     LinearAllocator allocator;

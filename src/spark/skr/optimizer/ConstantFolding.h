@@ -141,7 +141,7 @@ private:
 
 
     static FloatConstant* evaluate(Allocator& a, float left, SkrBinary::Operator op, float right) {
-        int32_t res = 0;
+        float res = 0;
         switch (op)
         {
         case SkrBinary::Operator::Plus:

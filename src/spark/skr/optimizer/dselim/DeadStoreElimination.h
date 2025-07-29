@@ -55,6 +55,10 @@ private:
             auto* it = (SkrInt2Float*) instr;
             return isNotRetVar(it->getDst()) && !annotation.contains(it->getDst());
         }
+        else if (instr->kind == SkrInstruction::Kind::FunCall) {
+            auto* it = (SkrFunCall*) instr;
+            return isNotRetVar(it->getRetVar()) && !annotation.contains(it->getRetVar());
+        }
 
         return false;
     }

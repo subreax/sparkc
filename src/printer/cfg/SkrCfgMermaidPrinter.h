@@ -1,7 +1,8 @@
 #pragma once
 #include <iostream>
-#include <set>
+#include <fstream>
 #include "../../spark/common/cfg/CfGraph.h"
+#include "../../spark/symbol/SymbolTable.h"
 #include "../skr/SkrPrinter.h"
 
 class SkrCfgMermaidPrinter {
@@ -9,6 +10,24 @@ public:
     SkrCfgMermaidPrinter(std::ostream& out, SymbolTable& table) 
         : out(out)
         , table(table) { }
+
+    static void saveToFile(CfGraph<SkrInstruction*>& graph, SymbolTable& table, const std::string& outFile) {
+        std::filesystem::create_directory("cfg");
+        std::ofstream astOut("cfg/" + outFile);
+        astOut << "```mermaid\n";
+        astOut << "---\n"
+            "config:\n"
+            "  look: neo\n"
+            "  theme: redux-dark\n"
+            "---\n";
+        astOut << "flowchart TB\n";
+
+        SkrCfgMermaidPrinter conv(astOut, table);
+        conv.print(graph);
+
+        astOut << "```";
+        astOut.close();
+    }
 
     void print(CfGraph<SkrInstruction*>& graph) {
         auto& blocks = graph.getBlocks();

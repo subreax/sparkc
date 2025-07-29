@@ -3,6 +3,7 @@
 #include <vector>
 #include <iostream>
 #include <sstream>
+#include <fstream>
 #include "../../spark/frontend/ast/everything.h"
 #include "../Type2String.h"
 
@@ -36,6 +37,23 @@ private:
 public:
     AstMermaidPrinter(std::ostream& os) : os(os) {  }
 
+    static void saveToFile(AstProgram* prog, const std::string& outFile) {
+        std::ofstream astOut(outFile);
+        astOut << "```mermaid\n";
+        astOut << "---\n"
+        "config:\n"
+        "  look: neo\n"
+        "  theme: redux-dark\n"
+        "---\n";
+        astOut << "flowchart LR\n";
+
+        AstMermaidPrinter printer(astOut);
+        printer.toMermaid(prog);
+
+        astOut << "```";
+        astOut.close();
+    }
+
     void toMermaid(AstProgram* prog) {
         auto node = Node(*this, "program");
         for (auto* item : prog->items) {
@@ -43,6 +61,7 @@ public:
         }
     }
 
+private:
     std::string toMermaid(AstProgItem* item) {
         if (item->kind == AstProgItem::Kind::Function) {
             return toMermaid((AstFunction*) item);
@@ -245,7 +264,6 @@ public:
         }
     }
 
-private:
     std::string toString(Constant* constant) {
         if (constant->isInt()) {
             auto* it = (IntConstant*) constant;

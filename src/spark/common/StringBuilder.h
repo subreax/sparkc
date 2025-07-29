@@ -21,7 +21,7 @@ public:
     StringBuilder& append(int32_t i) {
         char strInt[16];
         itoa(i, strInt, 10);
-        return append(StringRef::cstr(strInt));
+        return append(StringRef::cstr(strInt, sizeof(strInt)));
     }
 
     size_t getLength() const { return len; }

@@ -6,8 +6,8 @@
 
 class LinearAllocator : public Allocator {
 public:
-    LinearAllocator(const char* name, size_t sz, bool zeroMem = false)
-        : name(name)
+    LinearAllocator(StringRef name, size_t sz, bool zeroMem = false)
+        : Allocator(name)
         , begin((uint8_t*) malloc(sz))
         , ptr(begin)
         , end(begin + sz)
@@ -17,11 +17,12 @@ public:
         }
     }
 
+    LinearAllocator(const char* name, size_t sz, bool zeroMem = false)
+        : LinearAllocator(StringRef::cstr(name), sz, zeroMem) {  }
+
     ~LinearAllocator() override {
         ::free(begin);
     }
-
-    const char* getName() const { return name; }
 
     MemBlock allocate(size_t blockSz) {
         if (blockSz <= getFreeSize()) {
@@ -29,7 +30,7 @@ public:
             ptr += blockSz;
             return MemBlock(blockSz, block);
         } else {
-            throw NoMemoryException(name);
+            throw NoMemoryException(getName());
         }
     }
 
@@ -45,15 +46,17 @@ public:
         ptr = begin;
     }
 
-    size_t getUsedSize() const {
+    size_t getUsedSize() const override {
         return ptr - begin;
     }
 
-    size_t getFreeSize() const {
+    size_t getFreeSize() const override {
         return end - ptr;
     }
 
-    const size_t getCapacity() const { return end - begin; }
+    size_t getCapacity() const override {
+        return end - begin;
+    }
 
     uint8_t* getBlock() { return begin; }
     const uint8_t* getBlock() const { return begin; }
@@ -62,7 +65,6 @@ public:
     const uint8_t* getPtr() const { return ptr; }
 
 private:
-    const char* name;
     uint8_t *const begin;
     uint8_t* ptr;
     uint8_t* end;

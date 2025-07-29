@@ -2,6 +2,7 @@
 #include <fstream>
 #include <sstream>
 #include <filesystem>
+#include "spark/common/alloc/StatAllocator.h"
 #include "spark/frontend/lexer/Lexer.h"
 #include "spark/frontend/parser/Parser.h"
 #include "spark/frontend/semantic/Semantic.h"
@@ -12,32 +13,28 @@
 #include "spark/backend/rv/RvaPseudoReplacer.h"
 #include "spark/backend/rv/RvaFixer.h"
 #include "spark/backend/rv/asm/RvAssembler.h"
+
+#include "FileUtils.h"
+#include "MemUtils.h"
 #include "printer/ast/AstMermaidPrinter.h"
 #include "printer/skr/SkrPrinter.h"
 #include "printer/cfg/SkrCfgMermaidPrinter.h"
 #include "printer/rva/RvaPrinter.h"
+#include "printer/mem/MemUsagePrinter.h"
 using namespace std;
 
 
-string readFile(const char* path);
-void writeMermaidAst(AstProgram* exp, const char* outFile);
-void writeMermaidControlFlow(CfGraph<SkrInstruction*>& graph, SymbolTable& table, std::string funName);
-void dump(const LinearAllocator& allocator, const string& outFile);
-void dump(const uint8_t* block, size_t sz, const string& outFile);
-void printMemoryUsage(const char* name, size_t used, size_t cap);
-void printAllocatorStats(const LinearAllocator& allocator);
+
 void printError(ParseException& e, const string& source);
 string getLine(const string& src, int lineNo);
-int getLastSlashPos(const string& path);
-string getFileName(const string& path);
-string changeExtension(const string& path, const string& newExt);
+
 
 class CfgGraphPrinter : public SkrOptimizer::OnGraphCreatedListener {
 public:
     CfgGraphPrinter(SymbolTable& table) : table(table) {  }
 
     void onCreated(StringRef funName, int iteration, CfGraph<SkrInstruction*>* graph) override {
-        writeMermaidControlFlow(*graph, table, funName.toString() + "." + std::to_string(iteration) + ".md");
+        SkrCfgMermaidPrinter::saveToFile(*graph, table, funName.toString() + "." + std::to_string(iteration) + ".md");
     }
 
 private:
@@ -51,12 +48,12 @@ int main(int argc, char** argv) {
     }
 
     const char* srcFile = argv[1];
-    string source = readFile(srcFile);
+    string source = FileUtils::readFile(srcFile);
     Lexer lexer(source.c_str());
 
-    LinearAllocator astAlloc("ast", 4096);
-    LinearAllocator idAlloc("id", 2048, true);
-    LinearAllocator typeAlloc("symbol/type", 2048);
+    StatAllocator<LinearAllocator> astAlloc("ast", 4096);
+    StatAllocator<LinearAllocator> idAlloc("id", 2048, true);
+    StatAllocator<LinearAllocator> typeAlloc("symbol/type", 2048);
 
     IdentifierGen idGen(idAlloc);
     LabelGen labelGen(idAlloc);
@@ -75,11 +72,11 @@ int main(int argc, char** argv) {
         return 2;
     }
 
-    writeMermaidAst(program, "ast.md");
+    AstMermaidPrinter::saveToFile(program, "ast.md");
 
-    LinearAllocator skrAlloc("skr", 4096);
-    LinearAllocator rvaAlloc1("rva1", 4096);
-    LinearAllocator rvaAlloc2("rva2", 8192);
+    StatAllocator<LinearAllocator> skrAlloc("skr", 4096);
+    StatAllocator<LinearAllocator> rvaAlloc1("rva1", 4096);
+    StatAllocator<LinearAllocator> rvaAlloc2("rva2", 8192);
 
     std::vector<SkrFunction*> skrFunctions;
     std::vector<SkrInstruction*> skrsBuf;
@@ -113,7 +110,6 @@ int main(int argc, char** argv) {
     }
     cout << endl;
 
-    size_t rva1Peak = 0;
     std::vector<RvaInstruction*> rva;
     std::vector<RvaInstruction*> rvaFixed;
     for (auto* skrFunc : skrFunctions) {
@@ -126,7 +122,6 @@ int main(int argc, char** argv) {
         RvaPseudoReplacer::replace(rva, frame, symbolSize);
         RvaFixer::fix(rva, rvaFixed, rvaAlloc2);
 
-        rva1Peak = max(rva1Peak, rvaAlloc1.getUsedSize());
         rvaAlloc1.reset();
         rva.clear();
     }
@@ -141,138 +136,25 @@ int main(int argc, char** argv) {
     assembler.link();
 
     cout << "== external labels ==" << endl;
-    for (auto& label : assembler.getExternalLabels()) {
+    for (auto& label : assembler.getPublicLabels()) {
         cout << label.value.toString() << ": " << label.offset << endl;
     }
     cout << endl;
 
     cout << "== memory stats ==" << endl;
-    printAllocatorStats(typeAlloc);
-    printAllocatorStats(astAlloc);
-    printAllocatorStats(idAlloc);
-    printAllocatorStats(skrAlloc);
-    printMemoryUsage("rva1 peak", rva1Peak, rvaAlloc1.getCapacity());
-    printAllocatorStats(rvaAlloc2);
-    printMemoryUsage("program", assembler.getSize(), sizeof(bin));
+    MemUsagePrinter::print(typeAlloc);
+    MemUsagePrinter::print(astAlloc);
+    MemUsagePrinter::print(idAlloc);
+    MemUsagePrinter::print(skrAlloc);
+    MemUsagePrinter::print("rva1 peak", rvaAlloc1.getPeakUsage(), rvaAlloc1.getCapacity());
+    MemUsagePrinter::print(rvaAlloc2);
+    MemUsagePrinter::print("program", assembler.getSize(), sizeof(bin));
 
-    dump(idAlloc, "idAlloc.bin");
-    dump(bin, assembler.getSize(), changeExtension(getFileName(srcFile), "bin"));
+    MemUtils::dump(idAlloc.getAllocator(), "idAlloc.bin");
+    MemUtils::dump(bin, assembler.getSize(), FileUtils::changeExtension(FileUtils::getFileName(srcFile), "bin"));
     return 0;
 }
 
-int getLastSlashPos(const string& path) {
-    size_t slash = path.rfind('/');
-    if (slash != string::npos) {
-        return slash;
-    }
-
-    slash = path.rfind('\\');
-    if (slash != string::npos) {
-        return slash;
-    }
-
-    return -1;
-}
-
-string getFileName(const string& path) {
-    return path.substr(getLastSlashPos(path) + 1);
-}
-
-string changeExtension(const string& path, const string& newExt) {
-    int dot = path.rfind('.');
-    if (dot == string::npos) {
-        return path + "." + newExt;
-    }
-
-    return path.substr(0, dot) + "." + newExt;
-}
-
-
-void printMemoryUsage(const char* name, size_t used, size_t cap) {
-    auto percentage = used * 100 / cap;
-    printf("%-13s", name);
-    
-    char buf[16];
-    snprintf(buf, sizeof(buf), "%5d ", used);
-    printf("%5s ", buf);
-
-    const int w = cap * 45 / 4096;
-    cout << "[";
-    for (int i = 0; i < w; i++) {
-        if (i * 100 / (w - 1) < percentage) {
-            cout << "#";
-        }
-        else {
-            cout << ".";
-        }
-    }
-    cout << "] " << endl;
-}
-
-void printAllocatorStats(const LinearAllocator& allocator) {
-    printMemoryUsage(allocator.getName(), allocator.getUsedSize(), allocator.getCapacity());
-}
-
-string readFile(const char* path) {
-    ifstream fin(path);
-    if (!fin) {
-        return "";
-    }
-
-    ostringstream oss;
-    oss << fin.rdbuf();
-    return oss.str();
-}
-
-void writeMermaidAst(AstProgram* prog, const char* outFile) {
-    std::ostringstream oss;
-    AstMermaidPrinter conv(oss);
-    conv.toMermaid(prog);
-
-    ofstream astOut(outFile);
-    astOut << "```mermaid\n";
-    astOut << "---\n"
-"config:\n"
-"  look: neo\n"
-"  theme: redux-dark\n"
-"---\n";
-    astOut << "flowchart LR\n";
-    astOut << oss.str();
-    astOut << "```";
-    astOut.close();
-}
-
-void writeMermaidControlFlow(CfGraph<SkrInstruction*>& graph, SymbolTable& table, std::string outFile) {
-    std::filesystem::create_directory("cfg");
-    std::ostringstream oss;
-    SkrCfgMermaidPrinter conv(oss, table);
-    conv.print(graph);
-
-    ofstream astOut("cfg/" + outFile);
-    astOut << "```mermaid\n";
-    astOut << "---\n"
-"config:\n"
-"  look: neo\n"
-"  theme: redux-dark\n"
-"---\n";
-    astOut << "flowchart TB\n";
-    astOut << oss.str();
-    astOut << "```";
-    astOut.close();
-}
-
-void dump(const uint8_t* block, size_t sz, const string& outFile) {
-    FILE* f;
-    fopen_s(&f, outFile.c_str(), "wb");
-    for (size_t i = 0; i < sz; i++) {
-        fputc(block[i], f);
-    }
-    fclose(f);
-}
-
-void dump(const LinearAllocator& allocator, const string& outFile) {
-    dump(allocator.getBlock(), allocator.getFreeSize(), outFile);
-}
 
 void printError(ParseException& e, const string& source) {
     const auto& token = e.getToken();

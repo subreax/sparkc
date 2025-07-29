@@ -1,0 +1,47 @@
+#pragma once
+#include <string>
+#include <fstream>
+#include <iostream>
+#include <sstream>
+
+class FileUtils {
+public:
+    static std::string readFile(const std::string& path) {
+        std::ifstream fin(path);
+        if (!fin) {
+            return "";
+        }
+
+        std::ostringstream oss;
+        oss << fin.rdbuf();
+        return oss.str();
+    }
+
+    static std::string getFileName(const std::string& path) {
+        return path.substr(getLastSlashPos(path) + 1);
+    }
+
+    static std::string changeExtension(const std::string& path, const std::string& newExt) {
+        int dot = path.rfind('.');
+        if (dot == std::string::npos) {
+            return path + "." + newExt;
+        }
+
+        return path.substr(0, dot) + "." + newExt;
+    }
+
+private:
+    static int getLastSlashPos(const std::string& path) {
+        size_t slash = path.rfind('/');
+        if (slash != std::string::npos) {
+            return slash;
+        }
+
+        slash = path.rfind('\\');
+        if (slash != std::string::npos) {
+            return slash;
+        }
+
+        return -1;
+    }
+};

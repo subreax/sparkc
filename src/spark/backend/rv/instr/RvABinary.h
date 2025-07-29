@@ -21,7 +21,8 @@ public:
         ShiftLeft,
         ShiftRight,
         Or,
-        FixedMul
+        _FixedMul,
+        _FixedDiv
     };
 
     RvaBinary(RvaValue* dst, RvaValue* left, Operator op, RvaValue* right)

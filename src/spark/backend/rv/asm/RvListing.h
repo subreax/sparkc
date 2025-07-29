@@ -32,6 +32,11 @@ public:
         labels.emplace_back(offset, label);
     }
 
+    void addExternalLabel(StringRef label, void* ptr) {
+        size_t offset = ((uint8_t*) ptr) - out;
+        labels.emplace_back(offset, label);
+    }
+
     void addWithLabel(uint32_t instr, StringRef label) {
         write_u32(instr, offset);
         unresolved.emplace_back(offset, label);
@@ -56,9 +61,9 @@ public:
 
     size_t getSize() const { return offset; }
 
-    void getExternalLabels(std::vector<Label>& out) {
+    void getPublicLabels(std::vector<Label>& out) {
         for (auto& label : labels) {
-            if (LabelGen::isExternal(label.value)) {
+            if (LabelGen::isPublic(label.value)) {
                 out.emplace_back(label);
             }
         }
@@ -76,7 +81,7 @@ private:
     };
 
     void write_u32(uint32_t instr, int32_t offset) {
-        if (offset + 4 < cap) {
+        if (offset + 4 <= cap) {
             *((uint32_t*) (out + offset)) = instr;
         } else {
             sparkError("RvListing", "Not enough memory to write compiled program");
