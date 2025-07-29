@@ -85,6 +85,10 @@ public:
 
     // pseudo
 
+    static uint32_t ret() {
+        return Rv32I::jalr(RvReg::ZERO, RvReg::RA, 0);
+    }
+
     static uint32_t seqz(RvReg rd, RvReg rs) {
         return sltiu(rd, rs, 1);
     }
