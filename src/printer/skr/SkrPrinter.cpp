@@ -53,7 +53,7 @@ std::ostream& operator<<(std::ostream& os, SkrBranch::Operator op) {
     return os;
 }
 
-void SkrPrinter::print(std::ostream& os, SkrFunction* func, SymbolTable& table) {
+void SkrPrinter::print(std::ostream& os, SkrFunction* func, const SymbolTable& table) {
     os << "fun " << Colored::label(func->getName()) << "(";
     auto* funcType = (SymbolFunctionType*) table.get(func->getName());
     auto params = func->getParams();
@@ -75,7 +75,7 @@ void SkrPrinter::print(std::ostream& os, SkrFunction* func, SymbolTable& table) 
     }
 }
 
-void SkrPrinter::print(std::ostream& os, SkrInstruction* skr, SymbolTable& table, bool colored) {
+void SkrPrinter::print(std::ostream& os, SkrInstruction* skr, const SymbolTable& table, bool colored) {
     auto kind = skr->kind;
     if (kind == SkrInstruction::Kind::Binary) {
         auto* bin = (SkrBinary*) skr;

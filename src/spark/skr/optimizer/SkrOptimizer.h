@@ -3,16 +3,21 @@
 #include "../instr/everything.h"
 #include "../SkrFunction.h"
 #include "../../common/cfg/CfgBuilder.h"
-#include "SkrCfgOverloadings.h"
 #include "ConstantFolding.h"
 #include "UnreachableCodeElimination.h"
 #include "copyprop/CopyPropagation.h"
 #include "dselim/DeadStoreElimination.h"
+#include "SkrOptOnCfgCreatedListener.h"
 
 class SkrOptimizer {
 public:
     struct Config {
         Config() = default;
+        Config(bool constantFolding, bool deadCodeElim, bool copyPropagation, bool deadStoreElim)
+            : constantFolding(constantFolding)
+            , deadCodeElimination(deadCodeElim)
+            , copyPropagation(copyPropagation)
+            , deadStoreElimination(deadStoreElim) {  }
 
         bool constantFolding = true;
         bool deadCodeElimination = true;
@@ -22,20 +27,14 @@ public:
 
     static constexpr size_t MAX_ITERATIONS = 50;
 
-    class OnGraphCreatedListener {
-    public:
-        virtual ~OnGraphCreatedListener() = default;
-        virtual void onCreated(StringRef funName, int iteration, CfGraph<SkrInstruction*>* graph) = 0;
-    };
-
-    SkrOptimizer(Allocator& a1, SkrFunction* rawFunc, OnGraphCreatedListener* onGraphCreated = nullptr)
+    SkrOptimizer(Allocator& a1, SkrFunction* rawFunc, SkrOptOnCfgCreatedListener* onGraphCreated = nullptr)
         : raw(rawFunc->getInstructions().toVector())
         , rawFunc(rawFunc)
         , a1(a1)
-        , onGraphCreatedListener(onGraphCreated) {  }
+        , onCfgCreatedListener(onGraphCreated) {  }
 
     SkrFunction* optimize(Config config) {
-        if (onGraphCreatedListener != nullptr) {
+        if (onCfgCreatedListener != nullptr) {
             auto* initialGraph = CfgBuilder<SkrInstruction>().build_delGraphWhenDone(raw);
             notifyGraphCreated(rawFunc->getName(), 0, initialGraph);
             delete initialGraph;
@@ -84,13 +83,13 @@ public:
 
 private:
     void notifyGraphCreated(StringRef funName, int iteration, CfGraph<SkrInstruction*>* graph) {
-        if (onGraphCreatedListener != nullptr) {
-            onGraphCreatedListener->onCreated(funName, iteration, graph);
+        if (onCfgCreatedListener != nullptr) {
+            onCfgCreatedListener->onCfgCreated(funName, iteration, graph);
         }
     }
 
     std::vector<SkrInstruction*> raw;
     SkrFunction* rawFunc;
     Allocator& a1;
-    OnGraphCreatedListener* onGraphCreatedListener = nullptr;
+    SkrOptOnCfgCreatedListener* onCfgCreatedListener = nullptr;
 };

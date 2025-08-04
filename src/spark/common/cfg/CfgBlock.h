@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include "../StringRef.h"
 
 namespace cfg {
 template<typename I>

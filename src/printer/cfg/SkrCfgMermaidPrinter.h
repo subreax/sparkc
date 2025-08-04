@@ -7,11 +7,11 @@
 
 class SkrCfgMermaidPrinter {
 public:
-    SkrCfgMermaidPrinter(std::ostream& out, SymbolTable& table) 
+    SkrCfgMermaidPrinter(std::ostream& out, const SymbolTable& table) 
         : out(out)
         , table(table) { }
 
-    static void saveToFile(CfGraph<SkrInstruction*>& graph, SymbolTable& table, const std::string& outFile) {
+    static void saveToFile(CfGraph<SkrInstruction*>& graph, const SymbolTable& table, const std::string& outFile) {
         std::filesystem::create_directory("cfg");
         std::ofstream astOut("cfg/" + outFile);
         astOut << "```mermaid\n";
@@ -84,5 +84,5 @@ private:
     }
 
     std::ostream& out;
-    SymbolTable& table;
+    const SymbolTable& table;
 };

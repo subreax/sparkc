@@ -1,15 +1,15 @@
-#pragma once
 #include "../../common/cfg/CfgBlock.h"
+#include "../../common/StringRef.h"
 #include "../instr/everything.h"
+using namespace cfg;
 
-namespace cfg {
 template<>
-bool isLabel(SkrInstruction* ptr) {
+bool cfg::isLabel(SkrInstruction* ptr) {
     return ptr->kind == SkrInstruction::Kind::Label;
 }
 
 template<>
-StringRef getLabel(SkrInstruction* ptr) {
+StringRef cfg::getLabel(SkrInstruction* ptr) {
     switch (ptr->kind) {
     case SkrInstruction::Kind::Label:   return ((SkrLabel*) ptr)->getLabel();
     case SkrInstruction::Kind::Jump:    return ((SkrJump*) ptr)->getLabel();
@@ -20,12 +20,11 @@ StringRef getLabel(SkrInstruction* ptr) {
 }
 
 template<>
-bool isJump(SkrInstruction* ptr) {
+bool cfg::isJump(SkrInstruction* ptr) {
     return ptr->kind == SkrInstruction::Kind::Jump;
 }
 
 template<>
-bool isBranch(SkrInstruction* ptr) {
+bool cfg::isBranch(SkrInstruction* ptr) {
     return ptr->kind == SkrInstruction::Kind::Branch;
 }
-};

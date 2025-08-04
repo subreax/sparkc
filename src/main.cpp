@@ -2,17 +2,8 @@
 #include <fstream>
 #include <sstream>
 #include <filesystem>
-#include "spark/common/alloc/StatAllocator.h"
-#include "spark/frontend/lexer/Lexer.h"
-#include "spark/frontend/parser/Parser.h"
-#include "spark/frontend/semantic/Semantic.h"
-#include "spark/type/TypeTable.h"
-#include "spark/skr/SkrEmitter.h"
-#include "spark/skr/optimizer/SkrOptimizer.h"
-#include "spark/backend/rv/Skr2RvaPseudo.h"
-#include "spark/backend/rv/RvaPseudoReplacer.h"
-#include "spark/backend/rv/RvaFixer.h"
-#include "spark/backend/rv/asm/RvAssembler.h"
+#include "spark/frontend/parser/except/ParseException.h"
+#include "spark/SparkCompiler.h"
 
 #include "FileUtils.h"
 #include "MemUtils.h"
@@ -25,21 +16,52 @@ using namespace std;
 
 
 
-void printError(ParseException& e, const string& source);
+void printError(const ParseException& e, const string& source);
 string getLine(const string& src, int lineNo);
+void printMemUsage(const char* name, int usedPercentage);
 
 
-class CfgGraphPrinter : public SkrOptimizer::OnGraphCreatedListener {
+class DebugCallback : public SparkCompiler::DebugCallback {
 public:
-    CfgGraphPrinter(SymbolTable& table) : table(table) {  }
-
-    void onCreated(StringRef funName, int iteration, CfGraph<SkrInstruction*>* graph) override {
-        SkrCfgMermaidPrinter::saveToFile(*graph, table, funName.toString() + "." + std::to_string(iteration) + ".md");
+    void onAstBuild(class AstProgram* ast) override { 
+        AstMermaidPrinter::saveToFile(ast, "ast.md");
     }
 
-private:
-    SymbolTable& table;
+    void onEmitSkrFunc(class SkrFunction* skrFunc) override {
+        cout << "== skr ==" << endl;
+        SkrPrinter::print(cout, skrFunc, getCtx().symTable);
+        cout << endl;
+    }
+
+    void onCfgCreated(StringRef funName, int iteration, CfGraph<SkrInstruction*>* graph) override {
+        SkrCfgMermaidPrinter::saveToFile(*graph, getCtx().symTable, funName.toString() + "." + std::to_string(iteration) + ".md");
+    }
+
+    void onOptimizeSkrFunc(class SkrFunction* skrFunc) override {
+        cout << "== skr optimized ==" << endl;
+        SkrPrinter::print(cout, skrFunc, getCtx().symTable);
+        cout << endl;
+    }
+
+    void onEmitRva(const std::vector<class RvaInstruction*>& rva) override {
+        cout << "== rva ==" << endl;
+        RvaPrinter::print(cout, rva);
+        cout << endl;
+    }
+
+    void onReplaceRvaPseudo(const std::vector<class RvaInstruction*>& rva) override {
+        cout << "== rva pseudo replaced ==" << endl;
+        RvaPrinter::print(cout, rva);
+        cout << endl;
+    }
+
+    void onFixRva(const std::vector<class RvaInstruction*>& rva) override {
+        cout << "== rva fixed ==" << endl;
+        RvaPrinter::print(cout, rva);
+        cout << endl;
+    }
 };
+
 
 int main(int argc, char** argv) {
     if (argc == 1) {
@@ -47,116 +69,39 @@ int main(int argc, char** argv) {
         return 1;
     }
 
+    uint8_t binary[1024];
     const char* srcFile = argv[1];
     string source = FileUtils::readFile(srcFile);
-    Lexer lexer(source.c_str());
 
-    StatAllocator<LinearAllocator> astAlloc("ast", 4096);
-    StatAllocator<LinearAllocator> idAlloc("id", 2048, true);
-    StatAllocator<LinearAllocator> typeAlloc("symbol/type", 2048);
+    DebugCallback debugCallback;
 
-    IdentifierGen idGen(idAlloc);
-    LabelGen labelGen(idAlloc);
-    SymbolTable symbolTable(typeAlloc);
-    TypeTable typeTable(typeAlloc);
-    SymbolSize symbolSize(symbolTable, typeTable);
-    AstProgram* program;
+    SparkCompiler::Initializer sci;
+    sci.mem = 8192;
+    sci.outBin = binary;
+    sci.outCap = sizeof(binary);
+    sci.debugCallback = &debugCallback;
+    SparkCompiler compiler(sci);
+    SparkBuildInfo buildInfo;
     try {
-        program = Parser(lexer, astAlloc, symbolTable.getTypeAllocator()).parseProgram();
-        Semantic(symbolTable, typeTable, idGen, astAlloc, 1024).process(program);
-    } catch (ParseException& e) {
-        printError(e, source);
+        buildInfo = compiler.build(source.c_str());
+    } 
+    catch (const ParseException& ex) {
+        printError(ex, source);
         return 1;
-    } catch (std::exception& e) {
-        cout << e.what() << endl;
-        return 2;
     }
-
-    AstMermaidPrinter::saveToFile(program, "ast.md");
-
-    StatAllocator<LinearAllocator> skrAlloc("skr", 4096);
-    StatAllocator<LinearAllocator> rvaAlloc1("rva1", 4096);
-    StatAllocator<LinearAllocator> rvaAlloc2("rva2", 8192);
-
-    std::vector<SkrFunction*> skrFunctions;
-    std::vector<SkrInstruction*> skrsBuf;
-    for (AstProgItem* item : program->items) {
-        if (item->kind == AstProgItem::Kind::Function) {
-            SkrFunction* func = SkrEmitter::emit((AstFunction*) item, skrAlloc, symbolTable, typeTable, idGen, labelGen, skrsBuf);
-            skrFunctions.emplace_back(func);
-            skrsBuf.clear();
-        }
-    }
-
-    cout << "== skr ==" << endl;
-    for (auto* skrFunc : skrFunctions) {
-        SkrPrinter::print(cout, skrFunc, symbolTable);
-        cout << endl;
-    }
-    cout << endl;
-
-    CfgGraphPrinter graphPrinter(symbolTable);
-
-    cout << "== skr optimized ==" << endl;
-    SkrOptimizer::Config optimizerConf;
-    optimizerConf.constantFolding = true;
-    optimizerConf.deadCodeElimination = true;
-    optimizerConf.copyPropagation = true;
-    optimizerConf.deadStoreElimination = true;
-    for (int i = 0; i < skrFunctions.size(); i++) {
-        skrFunctions[i] = SkrOptimizer(skrAlloc, skrFunctions[i], &graphPrinter).optimize(optimizerConf);
-        SkrPrinter::print(cout, skrFunctions[i], symbolTable);
-        cout << endl;
-    }
-    cout << endl;
-
-    std::vector<RvaInstruction*> rva;
-    std::vector<RvaInstruction*> rvaFixed;
-    for (auto* skrFunc : skrFunctions) {
-        StackFrame frame(rvaAlloc1);
-        Skr2RvaPseudo::emit(skrFunc, rvaAlloc1, idGen, symbolTable, symbolSize, frame, rva);
-        cout << "== rva ==" << endl;
-        RvaPrinter::print(cout, rva);
-        cout << endl;
-
-        RvaPseudoReplacer::replace(rva, frame, symbolSize);
-        RvaFixer::fix(rva, rvaFixed, rvaAlloc2);
-
-        rvaAlloc1.reset();
-        rva.clear();
-    }
-
-    cout << "== rva fixed ==" << endl;
-    RvaPrinter::print(cout, rvaFixed);
-    cout << endl;
-
-    uint8_t bin[1024];
-    RvAssembler assembler(bin, sizeof(bin));
-    assembler.compile(rvaFixed);
-    assembler.link();
-
-    cout << "== external labels ==" << endl;
-    for (auto& label : assembler.getPublicLabels()) {
-        cout << label.value.toString() << ": " << label.offset << endl;
-    }
-    cout << endl;
 
     cout << "== memory stats ==" << endl;
-    MemUsagePrinter::print(typeAlloc);
-    MemUsagePrinter::print(astAlloc);
-    MemUsagePrinter::print(idAlloc);
-    MemUsagePrinter::print(skrAlloc);
-    MemUsagePrinter::print("rva1 peak", rvaAlloc1.getPeakUsage(), rvaAlloc1.getCapacity());
-    MemUsagePrinter::print(rvaAlloc2);
-    MemUsagePrinter::print("program", assembler.getSize(), sizeof(bin));
-
-    MemUtils::dump(idAlloc.getAllocator(), "idAlloc.bin");
-    MemUtils::dump(bin, assembler.getSize(), FileUtils::changeExtension(FileUtils::getFileName(srcFile), "bin"));
+    printMemUsage("pool1", buildInfo.memoryUsage.pool1);
+    printMemUsage("pool2", buildInfo.memoryUsage.pool2);
+    printMemUsage("pool3", buildInfo.memoryUsage.pool3);
+    printMemUsage("shared", buildInfo.memoryUsage.shared);
+    printMemUsage("bin", buildInfo.binarySize * 100 / sizeof(binary));
+    MemUtils::dump(binary, buildInfo.binarySize, FileUtils::changeExtension(FileUtils::getFileName(srcFile), "bin"));
     return 0;
 }
 
 
-void printError(ParseException& e, const string& source) {
+void printError(const ParseException& e, const string& source) {
     const auto& token = e.getToken();
     cout << e.what() << endl;
 
@@ -187,4 +132,8 @@ string getLine(const string& src, int lineNo) {
     } else {
         return src.substr(offset);
     }
+}
+
+void printMemUsage(const char* name, int usedPercentage) {
+    cout << name << ": " << usedPercentage << "%" << endl;
 }

@@ -4,6 +4,7 @@
 #include "../../common/IdentifierGen.h"
 #include "../lexer/Lexer.h"
 #include "../ast/everything.h"
+#include "../../type/TypeTable.h"
 #include "except/everything.h"
 
 class Parser {
@@ -11,11 +12,13 @@ public:
     Parser(
         Lexer& lexer, 
         Allocator& allocator, 
-        Allocator& typeAlloc
+        TypeTable& typeTable,
+        std::vector<StringRef>& types
     )
         : lexer(lexer)
         , allocator(allocator)
-        , typeAlloc(typeAlloc)
+        , typeTable(typeTable)
+        , types(types)
     {
         takeToken();
     }
@@ -288,7 +291,7 @@ private:
         }
         else if (current.kind == T_IDENTIFIER && isTypeExist(current.value)) {
             auto token = takeToken();
-            type = typeAlloc.create<SymbolStructureType>(token.value);
+            type = typeTable.getAllocator().create<SymbolStructureType>(token.value);
         }
         else {
             return nullptr;
@@ -359,7 +362,7 @@ private:
 
     void regType(StringRef type) {
         if (isTypeExist(type)) {
-            sparkError("Parser", "Type %d is already declared", type); // todo: replace
+            sparkError("Parser", "Type '" + type.toString() + "' is already declared"); // todo: replace
         }
         types.emplace_back(type);
     }
@@ -373,10 +376,10 @@ private:
         return false;
     }
 
-    std::vector<StringRef> types;
-
+    
     Token current;
     Lexer& lexer;
     Allocator& allocator;
-    Allocator& typeAlloc;
+    TypeTable& typeTable;
+    std::vector<StringRef>& types;
 };
