@@ -179,7 +179,8 @@ private:
         for (auto* arg : skrArgs) {
             size_t argSz = getSize(arg);
             if (argSz > 8) {
-                placeArgOnStack(arg, argSz, argIdx);
+                //placeArgOnStack(arg, argSz, argIdx);
+                passArgByRef(arg, argIdx);
                 argIdx++;
             }
             else if (argSz > 4) {
@@ -206,6 +207,10 @@ private:
 
         copy(arg, 0, skrArg, 0);
         add<RvaGetAddress>(getArgDst(regIdx), toPseudo(arg));
+    }
+
+    void passArgByRef(const SkrValue* skrArg, int regIdx) {
+        add<RvaGetAddress>(getArgDst(regIdx), toPseudo(skrArg));
     }
 
     void emitInt2Float(SkrInt2Float* it) {
