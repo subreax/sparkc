@@ -362,13 +362,18 @@ private:
     }
 
     void copy(const SkrValue* to, int toOffset, const SkrValue* from, int fromOffset) {
-        if (isReplacedToPtr(to)) {
+        bool isToReplacedToPtr = isReplacedToPtr(to);
+        bool isFromReplacedToPtr = isReplacedToPtr(from);
+        if (isToReplacedToPtr && isFromReplacedToPtr) {
+            copyBytesFromPtrToPtr(to, toOffset, from, fromOffset);
+        }
+        else if (isToReplacedToPtr) {
             if (fromOffset != 0) {
                 sparkError("Skr2RvaPseudo", "Store value from offset is not supported");
             }
             storeBytes(to, toOffset, from);
         }
-        else if (isReplacedToPtr(from)) {
+        else if (isFromReplacedToPtr) {
             if (toOffset != 0) {
                 sparkError("Skr2RvaPseudo", "Load value to offset is not supported");
             }
@@ -379,6 +384,16 @@ private:
             for (size_t off = 0; off < sz; off += 4) {
                 add<RvaMov>(toPseudo(to, toOffset + off), toPseudo(from, fromOffset + off));
             }
+        }
+    }
+
+    void copyBytesFromPtrToPtr(const SkrValue* to, int toOffset, const SkrValue* from, int fromOffset) {
+        add<RvaMov>(tempReg, toPseudo(to));
+        auto* tempReg2 = newRegister(RvReg::T1);
+        add<RvaMov>(tempReg2, toPseudo(from));
+        size_t sz = getSize(from);
+        for (size_t off = 0; off < sz; off += 4) {
+            add<RvaMov>(newMemory(tempReg, toOffset + off), newMemory(tempReg2, fromOffset + off));
         }
     }
 

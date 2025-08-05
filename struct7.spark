@@ -1,0 +1,5 @@
+struct color(float r, float g, float b, float a);
+
+color mulcf(color c, float f) {
+    return c;
+}
