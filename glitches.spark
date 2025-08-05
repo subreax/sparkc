@@ -1,0 +1,15 @@
+struct color(float r, float g, float b, float a);
+
+color pixel(float x, float t) {
+    float pos = wave(t*0.0625);
+    float glitches = level(0.35, 0.4, noise2d(0.3, t, 0.5, 2))*0.125;
+    float cycleX = wave(x + pos + glitches + 0.5);
+
+    float slope = level(0.95, 1, cycleX);
+    return hsv(1 - x, 1, slope, 1);
+}
+
+float wave(float f) { return 0; }
+float level(float a, float b, float c) { return 0; }
+float noise2d(float a, float b, float c, int d) { return 0; }
+color hsv(float h, float s, float v, float a) { return color(1,1,1,1); }

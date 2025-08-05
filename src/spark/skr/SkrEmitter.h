@@ -73,15 +73,8 @@ private:
                 return;
             }
 
-            if (initializer->kind == AstExp::Kind::StructInit) {
-                auto* skrVar = allocator.create<SkrVar>(it->getId());
-                emitStructInit((AstStructInit*) initializer, skrVar);
-            }
-            else {
-                auto* initRes = emitAndConvert(initializer);
-                auto* skrVar = allocator.create<SkrVar>(it->getId());
-                out.emplace_back(allocator.create<SkrCopy>(skrVar, initRes));
-            }
+            auto* skrVar = allocator.create<SkrVar>(it->getId());
+            emit(initializer, skrVar);
         }
         else {
             sparkError("SkrEmitter", "Unknown AstDeclaration: %d", decl->kind);
@@ -92,8 +85,10 @@ private:
         auto kind = st->kind;
         if (kind == AstStatement::Kind::Return) {
             auto* it = (AstReturnStatement*) st;
-            auto* retVal = emitAndConvert(it->getExpression());
-            out.emplace_back(allocator.create<SkrCopy>(funcRetVal, retVal));
+            auto* retVal = emitAndConvert(it->getExpression(), funcRetVal);
+            if (retVal != funcRetVal) {
+                out.emplace_back(allocator.create<SkrCopy>(funcRetVal, retVal));
+            }
             out.emplace_back(allocator.create<SkrJump>(retLabel));
         }
         else if (kind == AstStatement::Kind::Expression) {
@@ -171,7 +166,7 @@ private:
         }
     }
 
-    SkrExpRes emit(AstExp* exp) {
+    SkrExpRes emit(AstExp* exp, SkrVar* dst = nullptr) {
         auto kind = exp->kind;
         if (kind == AstExp::Kind::Constant) {
             auto* it = (AstConstantExp*) exp;
@@ -187,12 +182,14 @@ private:
             auto* it = (AstAddrOf*) exp;
             SkrExpRes var = emit(it->getExpression());
             auto* toType = symbolTable.getTypeAllocator().create<SymbolPointerType>(getType(var.get()));
-            SkrVar* to = createVar("addr", toType);
-            out.emplace_back(allocator.create<SkrGetAddr>(to, var.get()->toSkrVar()));
-            return SkrExpRes::val(to);
+            if (dst == nullptr) {
+                dst = createVar("addr", toType);
+            }
+            out.emplace_back(allocator.create<SkrGetAddr>(dst, var.get()->toSkrVar()));
+            return SkrExpRes::val(dst);
         }
         else if (kind == AstExp::Kind::Binary) {
-            auto* res = emitBinary((AstBinaryExp*) exp);
+            auto* res = emitBinary((AstBinaryExp*) exp, dst);
             return SkrExpRes::val(res);
         }
         else if (kind == AstExp::Kind::Var) {
@@ -217,25 +214,27 @@ private:
             }
         }
         else if (kind == AstExp::Kind::FunCall) {
-            auto* res = emitFunCall((AstFunCall*) exp);
+            auto* res = emitFunCall((AstFunCall*) exp, dst);
             return SkrExpRes::val(res);
         }
         else if (kind == AstExp::Kind::Cast) {
             auto* it = (AstCast*) exp;
             auto targetType = exp->type;
             SkrValue* srcVal = emitAndConvert(it->getExp());
-            SkrVar* dstVar = createVar("cast", targetType);
+            if (dst == nullptr) {
+                dst = createVar("cast", targetType);
+            }
 
             if (getTypeKind(srcVal) == SymbolType::Kind::Integer && targetType->kind == SymbolType::Kind::Float) {
-                out.emplace_back(allocator.create<SkrInt2Float>(dstVar, srcVal));
+                out.emplace_back(allocator.create<SkrInt2Float>(dst, srcVal));
             }
             else if (getTypeKind(srcVal) == SymbolType::Kind::Float && targetType->kind == SymbolType::Kind::Integer) {
-                out.emplace_back(allocator.create<SkrFloat2Int>(dstVar, srcVal));
+                out.emplace_back(allocator.create<SkrFloat2Int>(dst, srcVal));
             }
             else {
                 sparkError("SkrEmitter", "Failed to cast expression");
             }
-            return SkrExpRes::val(dstVar);
+            return SkrExpRes::val(dst);
         }
         else if (kind == AstExp::Kind::Dot) {
             auto* it = (AstDot*) exp;
@@ -252,7 +251,7 @@ private:
             // }
         }
         else if (kind == AstExp::Kind::StructInit) {
-            auto* res = emitStructInit((AstStructInit*) exp);
+            auto* res = emitStructInit((AstStructInit*) exp, dst);
             return SkrExpRes::val(res);
         }
         else {
@@ -269,7 +268,7 @@ private:
         return StringRef::nullInstance();
     }
 
-    SkrValue* emitBinary(AstBinaryExp* exp) {
+    SkrValue* emitBinary(AstBinaryExp* exp, SkrVar* dst = nullptr) {
         auto astOp = exp->getOperator();
         if (astOp == AstBinaryExp::Operator::And) {
             auto falseLabel = labelGen.uniquePrivate("and_false");
@@ -311,44 +310,49 @@ private:
             SkrValue* left = emitAndConvert(exp->getLeft());
             auto op = binaryOpOf(exp->getOperator());
             SkrValue* right = emitAndConvert(exp->getRight());
-            SkrVar* dst = createVar(funName, getType(left));
+            if (dst == nullptr) {
+                dst = createVar(funName, getType(left));
+            }
             out.emplace_back(allocator.create<SkrBinary>(dst, left, op, right));
             return dst;
         }
     }
 
-    SkrValue* emitFunCall(AstFunCall* call) {
+    SkrValue* emitFunCall(AstFunCall* call, SkrVar* dst = nullptr) {
         auto astArgs = call->getArgs();
         auto skrArgs = BoundArray<SkrValue*>::create(astArgs.size(), allocator);
         for (size_t i = 0; i < astArgs.size(); i++) {
             skrArgs[i] = emitAndConvert(astArgs[i]);
         }
-        auto* result = createVar(call->getFunName(), "r", call->type);
-        auto* skrCall = allocator.create<SkrFunCall>(call->getFunName(), skrArgs, result);
+
+        if (dst == nullptr) {
+            dst = createVar(call->getFunName(), "r", call->type);
+        }
+        auto* skrCall = allocator.create<SkrFunCall>(call->getFunName(), skrArgs, dst);
         out.emplace_back(skrCall);
-        return result;
+        return dst;
     }
 
-    SkrValue* emitStructInit(AstStructInit* it, SkrVar* result = nullptr) {
+    SkrValue* emitStructInit(AstStructInit* it, SkrVar* dst = nullptr) {
         auto tag = it->getTag();
         auto args = it->getArgs();
 
-        if (result == nullptr) {
-            result = createVar(tag, it->type);
+        if (dst == nullptr) {
+            dst = createVar(tag, it->type);
         }
 
         const auto& fields = typeTable.get(tag);
         for (size_t i = 0; i < args.size(); i++) {
             auto* arg = emitAndConvert(args[i]);
             int offset = fields[i].offset;
-            auto* instr = allocator.create<SkrCopyToOffset>(result, offset, arg);
+            auto* instr = allocator.create<SkrCopyToOffset>(dst, offset, arg);
             out.emplace_back(instr);
         }
-        return result;
+        return dst;
     }
 
-    SkrValue* emitAndConvert(AstExp* exp) {
-        auto res = emit(exp);
+    SkrValue* emitAndConvert(AstExp* exp, SkrVar* dst = nullptr) {
+        auto res = emit(exp, dst);
         if (res.kind == SkrExpRes::Kind::Val) {
             return res.get();
         }
@@ -358,9 +362,11 @@ private:
             return tmpVar;
         } */
         else if (res.kind == SkrExpRes::Kind::Field) {
-            auto* tmpVar = createVar("field", exp->type);
-            out.emplace_back(allocator.create<SkrCopyFromOffset>(tmpVar, res.getBase(), res.getOffset()));
-            return tmpVar;
+            if (dst == nullptr) {
+                dst = createVar("field", exp->type);
+            }
+            out.emplace_back(allocator.create<SkrCopyFromOffset>(dst, res.getBase(), res.getOffset()));
+            return dst;
         }
 
         sparkError("SkrEmitter", "Unknown SkrExpRes kind: %d", res.kind);
