@@ -19,7 +19,7 @@ public:
 
     void declare(StringRef tag, const std::vector<StructField>& fields) {
         if (table.find(tag) != table.end()) {
-            sparkError("TypeTable", tag.toString() + "' is already declared"); // todo
+            sparkError("TypeTable", "'" + tag.toString() + "' is already declared"); // todo
         }
 
         for (size_t i = 0; i < fields.size(); i++) {

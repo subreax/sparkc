@@ -33,30 +33,40 @@ void SparkCompiler::addFunction(void* ptr, const char* name, SymbolType* retType
 }
 
 SparkBuildInfo SparkCompiler::build(const char* src) {
-    AstProgram* ast = buildAst(pools.pool1, src);
-    for (auto* item : ast->items) {
-        if (item->kind != AstProgItem::Kind::Function) {
-            continue;
+    try {
+        AstProgram* ast = buildAst(pools.pool1, src);
+        for (auto* item : ast->items) {
+            if (item->kind != AstProgItem::Kind::Function) {
+                continue;
+            }
+
+            auto* astFunc = (AstFunction*) item;
+            auto* skrFunc = ast2skr(astFunc, pools.pool2);
+            skrFunc = SkrOptimizer(pools.pool2, skrFunc, debugCallback).optimize(skrOptimizerConfig);
+            notifyOptimizeSkrFunc(skrFunc);
+
+            std::vector<RvaInstruction*> rvas;
+            skr2rva(skrFunc, pools.pool2, pools.pool3, rvas);
+
+            ctx->assembler.compile(rvas);
+
+            pools.pool2.reset();
+            pools.pool3.reset();
         }
+        ctx->assembler.link();
 
-        auto* astFunc = (AstFunction*) item;
-        auto* skrFunc = ast2skr(astFunc, pools.pool2);
-        skrFunc = SkrOptimizer(pools.pool2, skrFunc, debugCallback).optimize(skrOptimizerConfig);
-        notifyOptimizeSkrFunc(skrFunc);
-
-        std::vector<RvaInstruction*> rvas;
-        skr2rva(skrFunc, pools.pool2, pools.pool3, rvas);
-
-        ctx->assembler.compile(rvas);
-
-        pools.pool2.reset();
-        pools.pool3.reset();
+        SparkBuildInfo buildInfo(
+            pools.getMemoryUsage(), 
+            ctx->assembler.getPublicLabels(), 
+            ctx->assembler.getSize(),
+            ctx->assembler.getSize() * 100 / outCap
+        );
+        reset();
+        return buildInfo;
+    } catch (...) {
+        reset();
+        std::rethrow_exception(std::current_exception());
     }
-    ctx->assembler.link();
-
-    SparkBuildInfo buildInfo(pools.getMemoryUsage(), ctx->assembler.getPublicLabels(), ctx->assembler.getSize());
-    reset();
-    return buildInfo;
 }
 
 void SparkCompiler::setDebugCallback(DebugCallback* callback) {

@@ -75,10 +75,7 @@ int main(int argc, char** argv) {
 
     DebugCallback debugCallback;
 
-    SparkCompiler::Initializer sci;
-    sci.mem = 8192;
-    sci.outBin = binary;
-    sci.outCap = sizeof(binary);
+    SparkCompiler::Initializer sci(8192, binary, sizeof(binary));
     sci.debugCallback = &debugCallback;
     SparkCompiler compiler(sci);
     SparkBuildInfo buildInfo;
@@ -95,7 +92,7 @@ int main(int argc, char** argv) {
     printMemUsage("pool2", buildInfo.memoryUsage.pool2);
     printMemUsage("pool3", buildInfo.memoryUsage.pool3);
     printMemUsage("shared", buildInfo.memoryUsage.shared);
-    printMemUsage("bin", buildInfo.binarySize * 100 / sizeof(binary));
+    printMemUsage("bin", buildInfo.binarySizeUsage);
     MemUtils::dump(binary, buildInfo.binarySize, FileUtils::changeExtension(FileUtils::getFileName(srcFile), "bin"));
     return 0;
 }

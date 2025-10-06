@@ -35,6 +35,9 @@ public:
     };
 
     struct Initializer {
+        Initializer(size_t mem, uint8_t* outBin, size_t outCap)
+            : mem(mem), outBin(outBin), outCap(outCap) {  }
+
         size_t mem;
         uint8_t* outBin;
         size_t outCap;

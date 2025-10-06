@@ -94,8 +94,8 @@ private:
     }
 
     void emitFixedMul(RvaRegister* dstReg, RvaRegister* leftReg, RvaValue* rightVal, RvaRegister* tmpReg) {
-        add(allocator.create<RvaBinary>(dstReg, leftReg, RvaBinary::Operator::Mul, rightVal));
         add(allocator.create<RvaBinary>(tmpReg, leftReg, RvaBinary::Operator::MulH, rightVal));
+        add(allocator.create<RvaBinary>(dstReg, leftReg, RvaBinary::Operator::Mul, rightVal));
         add(allocator.create<RvaBinary>(dstReg, dstReg, RvaBinary::Operator::ShiftRight, newImm(15)));
         add(allocator.create<RvaBinary>(tmpReg, tmpReg, RvaBinary::Operator::ShiftLeft, newImm(17)));
         add(allocator.create<RvaBinary>(dstReg, dstReg, RvaBinary::Operator::Or, tmpReg));

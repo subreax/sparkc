@@ -15,5 +15,5 @@ static void sparkError(const char* fileName, const char* fmt, ...) {
 }
 
 static void sparkError(const char* fileName, const std::string& str) {
-    throw SparkRuntimeException(str.c_str());
+    sparkError(fileName, str.c_str());
 }
