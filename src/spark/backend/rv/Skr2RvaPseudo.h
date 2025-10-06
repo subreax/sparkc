@@ -170,8 +170,12 @@ private:
         int argIdx = 0;
         RvaValue* retVar = toPseudo(func->getRetVar());
         if (retInMem) {
-            add<RvaReserveOnStack>(retVar);
-            add<RvaGetAddress>(getArgReg(0), retVar);
+            if (isReplacedToPtr(func->getRetVar())) {
+                add<RvaMov>(getArgReg(0), retVar);
+            } else {
+                add<RvaReserveOnStack>(retVar);
+                add<RvaGetAddress>(getArgReg(0), retVar);
+            }
             argIdx++;
         }
 

@@ -9,9 +9,7 @@ public:
     static void dump(const uint8_t* block, size_t sz, const std::string& outFile) {
         FILE* f;
         fopen_s(&f, outFile.c_str(), "wb");
-        for (size_t i = 0; i < sz; i++) {
-            fputc(block[i], f);
-        }
+        fwrite(block, 1, sz, f);
         fclose(f);
     }
 

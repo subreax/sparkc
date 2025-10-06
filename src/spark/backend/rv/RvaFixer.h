@@ -71,12 +71,12 @@ private:
 
     void fix(RvaBinary* it) {
         auto* dstReg = getRegisterOrNew(it->dst, RvReg::T0);
-        auto* leftReg = moveToReg(it->left, RvReg::T1);
+        auto* leftReg = moveToReg(it->left, RvReg::T0);
         RvaValue* right;
         if (it->supportImm()) {
-            right = getImmOrMoveToReg(it->right, RvReg::T2);
+            right = getImmOrMoveToReg(it->right, RvReg::T1);
         } else {
-            right = moveToReg(it->right, RvReg::T2);
+            right = moveToReg(it->right, RvReg::T1);
         }
 
         if (it->op == RvaBinary::Operator::_FixedMul) {
@@ -98,7 +98,7 @@ private:
         add(allocator.create<RvaBinary>(tmpReg, leftReg, RvaBinary::Operator::MulH, rightVal));
         add(allocator.create<RvaBinary>(dstReg, dstReg, RvaBinary::Operator::ShiftRight, newImm(15)));
         add(allocator.create<RvaBinary>(tmpReg, tmpReg, RvaBinary::Operator::ShiftLeft, newImm(17)));
-        add(allocator.create<RvaBinary>(dstReg, tmpReg, RvaBinary::Operator::Or, dstReg));
+        add(allocator.create<RvaBinary>(dstReg, dstReg, RvaBinary::Operator::Or, tmpReg));
     }
 
     void emitFixedDiv(RvaRegister* dstReg, RvaRegister* leftReg, RvaValue* rightVal) {

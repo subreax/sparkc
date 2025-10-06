@@ -74,7 +74,7 @@ private:
         for (AstBlockItem* item : block->getItems()) {
             resolve(item);
         }
-        scope.open();
+        scope.close();
     }
 
     void resolve(AstBlockItem* item) {
