@@ -1,6 +1,6 @@
 #pragma once
 #include <string>
-#include "../spark/common/LabelGen.h"
+#include "../../spark/common/LabelGen.h"
 
 class Colored {
 public:

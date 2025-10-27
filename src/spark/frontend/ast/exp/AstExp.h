@@ -22,7 +22,7 @@ public:
         return "";
     }
 
-    bool hasType(SymbolType* other) const {
+    bool hasType(const SymbolType* other) const {
         if (type == nullptr) {
             return false;
         }

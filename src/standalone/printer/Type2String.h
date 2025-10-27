@@ -1,5 +1,5 @@
 #pragma once
-#include "../spark/symbol/SymbolType.h"
+#include "../../spark/symbol/SymbolType.h"
 
 class Type2String {
 public:

@@ -17,6 +17,7 @@ public:
     AstDeclBlockItem(AstDeclaration* decl) : AstBlockItem(Kind::Declaration), decl(decl) {  }
 
     AstDeclaration* getDeclaration() { return decl; }
+    const AstDeclaration* getDeclaration() const { return decl; }
     
 private:
     AstDeclaration* decl;
@@ -28,6 +29,7 @@ public:
     AstStatementBlockItem(AstStatement* statement) : AstBlockItem(Kind::Statement), statement(statement) { }
 
     AstStatement* getStatement() { return statement; }
+    const AstStatement* getStatement() const { return statement; }
 
 private:
     AstStatement* statement;

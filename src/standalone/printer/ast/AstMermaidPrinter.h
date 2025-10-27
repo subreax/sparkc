@@ -4,7 +4,7 @@
 #include <iostream>
 #include <sstream>
 #include <fstream>
-#include "../../spark/frontend/ast/everything.h"
+#include "../../../spark/frontend/ast/everything.h"
 #include "../Type2String.h"
 
 class AstMermaidPrinter {

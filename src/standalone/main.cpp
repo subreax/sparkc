@@ -2,11 +2,12 @@
 #include <fstream>
 #include <sstream>
 #include <filesystem>
-#include "spark/frontend/parser/except/ParseException.h"
-#include "spark/SparkCompiler.h"
+#include "../spark/frontend/parser/except/ParseException.h"
+#include "../spark/SparkCompiler.h"
 
 #include "FileUtils.h"
 #include "MemUtils.h"
+#include "printer/ast/AstPrinter.h"
 #include "printer/ast/AstMermaidPrinter.h"
 #include "printer/skr/SkrPrinter.h"
 #include "printer/cfg/SkrCfgMermaidPrinter.h"
@@ -23,7 +24,10 @@ void printMemUsage(const char* name, int usedPercentage);
 
 class DebugCallback : public SparkCompiler::DebugCallback {
 public:
-    void onAstBuild(class AstProgram* ast) override { 
+    void onAstBuild(class AstProgram* ast) override {
+        /* AstPrinter(cout).print(ast);
+        cout << endl; */
+
         AstMermaidPrinter::saveToFile(ast, "ast.md");
     }
 

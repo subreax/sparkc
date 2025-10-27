@@ -1,6 +1,6 @@
 #pragma once
 #include <iostream>
-#include "../../spark/common/alloc/StatAllocator.h"
+#include "../../../spark/common/alloc/StatAllocator.h"
 
 class MemUsagePrinter {
 public:

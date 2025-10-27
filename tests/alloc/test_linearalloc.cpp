@@ -1,5 +1,5 @@
 #include <catch2/catch_test_macros.hpp>
-#include "common/alloc/LinearAllocator.h"
+#include "spark/common/alloc/LinearAllocator.h"
 
 TEST_CASE("Linear allocator test", "[linear-allocator]") {
     LinearAllocator allocator("test", 16, true);

@@ -1,8 +1,8 @@
 #pragma once
 #include <iostream>
 #include <fstream>
-#include "../../spark/common/cfg/CfGraph.h"
-#include "../../spark/symbol/SymbolTable.h"
+#include "../../../spark/common/cfg/CfGraph.h"
+#include "../../../spark/symbol/SymbolTable.h"
 #include "../skr/SkrPrinter.h"
 
 class SkrCfgMermaidPrinter {

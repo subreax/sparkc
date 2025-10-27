@@ -1,4 +1,4 @@
-#include "backend/rv/asm/Rv32Base.h"
+#include "spark/backend/rv/asm/Rv32Base.h"
 #include <catch2/catch_test_macros.hpp>
 
 constexpr uint32_t _0101 = 0b01010101010101010101010101010101u;

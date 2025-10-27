@@ -2,7 +2,7 @@
 #include <cstdint>
 #include <string>
 #include <cstdio>
-#include "spark/common/alloc/LinearAllocator.h"
+#include "../spark/common/alloc/LinearAllocator.h"
 
 class MemUtils {
 public:

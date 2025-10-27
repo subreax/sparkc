@@ -1,5 +1,5 @@
-#include "backend/rv/instr/RvaMov.h"
-#include "backend/rv/asm/RvListing.h"
+#include "spark/backend/rv/instr/RvaMov.h"
+#include "spark/backend/rv/asm/RvListing.h"
 #include <catch2/catch_test_macros.hpp>
 
 TEST_CASE("Test RvaMov", "[rva]") {
