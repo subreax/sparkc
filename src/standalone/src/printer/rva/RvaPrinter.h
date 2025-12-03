@@ -1,0 +1,8 @@
+#pragma once
+#include <iostream>
+#include <sparkc/backend/rv/instr/everything.h>
+
+namespace RvaPrinter {
+void print(std::ostream& os, const std::vector<RvaInstruction*>& instructions);
+};
+
