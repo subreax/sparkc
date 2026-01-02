@@ -8,6 +8,8 @@ public:
 
     SymbolType(Kind kind) : kind(kind) {  }
 
+    std::string toString() const;
+
     const Kind kind;
 };
 

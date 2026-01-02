@@ -5,7 +5,6 @@
 #include <sstream>
 #include <fstream>
 #include <sparkc/frontend/ast/everything.h>
-#include "../Type2String.h"
 
 class AstMermaidPrinter {
 private:
@@ -315,7 +314,11 @@ private:
     }
 
     std::string type2string(SymbolType* type) {
-        return Type2String::run(type);
+        if (type) {
+            return type->toString();
+        } else {
+            return "NULL";
+        }
     }
 
     std::ostream& os;

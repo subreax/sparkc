@@ -3,11 +3,11 @@
 #include "backend/rv/RvaFixer.h"
 #include "backend/rv/RvaPseudoReplacer.h"
 #include "backend/rv/Skr2RvaPseudo.h"
+#include "frontend/lexer/Lexer.h"
 #include "frontend/parser/Parser.h"
 #include "frontend/semantic/Semantic.h"
 #include "skr/SkrEmitter.h"
 #include "skr/optimizer/SkrOptimizer.h"
-#include "sparkc/frontend/lexer/Lexer.h"
 
 SparkCompiler::SparkCompiler(const SparkCompiler::Initializer& init)
     : pools(init.mem)

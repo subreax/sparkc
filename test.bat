@@ -1,2 +1,4 @@
 @echo off
-out\tests.exe
+cd bin
+tests.exe
+cd ..

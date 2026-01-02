@@ -1,13 +1,13 @@
 #pragma once
+#include "../lexer/Lexer.h"
 #include "sparkc/common/alloc/Allocator.h"
 #include "sparkc/frontend/ast/everything.h"
-#include "sparkc/frontend/lexer/Lexer.h"
 #include "sparkc/frontend/parser/except/everything.h"
 #include "sparkc/type/TypeTable.h"
 #include <vector>
 
 class Parser {
-  public:
+public:
     Parser(
         Lexer& lexer,
         Allocator& allocator,
@@ -18,7 +18,7 @@ class Parser {
 
     bool hasNext() const;
 
-  private:
+private:
     AstStruct* tryParseStruct();
     AstFunction* parseFunction();
     AstFunParam* parseFunParam();

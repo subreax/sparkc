@@ -1,0 +1,44 @@
+#src
+int main() {
+    int a;
+    a = 5;
+    return a;
+}
+
+#expect
+AstProgram(
+  items: [
+    AstFunction(
+      name: 'main',
+      returnType: 'int',
+      params: [],
+      body: AstBlock(
+        items: [
+          AstVarDeclaration(
+            type: 'int',
+            name: 'a.0'
+          ),
+          AstExpressionStatement(
+            exp: AstAssignment(
+              type: 'int',
+              var: AstVar(
+                type: 'int',
+                id: 'a.0'
+              ),
+              exp: AstConstantExp(
+                type: 'int',
+                value: '5'
+              )
+            )
+          ),
+          AstReturnStatement(
+            exp: AstVar(
+              type: 'int',
+              id: 'a.0'
+            )
+          )
+        ]
+      )
+    )
+  ]
+)

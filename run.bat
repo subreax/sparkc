@@ -1,4 +1,4 @@
 @echo off
-cd out
+cd bin
 spark-compiler ../%*
 cd ..

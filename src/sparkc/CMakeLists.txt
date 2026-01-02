@@ -1,15 +1,15 @@
 add_library(sparkc)
 
-#include(CMakePrintHelpers)
-#Include(FetchContent)
+include(CMakePrintHelpers)
+Include(FetchContent)
 
-#FetchContent_Declare(
-#  Catch2
-#  GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-#  GIT_TAG        v3.8.1
-#)
+FetchContent_Declare(
+  Catch2
+  GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+  GIT_TAG        v3.8.1
+)
 
-#FetchContent_MakeAvailable(Catch2)
+FetchContent_MakeAvailable(Catch2)
 
 
 set(SPARKC_INCL_PUB
@@ -81,6 +81,7 @@ set(SPARKC_INCL_PUB
   include/sparkc/frontend/ast/exp/AstStructInit.h
   include/sparkc/frontend/ast/exp/AstVar.h
   include/sparkc/frontend/ast/exp/everything.h
+  include/sparkc/frontend/ast/printer/AstPrinter.h
   include/sparkc/frontend/ast/statement/AstCompoundStatement.h
   include/sparkc/frontend/ast/statement/AstExpressionStatement.h
   include/sparkc/frontend/ast/statement/AstIfStatement.h
@@ -88,7 +89,6 @@ set(SPARKC_INCL_PUB
   include/sparkc/frontend/ast/statement/AstStatement.h
   include/sparkc/frontend/ast/statement/AstWhileStatement.h
   include/sparkc/frontend/ast/statement/everything.h
-  include/sparkc/frontend/lexer/Lexer.h
   include/sparkc/frontend/lexer/Token.h
   include/sparkc/frontend/parser/except/DuplicateDeclarationException.h
   include/sparkc/frontend/parser/except/everything.h
@@ -154,6 +154,7 @@ set(SPARKC_SRC
   src/frontend/lexer/Token.cpp
   src/frontend/lexer/TokenReaders.cpp
   src/frontend/parser/Parser.cpp
+  src/frontend/parser/ast/AstPrinter.cpp
   src/frontend/semantic/IdentifierResolution.cpp
   src/frontend/semantic/Scope.cpp
   src/frontend/semantic/TypeChecker.cpp
@@ -161,6 +162,7 @@ set(SPARKC_SRC
   src/skr/value/SkrValue.cpp
   src/skr/optimizer/SkrCfgOverloadings.cpp
   src/skr/optimizer/copyprop/CopyPropagation.cpp
+  src/symbol/SymbolType.cpp
 )
 
 set(SPARKC_INCL_PRIV
@@ -172,8 +174,10 @@ set(SPARKC_INCL_PRIV
   src/backend/rv/asm/Rv32Base.h
   src/backend/rv/asm/Rv32I.h
   src/backend/rv/asm/Rv32M.h
+  src/frontend/lexer/Lexer.h
   src/frontend/lexer/TokenReaders.h
   src/frontend/parser/Parser.h
+  src/frontend/parser/ast/Printer.h
   src/frontend/semantic/IdentifierResolution.h
   src/frontend/semantic/Scope.h
   src/frontend/semantic/Semantic.h
@@ -218,5 +222,24 @@ target_sources(sparkc
       ${SPARKC_INCL_PRIV}
 )
 
-#target_include_directories(tests PUBLIC src/)
-#target_link_libraries(tests PRIVATE Catch2::Catch2WithMain)
+
+
+add_executable(tests)
+target_sources(tests 
+  PRIVATE 
+    tests/frontend/parser/AstTester.cpp
+    tests/frontend/parser/ParserTest.cpp
+    tests/frontend/parser/ParserTestLoader.cpp
+
+  PRIVATE
+    FILE_SET privHeaders
+      TYPE HEADERS
+      BASE_DIRS
+        src
+      FILES
+        ${SPARKC_INCL_PRIV}
+)
+
+target_link_libraries(tests PRIVATE sparkc)
+target_include_directories(tests PRIVATE tests/)
+target_link_libraries(tests PRIVATE Catch2::Catch2WithMain)

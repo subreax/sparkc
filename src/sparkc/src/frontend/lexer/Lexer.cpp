@@ -1,4 +1,4 @@
-#include "sparkc/frontend/lexer/Lexer.h"
+#include "Lexer.h"
 #include "TokenReaders.h"
 
 

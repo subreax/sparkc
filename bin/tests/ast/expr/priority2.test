@@ -1,0 +1,42 @@
+#src
+int main() {
+    return 1 + 2 * 3;
+}
+
+#expect
+AstProgram(
+  items: [
+    AstFunction(
+      name: 'main',
+      returnType: 'int',
+      params: [],
+      body: AstBlock(
+        items: [
+          AstReturnStatement(
+            exp: AstBinaryExp(
+              type: 'int',
+              op: '+',
+              left: AstConstantExp(
+                type: 'int',
+                value: '1'
+              ),
+              right: AstBinaryExp(
+                type: 'int',
+                op: '*',
+                left: AstConstantExp(
+                  type: 'int',
+                  value: '2'
+                ),
+                right: AstConstantExp(
+                  type: 'int',
+                  value: '3'
+                )
+              )
+            )
+          )
+        ]
+      )
+    )
+  ]
+)
+

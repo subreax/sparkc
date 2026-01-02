@@ -1,50 +1,35 @@
 #pragma once
+#include "sparkc/common/StringRef.h"
 #include <iostream>
 #include <stack>
-#include <sparkc/common/StringRef.h>
 
 class Printer {
 public:
-    Printer(std::ostream& out) : out(out) {  }
+    Printer(std::ostream& out) : out(out) {}
 
     void beginObject(const char* name) {
         out << name;
         openScope("(");
     }
 
-    void endObject() {
-        closeScope(")");
-    }
+    void endObject() { closeScope(")"); }
 
     void field(const char* name) {
         nextElement();
         out << name << ": ";
     }
 
-    void value(const char* stringValue) {
-        out << "'" << stringValue << "'";
-    }
+    void value(const char* stringValue) { out << "'" << stringValue << "'"; }
 
-    void value(int val) {
-        out << val;
-    }
+    void value(int val) { out << val; }
 
-    void value(float val) {
-        out << val;
-    }
+    void value(float val) { out << val; }
 
-    void beginArray() {
-        openScope("[");
-    }
+    void beginArray() { openScope("["); }
 
-    void arrItem() {
-        nextElement();
-    }
+    void arrItem() { nextElement(); }
 
-    void endArray() {
-        closeScope("]");
-    }
-
+    void endArray() { closeScope("]"); }
 
     void field(const char* name, const char* val) {
         field(name);

@@ -1,0 +1,115 @@
+#src
+int main() {
+    int a = 5;
+    int b = 10;
+    b = b * 3;
+    int c = a + b;
+    int d = a * (b + c);
+    return d * 6;
+}
+
+#expect
+AstProgram(
+  items: [
+    AstFunction(
+      name: 'main',
+      returnType: 'int',
+      params: [],
+      body: AstBlock(
+        items: [
+          AstVarDeclaration(
+            type: 'int',
+            name: 'a.0',
+            init: AstConstantExp(
+              type: 'int',
+              value: '5'
+            )
+          ),
+          AstVarDeclaration(
+            type: 'int',
+            name: 'b.1',
+            init: AstConstantExp(
+              type: 'int',
+              value: '10'
+            )
+          ),
+          AstExpressionStatement(
+            exp: AstAssignment(
+              type: 'int',
+              var: AstVar(
+                type: 'int',
+                id: 'b.1'
+              ),
+              exp: AstBinaryExp(
+                type: 'int',
+                op: '*',
+                left: AstVar(
+                  type: 'int',
+                  id: 'b.1'
+                ),
+                right: AstConstantExp(
+                  type: 'int',
+                  value: '3'
+                )
+              )
+            )
+          ),
+          AstVarDeclaration(
+            type: 'int',
+            name: 'c.2',
+            init: AstBinaryExp(
+              type: 'int',
+              op: '+',
+              left: AstVar(
+                type: 'int',
+                id: 'a.0'
+              ),
+              right: AstVar(
+                type: 'int',
+                id: 'b.1'
+              )
+            )
+          ),
+          AstVarDeclaration(
+            type: 'int',
+            name: 'd.3',
+            init: AstBinaryExp(
+              type: 'int',
+              op: '*',
+              left: AstVar(
+                type: 'int',
+                id: 'a.0'
+              ),
+              right: AstBinaryExp(
+                type: 'int',
+                op: '+',
+                left: AstVar(
+                  type: 'int',
+                  id: 'b.1'
+                ),
+                right: AstVar(
+                  type: 'int',
+                  id: 'c.2'
+                )
+              )
+            )
+          ),
+          AstReturnStatement(
+            exp: AstBinaryExp(
+              type: 'int',
+              op: '*',
+              left: AstVar(
+                type: 'int',
+                id: 'd.3'
+              ),
+              right: AstConstantExp(
+                type: 'int',
+                value: '6'
+              )
+            )
+          )
+        ]
+      )
+    )
+  ]
+)

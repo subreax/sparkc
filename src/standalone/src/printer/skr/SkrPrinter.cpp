@@ -1,9 +1,8 @@
 #include "SkrPrinter.h"
 #include "../Colored.h"
-#include "../Type2String.h"
 
 std::ostream& operator<<(std::ostream& os, const SymbolType& type) {
-    os << Type2String::run(&type);
+    os << type.toString();
     return os;
 }
 
