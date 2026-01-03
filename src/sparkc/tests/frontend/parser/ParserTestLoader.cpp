@@ -10,7 +10,8 @@ void loadTestFile(const std::string& path, ParserTest& out);
 
 void loadRecursively(
     const std::string& dirPath,
-    std::function<void(const ParserTest&)> onTestLoaded) {
+    std::function<void(const ParserTest&)> onTestLoaded
+) {
     ParserTest test;
     auto dirIterator = fs::directory_iterator(dirPath);
     for (const auto& entry : dirIterator) {
@@ -24,24 +25,27 @@ void loadRecursively(
     }
 }
 
-static inline std::string ParserTestLoader_trim(const std::string& s) {
-    size_t b = 0, e = s.length();
-    while (b < e && std::isspace(s[b])) {
+std::string trim(const std::string& str) {
+    size_t b = 0, e = str.length();
+    while (b < e && std::isspace(str[b])) {
         b++;
     }
 
-    while (e > b && std::isspace(s[e - 1])) {
+    while (e > b && std::isspace(str[e - 1])) {
         e--;
     }
 
-    return s.substr(b, e - b);
+    return str.substr(b, e - b);
 }
 
 void loadTestFile(const std::string& path, ParserTest& out) {
     std::ifstream fin(path);
     std::ostringstream sections[2];
 
-    enum Section { S_SRC, S_EXPECTED };
+    enum Section {
+        S_SRC,
+        S_EXPECTED
+    };
 
     std::string line;
     Section section = S_SRC;
@@ -60,7 +64,7 @@ void loadTestFile(const std::string& path, ParserTest& out) {
     fin.close();
 
     out.path = path;
-    out.src = ParserTestLoader_trim(sections[S_SRC].str());
-    out.expectedTree = ParserTestLoader_trim(sections[S_EXPECTED].str());
+    out.src = trim(sections[S_SRC].str());
+    out.expectedTree = trim(sections[S_EXPECTED].str());
 }
 }; // namespace ParserTestLoader

@@ -2,14 +2,13 @@
 #include "SparkBuildInfo.h"
 #include "SparkCompilerContext.h"
 #include "SparkPools.h"
-#include "sparkc/skr/optimizer/SkrOptimizerConfig.h"
 #include "sparkc/skr/optimizer/SkrOptOnCfgCreatedListener.h"
+#include "sparkc/skr/optimizer/SkrOptimizerConfig.h"
 #include "sparkc/symbol/SymbolTable.h"
 #include "sparkc/symbol/SymbolType.h"
 #include "sparkc/type/TypeTable.h"
 #include <string>
 #include <vector>
-
 
 class SparkCompiler {
 public:
@@ -17,12 +16,12 @@ public:
     public:
         virtual ~DebugCallback() = default;
 
-        virtual void onAstBuild(class AstProgram* ast) {}
-        virtual void onEmitSkrFunc(class SkrFunction* skrFunc) {}
-        virtual void onOptimizeSkrFunc(class SkrFunction* skrFunc) {}
-        virtual void onEmitRva(const std::vector<class RvaInstruction*>& rva) {}
-        virtual void onReplaceRvaPseudo(const std::vector<class RvaInstruction*>& rva) {}
-        virtual void onFixRva(const std::vector<class RvaInstruction*>& rva) {}
+        virtual void onAstBuild(class AstProgram* ast) { }
+        virtual void onEmitSkrFunc(class SkrFunction* skrFunc) { }
+        virtual void onOptimizeSkrFunc(class SkrFunction* skrFunc) { }
+        virtual void onEmitRva(const std::vector<class RvaInstruction*>& rva) { }
+        virtual void onReplaceRvaPseudo(const std::vector<class RvaInstruction*>& rva) { }
+        virtual void onFixRva(const std::vector<class RvaInstruction*>& rva) { }
 
         void setCtx(class SparkCompilerContext* ctx) { this->ctx = ctx; }
 
@@ -35,7 +34,9 @@ public:
 
     struct Initializer {
         Initializer(size_t mem, uint8_t* outBin, size_t outCap)
-            : mem(mem), outBin(outBin), outCap(outCap) {}
+            : mem(mem)
+            , outBin(outBin)
+            , outCap(outCap) { }
 
         size_t mem;
         uint8_t* outBin;
@@ -49,34 +50,39 @@ public:
     };
 
     SparkCompiler(const Initializer& init);
+
     ~SparkCompiler();
 
     void addStruct(const char* tag, std::initializer_list<StructField> fields);
-    void addFunction(
-        void* ptr,
-        const char* name,
-        SymbolType* retType,
-        std::initializer_list<SymbolType*> params);
+
+    void addFunction(void* ptr, const char* name, SymbolType* retType, std::initializer_list<SymbolType*> params);
+
     SparkBuildInfo build(const char* src);
 
     void setDebugCallback(DebugCallback* callback);
 
 private:
     void reset();
+
     void recreateContext();
-    class AstProgram* buildAst(Allocator& pool, const char* src);
+
+    class AstProgram* buildAst(Allocator& pool, Allocator& sharedPool, const char* src);
+
     class SkrFunction* ast2skr(class AstFunction* astFunc, Allocator& pool);
+
     void skr2rva(
         class SkrFunction* skrFunc,
         Allocator& skrOutPool,
         Allocator& tempPool,
-        std::vector<class RvaInstruction*>& out);
+        std::vector<class RvaInstruction*>& out
+    );
 
     void notifyAstBuild(class AstProgram* ast) {
         if (debugCallback) {
             debugCallback->onAstBuild(ast);
         }
     }
+
     void notifyEmitSkrFunc(class SkrFunction* skrFunc) {
         if (debugCallback) {
             debugCallback->onEmitSkrFunc(skrFunc);

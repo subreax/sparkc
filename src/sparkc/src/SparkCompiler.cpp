@@ -1,5 +1,5 @@
 #include "sparkc/SparkCompiler.h"
-#include "sparkc/SparkCompilerContext.h"
+
 #include "backend/rv/RvaFixer.h"
 #include "backend/rv/RvaPseudoReplacer.h"
 #include "backend/rv/Skr2RvaPseudo.h"
@@ -8,34 +8,37 @@
 #include "frontend/semantic/Semantic.h"
 #include "skr/SkrEmitter.h"
 #include "skr/optimizer/SkrOptimizer.h"
+#include "sparkc/SparkCompilerContext.h"
 
 SparkCompiler::SparkCompiler(const SparkCompiler::Initializer& init)
     : pools(init.mem)
     , outBin(init.outBin)
-    , outCap(init.outCap) 
+    , outCap(init.outCap)
     , debugCallback(init.debugCallback)
-    , skrOptimizerConfig(init.constantFolding, init.deadCodeElim, init.copyPropagation, init.deadStoreElim)
-{
+    , skrOptimizerConfig(init.constantFolding, init.deadCodeElim, init.copyPropagation, init.deadStoreElim) {
     reset();
 }
 
-SparkCompiler::~SparkCompiler() {
-    delete ctx;
-}
+SparkCompiler::~SparkCompiler() { delete ctx; }
 
 void SparkCompiler::addStruct(const char* tag, std::initializer_list<StructField> fields) {
     parserTypes.emplace_back(StringRef::cstr(tag));
     ctx->typeTable.declare(StringRef::cstr(tag), fields);
 }
 
-void SparkCompiler::addFunction(void* ptr, const char* name, SymbolType* retType, std::initializer_list<SymbolType*> params) {
+void SparkCompiler::addFunction(
+    void* ptr,
+    const char* name,
+    SymbolType* retType,
+    std::initializer_list<SymbolType*> params
+) {
     ctx->symTable.declareFunc(StringRef::cstr(name), retType, params);
     ctx->assembler.addExternalLabel(StringRef::cstr(name), ptr);
 }
 
 SparkBuildInfo SparkCompiler::build(const char* src) {
     try {
-        AstProgram* ast = buildAst(pools.pool1, src);
+        AstProgram* ast = buildAst(pools.pool1, pools.shared, src);
         for (auto* item : ast->items) {
             if (item->kind != AstProgItem::Kind::Function) {
                 continue;
@@ -57,8 +60,8 @@ SparkBuildInfo SparkCompiler::build(const char* src) {
         ctx->assembler.link();
 
         SparkBuildInfo buildInfo(
-            pools.getMemoryUsage(), 
-            ctx->assembler.getPublicLabels(), 
+            pools.getMemoryUsage(),
+            ctx->assembler.getPublicLabels(),
             ctx->assembler.getSize(),
             ctx->assembler.getSize() * 100 / outCap
         );
@@ -70,9 +73,7 @@ SparkBuildInfo SparkCompiler::build(const char* src) {
     }
 }
 
-void SparkCompiler::setDebugCallback(DebugCallback* callback) {
-    this->debugCallback = callback;
-}
+void SparkCompiler::setDebugCallback(DebugCallback* callback) { this->debugCallback = callback; }
 
 void SparkCompiler::reset() {
     pools.reset();
@@ -84,15 +85,14 @@ void SparkCompiler::reset() {
     }
 }
 
-
 void SparkCompiler::recreateContext() {
     delete ctx;
     ctx = new SparkCompilerContext(pools.shared, outBin, outCap);
 }
 
-AstProgram* SparkCompiler::buildAst(Allocator& pool, const char* src) {
+AstProgram* SparkCompiler::buildAst(Allocator& pool, Allocator& sharedPool, const char* src) {
     Lexer lexer(src);
-    auto* astProgram = Parser(lexer, pool, ctx->typeTable, parserTypes).parseProgram();
+    auto* astProgram = Parser(lexer, pool, sharedPool).parseProgram();
     Semantic(ctx->symTable, ctx->typeTable, ctx->idGen, pool, 1024).process(astProgram);
     notifyAstBuild(astProgram);
     return astProgram;
@@ -100,12 +100,18 @@ AstProgram* SparkCompiler::buildAst(Allocator& pool, const char* src) {
 
 SkrFunction* SparkCompiler::ast2skr(AstFunction* astFunc, Allocator& pool) {
     std::vector<SkrInstruction*> buf;
-    SkrFunction* skrFunc = SkrEmitter::emit(astFunc, pool, ctx->symTable, ctx->typeTable, ctx->idGen, ctx->labelGen, buf);
+    SkrFunction* skrFunc
+        = SkrEmitter::emit(astFunc, pool, ctx->symTable, ctx->typeTable, ctx->idGen, ctx->labelGen, buf);
     notifyEmitSkrFunc(skrFunc);
     return skrFunc;
 }
 
-void SparkCompiler::skr2rva(SkrFunction* skrFunc, Allocator& skrRvaPool, Allocator& tempPool, std::vector<RvaInstruction*>& out) {
+void SparkCompiler::skr2rva(
+    SkrFunction* skrFunc,
+    Allocator& skrRvaPool,
+    Allocator& tempPool,
+    std::vector<RvaInstruction*>& out
+) {
     std::vector<RvaInstruction*> buf;
     StackFrame frame(tempPool);
     Skr2RvaPseudo::emit(skrFunc, tempPool, ctx->idGen, ctx->symTable, ctx->symSize, frame, buf);

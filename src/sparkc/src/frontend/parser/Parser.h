@@ -3,20 +3,18 @@
 #include "sparkc/common/alloc/Allocator.h"
 #include "sparkc/frontend/ast/everything.h"
 #include "sparkc/frontend/parser/except/everything.h"
-#include "sparkc/type/TypeTable.h"
 #include <vector>
 
 class Parser {
 public:
-    Parser(
-        Lexer& lexer,
-        Allocator& allocator,
-        TypeTable& typeTable,
-        std::vector<StringRef>& types);
+    Parser(Lexer& lexer, Allocator& allocator, Allocator& sharedAlloc);
 
     AstProgram* parseProgram();
 
     bool hasNext() const;
+
+    void declareType(StringRef type);
+    bool isTypeDeclared(StringRef type);
 
 private:
     AstStruct* tryParseStruct();
@@ -39,12 +37,9 @@ private:
     Token takeToken();
     Token expect(TokenKind kind);
 
-    void regType(StringRef type);
-    bool isTypeExist(StringRef type);
-
     Token current;
     Lexer& lexer;
     Allocator& allocator;
-    TypeTable& typeTable;
-    std::vector<StringRef>& types;
+    Allocator& sharedAllocator;
+    std::vector<StringRef> types;
 };

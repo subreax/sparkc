@@ -1,11 +1,9 @@
 #include "Parser.h"
 
-Parser::Parser(
-    Lexer& lexer,
-    Allocator& allocator,
-    TypeTable& typeTable,
-    std::vector<StringRef>& types)
-    : lexer(lexer), allocator(allocator), typeTable(typeTable), types(types) {
+Parser::Parser(Lexer& lexer, Allocator& allocator, Allocator& sharedAllocator)
+    : lexer(lexer)
+    , allocator(allocator)
+    , sharedAllocator(sharedAllocator) {
     takeToken();
 }
 
@@ -30,7 +28,7 @@ AstStruct* Parser::tryParseStruct() {
     if (current.kind == T_STRUCT_KEYWORD) {
         takeToken();
         StringRef tag = expect(T_IDENTIFIER).value;
-        regType(tag);
+        declareType(tag);
         expect(T_OPEN_PAR);
         std::vector<AstStructField*> fields;
         while (hasNext() && current.kind != T_CLOSE_PAR) {
@@ -44,8 +42,7 @@ AstStruct* Parser::tryParseStruct() {
         expect(T_CLOSE_PAR);
         expect(T_SEMICOLON);
 
-        return allocator.create<AstStruct>(
-            tag, BoundArray<AstStructField*>::fromVector(fields, allocator));
+        return allocator.create<AstStruct>(tag, BoundArray<AstStructField*>::fromVector(fields, allocator));
     }
     return nullptr;
 }
@@ -108,7 +105,8 @@ AstDeclaration* Parser::tryParseDeclaration() {
         }
         expect(T_SEMICOLON);
         return allocator.create<AstVarDeclaration>(varName, type, initializer);
-    } else {
+    }
+    else {
         return nullptr;
     }
 }
@@ -119,7 +117,8 @@ AstStatement* Parser::parseStatement() {
         AstExp* exp = parseExpression();
         expect(T_SEMICOLON);
         return allocator.create<AstReturnStatement>(exp);
-    } else if (current.kind == T_IF_KEYWORD) {
+    }
+    else if (current.kind == T_IF_KEYWORD) {
         takeToken();
         expect(T_OPEN_PAR);
         AstExp* cond = parseExpression();
@@ -131,17 +130,20 @@ AstStatement* Parser::parseStatement() {
             ifFalse = parseStatement();
         }
         return allocator.create<AstIfStatement>(cond, ifTrue, ifFalse);
-    } else if (current.kind == T_WHILE_KEYWORD) {
+    }
+    else if (current.kind == T_WHILE_KEYWORD) {
         takeToken();
         expect(T_OPEN_PAR);
         auto* cond = parseExpression();
         expect(T_CLOSE_PAR);
         auto* st = parseStatement();
         return allocator.create<AstWhileStatement>(cond, st);
-    } else if (current.kind == T_OPEN_BRACE) {
+    }
+    else if (current.kind == T_OPEN_BRACE) {
         AstBlock* block = parseBlock();
         return allocator.create<AstCompoundStatement>(block);
-    } else {
+    }
+    else {
         AstExp* exp = parseExpression();
         expect(TokenKind::T_SEMICOLON);
         return allocator.create<AstExpressionStatement>(exp);
@@ -156,13 +158,14 @@ AstExp* Parser::parseExpression(int prevPrecedence) {
         if (op.kind == T_EQUALS) {
             AstExp* right = parseExpression(precedence);
             left = allocator.create<AstAssignment>(left, right);
-        } else if (op.kind == T_PERIOD) {
+        }
+        else if (op.kind == T_PERIOD) {
             AstExp* right = parseExpression(precedence + 1);
             left = allocator.create<AstDot>(left, right);
-        } else {
+        }
+        else {
             AstExp* right = parseExpression(precedence + 1);
-            left = allocator.create<AstBinaryExp>(
-                left, AstBinaryExp::toBinaryOperator(op.kind), right);
+            left = allocator.create<AstBinaryExp>(left, AstBinaryExp::toBinaryOperator(op.kind), right);
         }
         precedence = getPrecedence(current.kind);
     }
@@ -175,16 +178,19 @@ AstExp* Parser::parseFactor() {
         int32_t value = parseInt(token);
         auto* c = allocator.create<IntConstant>(value);
         return allocator.create<AstConstantExp>(c);
-    } else if (current.kind == T_FLOAT_CONSTANT) {
+    }
+    else if (current.kind == T_FLOAT_CONSTANT) {
         auto token = takeToken();
         auto* c = allocator.create<FloatConstant>(parseFloat(token));
         return allocator.create<AstConstantExp>(c);
-    } else if (current.kind == T_OPEN_PAR) {
+    }
+    else if (current.kind == T_OPEN_PAR) {
         takeToken();
         auto exp = parseExpression();
         expect(T_CLOSE_PAR);
         return exp;
-    } else if (current.kind == T_IDENTIFIER) {
+    }
+    else if (current.kind == T_IDENTIFIER) {
         auto id = takeToken().value;
         if (current.kind == T_OPEN_PAR) {
             takeToken();
@@ -193,15 +199,18 @@ AstExp* Parser::parseFactor() {
             expect(T_CLOSE_PAR);
 
             auto argsBA = BoundArray<AstExp*>::fromVector(args, allocator);
-            if (isTypeExist(id)) {
+            if (isTypeDeclared(id)) {
                 return allocator.create<AstStructInit>(id, argsBA);
-            } else {
+            }
+            else {
                 return allocator.create<AstFunCall>(id, argsBA);
             }
-        } else {
+        }
+        else {
             return allocator.create<AstVar>(id);
         }
-    } else {
+    }
+    else {
         throw WrongExprException(current);
     }
 }
@@ -255,19 +264,24 @@ SymbolType* Parser::parseType() {
 }
 
 SymbolType* Parser::tryParseType() {
-    SymbolType* type;
-    if (current.kind == T_INT_KEYWORD) {
+    SymbolType* type = nullptr;
+    switch (current.kind) {
+    case T_INT_KEYWORD:
         takeToken();
         type = SymbolIntType::getInstance();
-    } else if (current.kind == T_FLOAT_KEYWORD) {
+        break;
+
+    case T_FLOAT_KEYWORD:
         takeToken();
         type = SymbolFloatType::getInstance();
-    } else if (current.kind == T_IDENTIFIER && isTypeExist(current.value)) {
-        auto token = takeToken();
-        type =
-            typeTable.getAllocator().create<SymbolStructureType>(token.value);
-    } else {
-        return nullptr;
+        break;
+
+    case T_IDENTIFIER:
+        if (isTypeDeclared(current.value)) {
+            auto token = takeToken();
+            type = sharedAllocator.create<SymbolStructureType>(token.value);
+        }
+        break;
     }
 
     return type;
@@ -289,51 +303,57 @@ Token Parser::takeToken() {
 Token Parser::expect(TokenKind kind) {
     if (current.kind == kind) {
         return takeToken();
-    } else {
+    }
+    else {
         throw UnexpectedTokenException(kind, current);
     }
 }
 
 int Parser::getPrecedence(TokenKind tk) {
     switch (tk) {
-    case T_PERIOD: return 100;
+    case T_PERIOD:
+        return 100;
 
     case T_ASTERISK:
     case T_FWD_SLASH:
-    case T_PERCENT: return 50;
+    case T_PERCENT:
+        return 50;
 
     case T_PLUS:
-    case T_HYPHEN: return 40;
+    case T_HYPHEN:
+        return 40;
 
     case T_GREATER_THAN:
     case T_LESS_THAN:
     case T_GREATER_OR_EQ:
-    case T_LESS_OR_EQ: return 35;
+    case T_LESS_OR_EQ:
+        return 35;
 
     case T_EQUALS_EQUALS:
-    case T_NOT_EQUALS: return 30;
+    case T_NOT_EQUALS:
+        return 30;
 
-    case T_AMP_AMP: return 10;
+    case T_AMP_AMP:
+        return 10;
 
-    case T_VBAR_VBAR: return 5;
+    case T_VBAR_VBAR:
+        return 5;
 
-    case T_EQUALS: return 1;
+    case T_EQUALS:
+        return 1;
 
-    default: return -1;
+    default:
+        return -1;
     }
 }
 
-void Parser::regType(StringRef type) {
-    if (isTypeExist(type)) {
-        sparkError(
-            "Parser",
-            "Type '" + type.toString() +
-                "' is already declared"); // todo: replace
+void Parser::declareType(StringRef type) {
+    if (!isTypeDeclared(type)) {
+        types.emplace_back(type);
     }
-    types.emplace_back(type);
 }
 
-bool Parser::isTypeExist(StringRef type) {
+bool Parser::isTypeDeclared(StringRef type) {
     for (auto t : types) {
         if (t == type) {
             return true;

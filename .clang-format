@@ -1,21 +1,29 @@
-BasedOnStyle: LLVM
-AlignAfterOpenBracket: AlwaysBreak
-AllowShortCaseLabelsOnASingleLine: true
-PointerAlignment: Left
-IndentWidth: 4
-TabWidth: 4
-AccessModifierOffset: -4
-
+BasedOnStyle: WebKit
+AlignAfterOpenBracket: BlockIndent
+AllowAllArgumentsOnNextLine: false
+AllowAllParametersOfDeclarationOnNextLine: false
 BinPackArguments: false
 BinPackParameters: false
-
-AllowAllParametersOfDeclarationOnNextLine: false
-AllowAllArgumentsOnNextLine: false
-
-PenaltyBreakBeforeFirstCallParameter: 1
-
-SpaceAfterCStyleCast: true
-BreakBeforeBraces: Custom
 BraceWrapping:
-  BeforeCatch: true
+  AfterCaseLabel: false
+  AfterClass: false
+  AfterControlStatement: Never
+  AfterEnum: false
+  AfterFunction: false
+  AfterNamespace: false
+  AfterObjCDeclaration: false
+  AfterStruct: false
+  AfterUnion: false
+  AfterExternBlock: false
+  BeforeCatch: false
   BeforeElse: true
+  BeforeLambdaBody: false
+  BeforeWhile: false
+  IndentBraces: false
+  SplitEmptyFunction: false
+  SplitEmptyRecord: false
+  SplitEmptyNamespace: false
+BreakBeforeBraces: Custom
+ColumnLimit: 120
+FixNamespaceComments: true
+SpaceAfterCStyleCast: true

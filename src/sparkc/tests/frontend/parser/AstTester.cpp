@@ -14,9 +14,7 @@ void testAst(const char* tag, const char* src, const char* expectedTree) {
     IdentifierGen idGen(commonAllocator);
 
     Lexer lexer(src);
-
-    std::vector<StringRef> types;
-    Parser parser(lexer, allocator, typeTable, types);
+    Parser parser(lexer, allocator, commonAllocator);
 
     AstProgram* program = parser.parseProgram();
     Semantic(symbolTable, typeTable, idGen, allocator, 2048).process(program);

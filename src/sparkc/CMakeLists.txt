@@ -230,6 +230,7 @@ target_sources(tests
     tests/frontend/parser/AstTester.cpp
     tests/frontend/parser/ParserTest.cpp
     tests/frontend/parser/ParserTestLoader.cpp
+    tests/frontend/parser/ExternalStructDeclarationTest.cpp
 
   PRIVATE
     FILE_SET privHeaders
