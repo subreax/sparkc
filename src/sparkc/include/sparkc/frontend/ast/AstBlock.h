@@ -1,10 +1,11 @@
 #pragma once
-#include "sparkc/common/BoundArray.h"
 #include "AstBlockItem.h"
+#include "sparkc/common/BoundArray.h"
 
 class AstBlock {
 public:
-    AstBlock(BoundArray<AstBlockItem*> items) : items(items) {  }
+    AstBlock(BoundArray<AstBlockItem*> items)
+        : items(items) { }
 
     const BoundArray<AstBlockItem*>& getItems() const { return items; }
 

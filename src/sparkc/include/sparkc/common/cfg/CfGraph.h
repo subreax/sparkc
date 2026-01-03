@@ -1,20 +1,23 @@
 #pragma once
-#include "CfgBlock.h"
-#include "BitMatrix.h"
 #include "../Error.h"
+#include "BitMatrix.h"
+#include "CfgBlock.h"
 
-
-template<typename CfgGraph>
+template <typename CfgGraph>
 class CfSGraphIterator {
 public:
     using ItemType = typename CfgGraph::ItemType;
 
-    CfSGraphIterator(const std::vector<CfgBlock<ItemType>*>& nodes, const BitMatrix& edges, size_t nodeIdx, size_t c = -1)
+    CfSGraphIterator(
+        const std::vector<CfgBlock<ItemType>*>& nodes,
+        const BitMatrix& edges,
+        size_t nodeIdx,
+        size_t c = -1
+    )
         : nodes(nodes)
         , edges(edges)
-        , r(nodeIdx) 
-        , c(c)
-    {
+        , r(nodeIdx)
+        , c(c) {
         if (c == -1) {
             operator++();
         }
@@ -47,17 +50,21 @@ private:
     const BitMatrix& edges;
 };
 
-template<typename CfgGraph>
+template <typename CfgGraph>
 class CfPGraphIterator {
 public:
     using ItemType = typename CfgGraph::ItemType;
 
-    CfPGraphIterator(const std::vector<CfgBlock<ItemType>*>& nodes, const BitMatrix& edges, size_t nodeIdx, size_t r = -1)
+    CfPGraphIterator(
+        const std::vector<CfgBlock<ItemType>*>& nodes,
+        const BitMatrix& edges,
+        size_t nodeIdx,
+        size_t r = -1
+    )
         : nodes(nodes)
         , edges(edges)
         , r(r)
-        , c(nodeIdx) 
-    {
+        , c(nodeIdx) {
         operator++();
     }
 
@@ -88,7 +95,7 @@ private:
     const BitMatrix& edges;
 };
 
-template<typename I>
+template <typename I>
 class CfGraph {
 public:
     using ItemType = I;
@@ -97,8 +104,7 @@ public:
 
     CfGraph(const std::vector<CfgBlock<I>*>& nodes)
         : blocks(nodes)
-        , edges(nodes.size()) {  }
-
+        , edges(nodes.size()) { }
 
     ~CfGraph() {
         for (auto* node : blocks) {

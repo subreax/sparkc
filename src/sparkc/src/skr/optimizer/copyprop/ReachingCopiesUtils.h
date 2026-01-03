@@ -1,6 +1,6 @@
 #pragma once
-#include <vector>
 #include "sparkc/skr/instr/SkrCopy.h"
+#include <vector>
 
 class ReachingCopiesUtils {
 public:

@@ -1,32 +1,31 @@
 #pragma once
-#include <vector>
 #include "../StringRef.h"
+#include <vector>
 
 namespace cfg {
-template<typename I>
+template <typename I>
 bool isLabel(I* ptr);
 
 // return empty string if instruction doesn't have labels or jumps
-template<typename I>
+template <typename I>
 StringRef getLabel(I* ptr);
 
-template<typename I>
+template <typename I>
 bool isJump(I* ptr);
 
-template<typename I>
+template <typename I>
 bool isBranch(I* ptr);
-};
+}; // namespace cfg
 
-
-
-template<typename I>
+template <typename I>
 class CfgBlock {
 public:
-    CfgBlock(int idx) : idx(idx) {  }
+    CfgBlock(int idx)
+        : idx(idx) { }
 
-    CfgBlock(int idx, const std::vector<I>& body) 
+    CfgBlock(int idx, const std::vector<I>& body)
         : idx(idx)
-        , body(body) {  }
+        , body(body) { }
 
     void add(const I& instr) {
         body.emplace_back(instr);

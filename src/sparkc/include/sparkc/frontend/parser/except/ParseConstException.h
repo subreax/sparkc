@@ -3,6 +3,6 @@
 
 class ParseConstException : public ParseException {
 public:
-    ParseConstException(const Token& token) 
-        : ParseException(Kind::WrongConst, token, "Failed to parse constant: '" + token.value.toString() + "'") {  }
+    ParseConstException(const Token& token)
+        : ParseException(Kind::WrongConst, token, "Failed to parse constant: '" + token.value.toString() + "'") { }
 };

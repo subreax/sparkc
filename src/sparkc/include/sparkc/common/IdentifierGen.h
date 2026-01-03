@@ -1,11 +1,12 @@
 #pragma once
-#include "alloc/Allocator.h"
 #include "StringBuilder.h"
 #include "StringRef.h"
+#include "alloc/Allocator.h"
 
 class IdentifierGen {
 public:
-    IdentifierGen(Allocator& allocator) : allocator(allocator) { }
+    IdentifierGen(Allocator& allocator)
+        : allocator(allocator) { }
 
     StringRef unique(const char* id) {
         return unique(StringRef::cstr(id));
@@ -23,12 +24,13 @@ public:
     }
 
     StringRef unique(StringRef id) {
-        StringRef str = StringBuilder(nameBuf, sizeof(nameBuf))
-            .append(id, std::min(id.getLength(), MAX_ID_LEN))
-            .append(StringRef::cstr("."))
-            .append(counter++)
-            .toString();
-        return copy(str);
+        return copy(
+            StringBuilder(nameBuf, sizeof(nameBuf))
+                .append(id, std::min(id.getLength(), MAX_ID_LEN))
+                .append(StringRef::cstr("."))
+                .append(counter++)
+                .toString()
+        );
     }
 
     StringRef copy(StringRef ref) {

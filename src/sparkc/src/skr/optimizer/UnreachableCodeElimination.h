@@ -6,7 +6,7 @@
 class UnreachableCodeElimination {
 public:
     UnreachableCodeElimination(CfGraph<SkrInstruction*>* graph)
-        : graph(graph) {}
+        : graph(graph) { }
 
     void run() {
         disconnectUnreachableBlocks();
@@ -37,8 +37,7 @@ private:
             auto* curr = blocks[i];
             auto* next = blocks[i + 1];
 
-            if (graph->isConnected(curr, next) && curr->hasJump() &&
-                next->isLabeled()) {
+            if (graph->isConnected(curr, next) && curr->hasJump() && next->isLabeled()) {
                 auto jumpLabel = curr->getJumpOrBranchLabel();
                 auto blockLabel = next->getLabel();
                 if (jumpLabel == blockLabel) {
@@ -58,8 +57,7 @@ private:
             auto* curr = blocks[i];
             auto* next = blocks[i + 1];
 
-            if (graph->isConnected(curr, next) && next->isLabeled() &&
-                graph->countPrecedessors(next) == 1) {
+            if (graph->isConnected(curr, next) && next->isLabeled() && graph->countPrecedessors(next) == 1) {
                 next->getBody().erase(next->getBody().begin());
             }
         }
@@ -67,7 +65,8 @@ private:
 
     void traverse(
         const CfgBlock<SkrInstruction*>* block,
-        std::unordered_set<int>& visited) {
+        std::unordered_set<int>& visited
+    ) {
         if (contains(visited, block)) {
             return;
         }
@@ -84,7 +83,8 @@ private:
 
     static bool contains(
         const std::unordered_set<int>& s,
-        const CfgBlock<SkrInstruction*>* block) {
+        const CfgBlock<SkrInstruction*>* block
+    ) {
         return s.find(block->getIdx()) != s.end();
     }
 

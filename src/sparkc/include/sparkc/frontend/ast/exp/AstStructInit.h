@@ -6,7 +6,7 @@ public:
     AstStructInit(StringRef tag, const BoundArray<AstExp*>& args)
         : AstExp(Kind::StructInit)
         , tag(tag)
-        , args(args) {  }
+        , args(args) { }
 
     StringRef getTag() const { return tag; }
     const BoundArray<AstExp*>& getArgs() const { return args; }

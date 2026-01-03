@@ -8,7 +8,8 @@
 class ReachingCopiesAnalysis {
 public:
     ReachingCopiesAnalysis(CfGraph<SkrInstruction*>* graph)
-        : graph(graph), annotatedBlocks(graph->getBlocks().size()) {}
+        : graph(graph)
+        , annotatedBlocks(graph->getBlocks().size()) { }
 
     void run() {
         std::vector<SkrCopy*> allCopies;
@@ -39,6 +40,7 @@ public:
     }
 
     RCABlock* getAnnotated(size_t idx) { return &annotatedBlocks[idx]; }
+
     const RCABlock* getAnnotated(size_t idx) const {
         return &annotatedBlocks[idx];
     }
@@ -49,15 +51,15 @@ private:
     void meet(
         size_t blockIdx,
         const std::vector<SkrCopy*>& allCopies,
-        std::vector<SkrCopy*>& out) {
+        std::vector<SkrCopy*>& out
+    ) {
         out = allCopies;
         auto it = graph->precedessorsIterator(blockIdx);
         auto end = graph->pEnd();
         while (it != end) {
             CfgBlock<SkrInstruction*>* predecessor = *it;
             size_t predIdx = predecessor->getIdx();
-            ReachingCopiesUtils::intersect(
-                out, getAnnotated(predIdx)->blockCopies);
+            ReachingCopiesUtils::intersect(out, getAnnotated(predIdx)->blockCopies);
             ++it;
         }
     }
@@ -105,8 +107,7 @@ private:
                 sparkError("ReachingCopiesAnalysis", "Load is not implemented");
             }
             else if (instr->kind == SkrInstruction::Kind::Store) {
-                sparkError(
-                    "ReachingCopiesAnalysis", "Store is not implemented");
+                sparkError("ReachingCopiesAnalysis", "Store is not implemented");
             }
         }
         annotated->blockCopies = currentCopies.getCopies();

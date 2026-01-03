@@ -1,6 +1,6 @@
-#include "spark/backend/rv/instr/RvaMov.h"
-#include "spark/backend/rv/asm/RvListing.h"
 #include <catch2/catch_test_macros.hpp>
+#include <sparkc/backend/rv/asm/RvListing.h>
+#include <sparkc/backend/rv/instr/RvaMov.h>
 
 TEST_CASE("Test RvaMov", "[rva]") {
     uint32_t buf[2] = { 0, 0 };

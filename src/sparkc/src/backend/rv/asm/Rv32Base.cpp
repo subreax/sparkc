@@ -1,9 +1,9 @@
 #include "Rv32Base.h"
 #include "sparkc/common/Error.h"
 
-static constexpr uint32_t mask3 =  0b111;
-static constexpr uint32_t mask5 =  0b11111;
-static constexpr uint32_t mask7 =  0b1111111;
+static constexpr uint32_t mask3 = 0b111;
+static constexpr uint32_t mask5 = 0b11111;
+static constexpr uint32_t mask7 = 0b1111111;
 static constexpr uint32_t mask12 = 0b111111111111;
 
 static constexpr uint32_t genMask(int bits) {
@@ -19,12 +19,12 @@ inline constexpr uint32_t regShl(RvReg reg, int shift) {
     return ((uint32_t) reg) << shift;
 }
 
-template<int to, int from>
+template <int to, int from>
 static constexpr uint32_t slice(uint32_t val) {
     return (val >> from) & genMask(to - from + 1);
 }
 
-template<int pos>
+template <int pos>
 static constexpr inline uint32_t bit(uint32_t val) {
     return (val >> pos) & 1;
 }
@@ -47,9 +47,8 @@ static void checkImm20(int32_t imm20) {
     checkImm(imm20, -1048576, 1048575);
 }
 
-
 uint32_t Rv32Base::rType(uint32_t opcode, uint32_t funct3, uint32_t funct7, RvReg rd, RvReg rs1, RvReg rs2) {
-    return (opcode & mask7) 
+    return (opcode & mask7)
         | regShl(rd, 7)
         | ((funct3 & mask3) << 12)
         | regShl(rs1, 15)

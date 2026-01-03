@@ -1,14 +1,16 @@
 #pragma once
+#include "sparkc/common/StringRef.h"
 #include <cstdint>
 #include <cstring>
 #include <vector>
-#include "sparkc/common/StringRef.h"
 
 class RvListing {
 public:
     struct Label {
         Label() = default;
-        Label(int32_t offset, StringRef value) : offset(offset), value(value) {}
+        Label(int32_t offset, StringRef value)
+            : offset(offset)
+            , value(value) { }
 
         int32_t offset = 0;
         StringRef value = StringRef::nullInstance();
@@ -33,7 +35,8 @@ private:
     struct Unresolved {
         Unresolved() = default;
         Unresolved(int32_t offset, StringRef label)
-            : offset(offset), label(label) {}
+            : offset(offset)
+            , label(label) { }
 
         int32_t offset = 0;
         StringRef label = StringRef::nullInstance();

@@ -1,8 +1,8 @@
 #pragma once
-#include <string>
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <string>
 
 class FileUtils {
 public:

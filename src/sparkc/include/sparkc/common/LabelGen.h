@@ -1,18 +1,19 @@
 #pragma once
-#include "alloc/Allocator.h"
 #include "StringBuilder.h"
+#include "alloc/Allocator.h"
 
 class LabelGen {
 public:
-    LabelGen(Allocator& allocator) : allocator(allocator) {  }
+    LabelGen(Allocator& allocator)
+        : allocator(allocator) { }
 
     StringRef uniquePrivate(const char* id) {
         StringRef str = StringBuilder(buf, sizeof(buf))
-            .append(StringRef::cstr("."))
-            .append(StringRef::cstr(id), LABEL_MAX_LEN)
-            .append(StringRef::cstr("_"))
-            .append(counter++)
-            .toString();
+                            .append(StringRef::cstr("."))
+                            .append(StringRef::cstr(id), LABEL_MAX_LEN)
+                            .append(StringRef::cstr("_"))
+                            .append(counter++)
+                            .toString();
 
         return StringBuilder(allocator.allocate(str.getLength()))
             .append(str)

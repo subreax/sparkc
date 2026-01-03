@@ -5,7 +5,8 @@
 
 class Printer {
 public:
-    Printer(std::ostream& out) : out(out) {}
+    Printer(std::ostream& out)
+        : out(out) { }
 
     void beginObject(const char* name) {
         out << name;

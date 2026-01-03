@@ -1,9 +1,9 @@
 #pragma once
-#include <vector>
-#include <unordered_set>
 #include "CfGraph.h"
+#include <unordered_set>
+#include <vector>
 
-template<typename I>
+template <typename I>
 class CfgBuilder {
 public:
     CfGraph<I*>* build_delGraphWhenDone(const std::vector<I*>& body) {
@@ -48,7 +48,7 @@ private:
     }
 
     void addEdges() {
-        const auto& blocks = graph->getBlocks(); 
+        const auto& blocks = graph->getBlocks();
         std::unordered_set<int> visited;
 
         for (size_t i = 0; i < blocks.size() - 1; i++) {

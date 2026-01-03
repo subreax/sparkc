@@ -1,8 +1,8 @@
 #pragma once
+#include "Scope.h"
+#include "sparkc/common/IdentifierGen.h"
 #include "sparkc/frontend/ast/everything.h"
 #include "sparkc/symbol/SymbolTable.h"
-#include "sparkc/common/IdentifierGen.h"
-#include "Scope.h"
 
 class IdentifierResolution {
 public:
@@ -23,7 +23,6 @@ private:
     void resolve(AstDeclaration* decl);
     void resolve(AstStatement* st);
     void resolve(AstExp* exp);
-
 
     void checkDeclaration(StringRef name, ScopeItem::Kind kind);
 

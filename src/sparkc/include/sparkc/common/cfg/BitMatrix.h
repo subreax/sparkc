@@ -6,9 +6,10 @@ public:
     BitMatrix(size_t w, size_t h)
         : w(w)
         , h(h)
-        , data(w * h) {  }
+        , data(w * h) { }
 
-    BitMatrix(size_t order) : BitMatrix(order, order) { }
+    BitMatrix(size_t order)
+        : BitMatrix(order, order) { }
 
     void set(size_t r, size_t c) {
         data.set(getIndex(r, c));

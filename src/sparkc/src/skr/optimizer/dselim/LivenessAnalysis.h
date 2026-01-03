@@ -1,15 +1,15 @@
 #pragma once
+#include "../Uniqueue.h"
+#include "DSEBlock.h"
+#include "VarSet.h"
 #include "sparkc/common/cfg/CfGraph.h"
 #include "sparkc/skr/instr/everything.h"
-#include "VarSet.h"
-#include "DSEBlock.h"
-#include "../Uniqueue.h"
 
 class LivenessAnalysis {
 public:
     LivenessAnalysis(const CfGraph<SkrInstruction*>* graph)
         : graph(graph)
-        , blocks(graph->getBlocksCount()) {  }
+        , blocks(graph->getBlocksCount()) { }
 
     void run() {
         Uniqueue<size_t> workQueue;
@@ -91,7 +91,7 @@ private:
                 vars.generateIfVar(it->getSrc());
             }
         }
-        
+
         annotated.setBlockVars(vars);
         annotated.reverseInstructions();
     }
@@ -112,7 +112,6 @@ private:
         return graph->getBlock(idx);
     }
 
-    
     void addAllPredecessors(size_t blockIdx, Uniqueue<size_t>& out) {
         auto it = graph->precedessorsIterator(blockIdx);
         auto end = graph->pEnd();
@@ -121,7 +120,7 @@ private:
             ++it;
         }
     }
-    
+
     std::vector<DSEBlock> blocks;
     const CfGraph<SkrInstruction*>* graph;
 };

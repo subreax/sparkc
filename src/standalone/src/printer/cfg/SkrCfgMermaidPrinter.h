@@ -1,25 +1,29 @@
 #pragma once
-#include <iostream>
+#include "../skr/SkrPrinter.h"
 #include <fstream>
+#include <iostream>
 #include <sparkc/common/cfg/CfGraph.h>
 #include <sparkc/symbol/SymbolTable.h>
-#include "../skr/SkrPrinter.h"
 
 class SkrCfgMermaidPrinter {
 public:
-    SkrCfgMermaidPrinter(std::ostream& out, const SymbolTable& table) 
+    SkrCfgMermaidPrinter(std::ostream& out, const SymbolTable& table)
         : out(out)
         , table(table) { }
 
-    static void saveToFile(CfGraph<SkrInstruction*>& graph, const SymbolTable& table, const std::string& outFile) {
+    static void saveToFile(
+        CfGraph<SkrInstruction*>& graph,
+        const SymbolTable& table,
+        const std::string& outFile
+    ) {
         std::filesystem::create_directory("cfg");
         std::ofstream astOut("cfg/" + outFile);
         astOut << "```mermaid\n";
         astOut << "---\n"
-            "config:\n"
-            "  look: neo\n"
-            "  theme: redux-dark\n"
-            "---\n";
+                  "config:\n"
+                  "  look: neo\n"
+                  "  theme: redux-dark\n"
+                  "---\n";
         astOut << "flowchart TB\n";
 
         SkrCfgMermaidPrinter conv(astOut, table);
@@ -62,7 +66,8 @@ private:
                     out << "**";
                     SkrPrinter::print(out, instr, table, false);
                     out << "**\n";
-                } else {
+                }
+                else {
                     SkrPrinter::print(out, instr, table, false);
                 }
                 out << "\n";
@@ -71,15 +76,15 @@ private:
         out << "\")\n";
     }
 
-    void declareBegin(int id) {
-        out << "id" << id << "(\"#" << id << " begin\")\n";
-    }
+    void declareBegin(int id) { out << "id" << id << "(\"#" << id << " begin\")\n"; }
 
-    void declareEnd(int id) {
-        out << "id" << id << "(\"#" << id << " end\")\n";
-    }
+    void declareEnd(int id) { out << "id" << id << "(\"#" << id << " end\")\n"; }
 
-    void connect(const CfGraph<SkrInstruction*>& graph, const CfgBlock<SkrInstruction*>* n1, const CfgBlock<SkrInstruction*>* n2) {
+    void connect(
+        const CfGraph<SkrInstruction*>& graph,
+        const CfgBlock<SkrInstruction*>* n1,
+        const CfgBlock<SkrInstruction*>* n2
+    ) {
         out << "id" << n1->getIdx() << " --> " << "id" << n2->getIdx() << "\n";
     }
 

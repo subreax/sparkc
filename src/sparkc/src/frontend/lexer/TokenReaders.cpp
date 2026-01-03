@@ -19,7 +19,8 @@ static StringRef readKeyword(const char* src, const char* keyword) {
     int keywordLen = strlen(keyword);
     if (startsWith(src, keyword) && !(isalnum(src[keywordLen]))) {
         return StringRef(src, keywordLen);
-    } else {
+    }
+    else {
         return StringRef::nullInstance();
     }
 }
@@ -27,7 +28,8 @@ static StringRef readKeyword(const char* src, const char* keyword) {
 static StringRef readChar(const char* src, char c) {
     if (src[0] == c) {
         return StringRef(src, 1);
-    } else {
+    }
+    else {
         return StringRef::nullInstance();
     }
 }
@@ -47,31 +49,13 @@ static StringRef readString(const char* src, const char* what) {
     return StringRef(src, len);
 }
 
-StringRef TokenReaders::readIntKeyword(const char* src) {
-    return readKeyword(src, "int");
-}
-
-StringRef TokenReaders::readFloatKeyword(const char* src) {
-    return readKeyword(src, "float");
-}
-
-StringRef TokenReaders::readReturnKeyword(const char* src) {
-    return readKeyword(src, "return");
-}
-
-StringRef TokenReaders::readIfKeyword(const char* src) {
-    return readKeyword(src, "if");
-}
-
-StringRef TokenReaders::readElseKeyword(const char* src) {
-    return readKeyword(src, "else");
-}
-StringRef TokenReaders::readWhileKeyword(const char* src) {
-    return readKeyword(src, "while");
-}
-StringRef TokenReaders::readStructKeyword(const char* src) {
-    return readKeyword(src, "struct");
-}
+StringRef TokenReaders::readIntKeyword(const char* src) { return readKeyword(src, "int"); }
+StringRef TokenReaders::readFloatKeyword(const char* src) { return readKeyword(src, "float"); }
+StringRef TokenReaders::readReturnKeyword(const char* src) { return readKeyword(src, "return"); }
+StringRef TokenReaders::readIfKeyword(const char* src) { return readKeyword(src, "if"); }
+StringRef TokenReaders::readElseKeyword(const char* src) { return readKeyword(src, "else"); }
+StringRef TokenReaders::readWhileKeyword(const char* src) { return readKeyword(src, "while"); }
+StringRef TokenReaders::readStructKeyword(const char* src) { return readKeyword(src, "struct"); }
 
 StringRef TokenReaders::readIdentifier(const char* src) {
     char first = src[0];
@@ -84,7 +68,8 @@ StringRef TokenReaders::readIdentifier(const char* src) {
         char c = src[i];
         if (isalnum(c) || c == '_') {
             i++;
-        } else {
+        }
+        else {
             break;
         }
     }
@@ -98,7 +83,8 @@ StringRef TokenReaders::readIntConstant(const char* src) {
 
     if (i > 0) {
         return StringRef(src, i);
-    } else {
+    }
+    else {
         return StringRef::nullInstance();
     }
 }
@@ -117,7 +103,8 @@ StringRef TokenReaders::readFloatConstant(const char* src) {
     if (src[i] == '.') {
         wasDot = true;
         i++;
-    } else {
+    }
+    else {
         return StringRef::nullInstance(); // because it is integer
     }
 

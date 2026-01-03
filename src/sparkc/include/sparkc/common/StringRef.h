@@ -1,12 +1,13 @@
 #pragma once
 #include <algorithm>
-#include <string>
 #include <cstring>
+#include <string>
 
 class StringRef {
 public:
-    StringRef(const char* str, size_t length) 
-        : str(str), length(length) { }
+    StringRef(const char* str, size_t length)
+        : str(str)
+        , length(length) { }
 
     static StringRef nullInstance() {
         return StringRef(nullptr, 0);
@@ -33,7 +34,8 @@ public:
             }
             out[i] = 0;
             return i;
-        } else {
+        }
+        else {
             out[0] = 0;
             return 0;
         }
@@ -82,7 +84,6 @@ private:
 
 std::string operator+(const std::string& s1, StringRef s2);
 std::string operator+(StringRef s1, const std::string& s2);
-
 
 template <>
 struct std::hash<StringRef> {

@@ -7,7 +7,8 @@ SkrFunction* SkrEmitter::emit(
     TypeTable& typeTable,
     IdentifierGen& idGen,
     LabelGen& labelGen,
-    std::vector<SkrInstruction*>& buf) {
+    std::vector<SkrInstruction*>& buf
+) {
     return SkrEmitter(allocator, idGen, labelGen, symbolTable, typeTable, buf)
         .emit(func);
 }
@@ -18,9 +19,14 @@ SkrEmitter::SkrEmitter(
     LabelGen& labelGen,
     SymbolTable& symbolTable,
     TypeTable& typeTable,
-    std::vector<SkrInstruction*>& out)
-    : allocator(allocator), symbolTable(symbolTable), typeTable(typeTable),
-      idGen(idGen), labelGen(labelGen), out(out) {}
+    std::vector<SkrInstruction*>& out
+)
+    : allocator(allocator)
+    , symbolTable(symbolTable)
+    , typeTable(typeTable)
+    , idGen(idGen)
+    , labelGen(labelGen)
+    , out(out) { }
 
 SkrFunction* SkrEmitter::emit(AstFunction* func) {
     funName = func->getName();
@@ -38,10 +44,13 @@ SkrFunction* SkrEmitter::emit(AstFunction* func) {
     emit(func->getBlock());
     out.emplace_back(allocator.create<SkrLabel>(retLabel));
 
-    auto baInstructions =
-        BoundArray<SkrInstruction*>::fromVector(out, allocator);
+    auto baInstructions = BoundArray<SkrInstruction*>::fromVector(out, allocator);
     return allocator.create<SkrFunction>(
-        func->getName(), skrParams, baInstructions, funcRetVal);
+        func->getName(),
+        skrParams,
+        baInstructions,
+        funcRetVal
+    );
 }
 
 void SkrEmitter::emit(const AstBlock* block) {
@@ -162,8 +171,7 @@ void SkrEmitter::emitBranch(AstExp* exp, StringRef label, bool invert) {
         else {
             skrOp = SkrBranch::Operator::NotEquals;
         }
-        auto* branch =
-            allocator.create<SkrBranch>(res, skrOp, getSkrIntConst(0), label);
+        auto* branch = allocator.create<SkrBranch>(res, skrOp, getSkrIntConst(0), label);
         out.emplace_back(branch);
     }
 }
@@ -184,12 +192,14 @@ SkrExpRes SkrEmitter::emit(AstExp* exp, SkrVar* dst) {
         auto* it = (AstAddrOf*) exp;
         SkrExpRes var = emit(it->getExpression());
         auto* toType = symbolTable.getTypeAllocator().create<SymbolPointerType>(
-            getType(var.get()));
+            getType(var.get())
+        );
         if (dst == nullptr) {
             dst = createVar("addr", toType);
         }
         out.emplace_back(
-            allocator.create<SkrGetAddr>(dst, var.get()->toSkrVar()));
+            allocator.create<SkrGetAddr>(dst, var.get()->toSkrVar())
+        );
         return SkrExpRes::val(dst);
     }
     else if (kind == AstExp::Kind::Binary) {
@@ -211,12 +221,16 @@ SkrExpRes SkrEmitter::emit(AstExp* exp, SkrVar* dst) {
         else */
         if (left.kind == SkrExpRes::Kind::Field) {
             out.emplace_back(allocator.create<SkrCopyToOffset>(
-                left.getBase(), left.getOffset(), right));
+                left.getBase(),
+                left.getOffset(),
+                right
+            ));
             return SkrExpRes::val(right);
         }
         else {
             out.emplace_back(
-                allocator.create<SkrCopy>(left.get()->toSkrVar(), right));
+                allocator.create<SkrCopy>(left.get()->toSkrVar(), right)
+            );
             return SkrExpRes::val(right);
         }
     }
@@ -232,13 +246,12 @@ SkrExpRes SkrEmitter::emit(AstExp* exp, SkrVar* dst) {
             dst = createVar("cast", targetType);
         }
 
-        if (getTypeKind(srcVal) == SymbolType::Kind::Integer &&
-            targetType->kind == SymbolType::Kind::Float) {
+        if (getTypeKind(srcVal) == SymbolType::Kind::Integer && targetType->kind == SymbolType::Kind::Float) {
             out.emplace_back(allocator.create<SkrInt2Float>(dst, srcVal));
         }
         else if (
-            getTypeKind(srcVal) == SymbolType::Kind::Float &&
-            targetType->kind == SymbolType::Kind::Integer) {
+            getTypeKind(srcVal) == SymbolType::Kind::Float && targetType->kind == SymbolType::Kind::Integer
+        ) {
             out.emplace_back(allocator.create<SkrFloat2Int>(dst, srcVal));
         }
         else {
@@ -338,8 +351,7 @@ SkrValue* SkrEmitter::emitFunCall(AstFunCall* call, SkrVar* dst) {
     if (dst == nullptr) {
         dst = createVar(call->getFunName(), "r", call->type);
     }
-    auto* skrCall =
-        allocator.create<SkrFunCall>(call->getFunName(), skrArgs, dst);
+    auto* skrCall = allocator.create<SkrFunCall>(call->getFunName(), skrArgs, dst);
     out.emplace_back(skrCall);
     return dst;
 }
@@ -377,7 +389,10 @@ SkrValue* SkrEmitter::emitAndConvert(AstExp* exp, SkrVar* dst) {
             dst = createVar("field", exp->type);
         }
         out.emplace_back(allocator.create<SkrCopyFromOffset>(
-            dst, res.getBase(), res.getOffset()));
+            dst,
+            res.getBase(),
+            res.getOffset()
+        ));
         return dst;
     }
 
@@ -424,7 +439,10 @@ StringRef SkrEmitter::getStructTag(SymbolType* type) {
     }
 
     sparkError(
-        "SkrEmitter", "Expected a structure, but found kind %d", type->kind);
+        "SkrEmitter",
+        "Expected a structure, but found kind %d",
+        type->kind
+    );
     return StringRef::nullInstance();
 }
 
@@ -436,20 +454,17 @@ SkrBinary::Operator SkrEmitter::binaryOpOf(AstBinaryExp::Operator astOp) {
     case AstBinaryExp::Operator::Div: return SkrBinary::Operator::Div;
     case AstBinaryExp::Operator::Rem: return SkrBinary::Operator::Rem;
     case AstBinaryExp::Operator::Equals: return SkrBinary::Operator::Equals;
-    case AstBinaryExp::Operator::NotEquals:
-        return SkrBinary::Operator::NotEquals;
+    case AstBinaryExp::Operator::NotEquals: return SkrBinary::Operator::NotEquals;
     case AstBinaryExp::Operator::LessThan: return SkrBinary::Operator::LessThan;
-    case AstBinaryExp::Operator::LessOrEqual:
-        return SkrBinary::Operator::LessOrEqual;
-    case AstBinaryExp::Operator::GreaterThan:
-        return SkrBinary::Operator::GreaterThan;
-    case AstBinaryExp::Operator::GreaterOrEqual:
-        return SkrBinary::Operator::GreaterOrEqual;
+    case AstBinaryExp::Operator::LessOrEqual: return SkrBinary::Operator::LessOrEqual;
+    case AstBinaryExp::Operator::GreaterThan: return SkrBinary::Operator::GreaterThan;
+    case AstBinaryExp::Operator::GreaterOrEqual: return SkrBinary::Operator::GreaterOrEqual;
     default:
         sparkError(
             "SkrBinary",
             "Can't map AstBinaryExp::Operator to SkrBinary::Operator: %d",
-            astOp);
+            astOp
+        );
         return SkrBinary::Operator::Plus;
     }
 }
@@ -457,20 +472,17 @@ SkrBinary::Operator SkrEmitter::binaryOpOf(AstBinaryExp::Operator astOp) {
 SkrBranch::Operator SkrEmitter::branchOpOf(AstBinaryExp::Operator astOp) {
     switch (astOp) {
     case AstBinaryExp::Operator::Equals: return SkrBranch::Operator::Equals;
-    case AstBinaryExp::Operator::NotEquals:
-        return SkrBranch::Operator::NotEquals;
+    case AstBinaryExp::Operator::NotEquals: return SkrBranch::Operator::NotEquals;
     case AstBinaryExp::Operator::LessThan: return SkrBranch::Operator::LessThan;
-    case AstBinaryExp::Operator::LessOrEqual:
-        return SkrBranch::Operator::LessOrEqual;
-    case AstBinaryExp::Operator::GreaterThan:
-        return SkrBranch::Operator::GreaterThan;
-    case AstBinaryExp::Operator::GreaterOrEqual:
-        return SkrBranch::Operator::GreaterOrEqual;
+    case AstBinaryExp::Operator::LessOrEqual: return SkrBranch::Operator::LessOrEqual;
+    case AstBinaryExp::Operator::GreaterThan: return SkrBranch::Operator::GreaterThan;
+    case AstBinaryExp::Operator::GreaterOrEqual: return SkrBranch::Operator::GreaterOrEqual;
     default:
         sparkError(
             "SkrBinary",
             "Can't map AstBinaryExp::Operator to SkrBranch::Operator: %d",
-            astOp);
+            astOp
+        );
         return SkrBranch::Operator::Equals;
     }
 }
@@ -480,19 +492,16 @@ SkrEmitter::invertedBranchOpOf(AstBinaryExp::Operator astOp) {
     switch (astOp) {
     case AstBinaryExp::Operator::Equals: return SkrBranch::Operator::NotEquals;
     case AstBinaryExp::Operator::NotEquals: return SkrBranch::Operator::Equals;
-    case AstBinaryExp::Operator::LessThan:
-        return SkrBranch::Operator::GreaterOrEqual;
-    case AstBinaryExp::Operator::LessOrEqual:
-        return SkrBranch::Operator::GreaterThan;
-    case AstBinaryExp::Operator::GreaterThan:
-        return SkrBranch::Operator::LessOrEqual;
-    case AstBinaryExp::Operator::GreaterOrEqual:
-        return SkrBranch::Operator::LessThan;
+    case AstBinaryExp::Operator::LessThan: return SkrBranch::Operator::GreaterOrEqual;
+    case AstBinaryExp::Operator::LessOrEqual: return SkrBranch::Operator::GreaterThan;
+    case AstBinaryExp::Operator::GreaterThan: return SkrBranch::Operator::LessOrEqual;
+    case AstBinaryExp::Operator::GreaterOrEqual: return SkrBranch::Operator::LessThan;
     default:
         sparkError(
             "SkrBinary",
             "Can't map inv AstBinaryExp::Operator to SkrBranch::Operator: %d",
-            astOp);
+            astOp
+        );
         return SkrBranch::Operator::Equals;
     }
 }
@@ -510,9 +519,11 @@ bool SkrEmitter::isLogicalBin(AstExp* exp) {
     case AstBinaryExp::Operator::LessThan:
     case AstBinaryExp::Operator::LessOrEqual:
     case AstBinaryExp::Operator::GreaterThan:
-    case AstBinaryExp::Operator::GreaterOrEqual: return true;
+    case AstBinaryExp::Operator::GreaterOrEqual:
+        return true;
 
-    default: return false;
+    default:
+        return false;
     }
 }
 

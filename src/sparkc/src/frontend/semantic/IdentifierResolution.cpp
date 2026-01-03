@@ -4,13 +4,15 @@ IdentifierResolution::IdentifierResolution(
     SymbolTable& symbolTable,
     TypeTable& typeTable,
     IdentifierGen& idGen,
-    size_t scopeMem)
-    : scope(symbolTable, typeTable, scopeMem), idGen(idGen) {}
+    size_t scopeMem
+)
+    : scope(symbolTable, typeTable, scopeMem)
+    , idGen(idGen) { }
 
 void IdentifierResolution::resolve(AstProgram* program) {
     for (auto* it : program->items) {
         if (it->kind == AstProgItem::Kind::Function) {
-            declareFunction((AstFunction*)it);
+            declareFunction((AstFunction*) it);
         }
     }
 
@@ -39,12 +41,17 @@ void IdentifierResolution::declareStruct(AstStruct* it) {
 
 void IdentifierResolution::resolve(AstProgItem* progItem) {
     if (progItem->kind == AstProgItem::Kind::Struct) {
-        resolve((AstStruct*)progItem);
-    } else if (progItem->kind == AstProgItem::Kind::Function) {
-        resolve((AstFunction*)progItem);
-    } else {
+        resolve((AstStruct*) progItem);
+    }
+    else if (progItem->kind == AstProgItem::Kind::Function) {
+        resolve((AstFunction*) progItem);
+    }
+    else {
         sparkError(
-            "IdentifierResolution", "Unknown AstProgItem: %d", progItem->kind);
+            "IdentifierResolution",
+            "Unknown AstProgItem: %d",
+            progItem->kind
+        );
     }
 }
 
@@ -73,94 +80,118 @@ void IdentifierResolution::resolve(AstBlock* block) {
 void IdentifierResolution::resolve(AstBlockItem* item) {
     auto kind = item->kind;
     if (kind == AstBlockItem::Kind::Declaration) {
-        auto* declItem = (AstDeclBlockItem*)item;
+        auto* declItem = (AstDeclBlockItem*) item;
         resolve(declItem->getDeclaration());
-    } else if (kind == AstBlockItem::Kind::Statement) {
-        auto* stItem = (AstStatementBlockItem*)item;
+    }
+    else if (kind == AstBlockItem::Kind::Statement) {
+        auto* stItem = (AstStatementBlockItem*) item;
         resolve(stItem->getStatement());
-    } else {
+    }
+    else {
         sparkError("IdentifierResolution", "Unknown AstBlockItem: %d", kind);
     }
 }
 
 void IdentifierResolution::resolve(AstDeclaration* decl) {
     if (decl->kind == AstDeclaration::Kind::Var) {
-        auto* varDecl = (AstVarDeclaration*)decl;
+        auto* varDecl = (AstVarDeclaration*) decl;
         if (varDecl->getInitializer() != nullptr) {
             resolve(varDecl->getInitializer());
         }
         varDecl->setId(declareVar(varDecl->getId(), varDecl->getType()));
-    } else {
+    }
+    else {
         sparkError(
-            "IdentifierResolution", "Unknown AstDeclaration: %d", decl->kind);
+            "IdentifierResolution",
+            "Unknown AstDeclaration: %d",
+            decl->kind
+        );
     }
 }
 
 void IdentifierResolution::resolve(AstStatement* st) {
     if (st->kind == AstStatement::Kind::Return) {
-        resolve(((AstReturnStatement*)st)->getExpression());
-    } else if (st->kind == AstStatement::Kind::Expression) {
-        resolve(((AstExpressionStatement*)st)->getExpression());
-    } else if (st->kind == AstStatement::Kind::If) {
-        auto* it = (AstIfStatement*)st;
+        resolve(((AstReturnStatement*) st)->getExpression());
+    }
+    else if (st->kind == AstStatement::Kind::Expression) {
+        resolve(((AstExpressionStatement*) st)->getExpression());
+    }
+    else if (st->kind == AstStatement::Kind::If) {
+        auto* it = (AstIfStatement*) st;
         resolve(it->getCondition());
         resolve(it->getTrueBranch());
         auto* falseBranch = it->getFalseBranch();
         if (falseBranch != nullptr) {
             resolve(falseBranch);
         }
-    } else if (st->kind == AstStatement::Kind::While) {
-        auto* it = (AstWhileStatement*)st;
+    }
+    else if (st->kind == AstStatement::Kind::While) {
+        auto* it = (AstWhileStatement*) st;
         resolve(it->getCondition());
         resolve(it->getStatement());
-    } else if (st->kind == AstStatement::Kind::Compound) {
-        auto* it = (AstCompoundStatement*)st;
+    }
+    else if (st->kind == AstStatement::Kind::Compound) {
+        auto* it = (AstCompoundStatement*) st;
         resolve(it->getBlock());
-    } else {
+    }
+    else {
         sparkError(
-            "IdentifierResolution", "Unknown AstStatement: %d", st->kind);
+            "IdentifierResolution",
+            "Unknown AstStatement: %d",
+            st->kind
+        );
     }
 }
 
 void IdentifierResolution::resolve(AstExp* exp) {
     auto kind = exp->kind;
     if (kind == AstExp::Kind::Constant) {
-    } else if (kind == AstExp::Kind::Binary) {
-        auto* it = (AstBinaryExp*)exp;
+    }
+    else if (kind == AstExp::Kind::Binary) {
+        auto* it = (AstBinaryExp*) exp;
         resolve(it->getLeft());
         resolve(it->getRight());
-    } else if (kind == AstExp::Kind::Var) {
-        auto* it = (AstVar*)exp;
+    }
+    else if (kind == AstExp::Kind::Var) {
+        auto* it = (AstVar*) exp;
         it->setId(scope.get(it->getId(), ScopeItem::Kind::Var).id);
-    } else if (kind == AstExp::Kind::Assignment) {
-        auto* it = (AstAssignment*)exp;
+    }
+    else if (kind == AstExp::Kind::Assignment) {
+        auto* it = (AstAssignment*) exp;
         resolve(it->getVar());
         resolve(it->getExp());
-    } else if (kind == AstExp::Kind::FunCall) {
-        auto* it = (AstFunCall*)exp;
+    }
+    else if (kind == AstExp::Kind::FunCall) {
+        auto* it = (AstFunCall*) exp;
         checkDeclaration(it->getFunName(), ScopeItem::Kind::Func);
         for (auto* arg : it->getArgs()) {
             resolve(arg);
         }
-    } else if (kind == AstExp::Kind::Cast) {
-        auto* it = (AstCast*)exp;
+    }
+    else if (kind == AstExp::Kind::Cast) {
+        auto* it = (AstCast*) exp;
         resolve(it->getExp());
-    } else if (kind == AstExp::Kind::Dereference) {
-        auto* it = (AstDereference*)exp;
+    }
+    else if (kind == AstExp::Kind::Dereference) {
+        auto* it = (AstDereference*) exp;
         resolve(it->getExpression());
-    } else if (kind == AstExp::Kind::AddrOf) {
-        auto* it = (AstAddrOf*)exp;
+    }
+    else if (kind == AstExp::Kind::AddrOf) {
+        auto* it = (AstAddrOf*) exp;
         resolve(it->getExpression());
-    } else if (kind == AstExp::Kind::Dot) {
-        auto* it = (AstDot*)exp;
+    }
+    else if (kind == AstExp::Kind::Dot) {
+        auto* it = (AstDot*) exp;
         resolve(it->getFrom());
-    } else if (kind == AstExp::Kind::StructInit) {
-        auto* it = (AstStructInit*)exp;
+    }
+    else if (kind == AstExp::Kind::StructInit) {
+        auto* it = (AstStructInit*) exp;
         checkDeclaration(it->getTag(), ScopeItem::Kind::Struct);
         for (auto* arg : it->getArgs()) {
             resolve(arg);
         }
-    } else {
+    }
+    else {
         sparkError("IdentifierResolution", "Unknown AstExp: %d", kind);
     }
 }

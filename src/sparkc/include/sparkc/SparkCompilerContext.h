@@ -1,15 +1,15 @@
 #pragma once
+#include "sparkc/backend/rv/asm/RvAssembler.h"
+#include "sparkc/common/IdentifierGen.h"
+#include "sparkc/common/LabelGen.h"
+#include "sparkc/common/alloc/Allocator.h"
+#include "sparkc/size/SymbolSize.h"
+#include "sparkc/symbol/SymbolTable.h"
+#include "sparkc/symbol/SymbolType.h"
+#include "sparkc/type/TypeTable.h"
 #include <cstdint>
 #include <string>
 #include <vector>
-#include "sparkc/common/alloc/Allocator.h"
-#include "sparkc/symbol/SymbolType.h"
-#include "sparkc/symbol/SymbolTable.h"
-#include "sparkc/type/TypeTable.h"
-#include "sparkc/common/IdentifierGen.h"
-#include "sparkc/common/LabelGen.h"
-#include "sparkc/size/SymbolSize.h"
-#include "sparkc/backend/rv/asm/RvAssembler.h"
 
 struct SparkCompilerContext {
     SparkCompilerContext(Allocator& shared, uint8_t* out, size_t outCap)

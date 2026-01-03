@@ -5,8 +5,8 @@ class WrongStatementException : public ParseException {
 public:
     WrongStatementException(const Token& token)
         : ParseException(
-            Kind::WrongStatement,
-            token, 
-            "Failed to parse statement: wtf '" + token.value.toString() + "'"
-        ) {}
+              Kind::WrongStatement,
+              token,
+              "Failed to parse statement: wtf '" + token.value.toString() + "'"
+          ) { }
 };

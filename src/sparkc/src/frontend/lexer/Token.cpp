@@ -42,7 +42,8 @@ static constexpr int _TokenKinds2StringCount = sizeof(_TokenKind2String) / sizeo
 const char* TokenKind_toString(TokenKind kind) {
     if (kind < _TokenKinds2StringCount) {
         return _TokenKind2String[kind];
-    } else {
+    }
+    else {
         return "<unknown>";
     }
 }
@@ -52,7 +53,7 @@ std::string TokenKind_toStdString(TokenKind kind) {
 }
 
 std::ostream& operator<<(std::ostream& os, TokenPos pos) {
-    os << "[" << pos.line+1 << ":" << pos.col+1 << "]";
+    os << "[" << pos.line + 1 << ":" << pos.col + 1 << "]";
     return os;
 }
 

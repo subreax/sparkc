@@ -1,7 +1,7 @@
 #pragma once
-#include <cstdio>
-#include <cstdarg>
 #include "SparkRuntimeException.h"
+#include <cstdarg>
+#include <cstdio>
 
 static void sparkError(const char* fileName, const char* fmt, ...) {
     char buf[192];

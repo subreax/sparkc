@@ -1,12 +1,13 @@
 #pragma once
-#include <vector>
-#include "sparkc/skr/instr/SkrCopy.h"
 #include "ReachingCopiesUtils.h"
+#include "sparkc/skr/instr/SkrCopy.h"
+#include <vector>
 
 class ReachingCopies {
 public:
     ReachingCopies() = default;
-    ReachingCopies(const std::vector<SkrCopy*>& initial) : copies(initial) {  }
+    ReachingCopies(const std::vector<SkrCopy*>& initial)
+        : copies(initial) { }
 
     void add(SkrCopy* copy) {
         if (!ReachingCopiesUtils::contains(copies, copy)) {

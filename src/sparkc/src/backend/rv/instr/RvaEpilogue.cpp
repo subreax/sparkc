@@ -2,7 +2,9 @@
 #include "../asm/Rv32I.h"
 
 RvaEpilogue::RvaEpilogue(int32_t frameSize, bool _loadRa)
-    : RvaInstruction(Kind::Epilogue), frameSize(frameSize), _loadRa(_loadRa) {}
+    : RvaInstruction(Kind::Epilogue)
+    , frameSize(frameSize)
+    , _loadRa(_loadRa) { }
 
 int32_t RvaEpilogue::getFrameSize() const { return frameSize; }
 void RvaEpilogue::setFrameSize(int32_t size) { frameSize = size; }

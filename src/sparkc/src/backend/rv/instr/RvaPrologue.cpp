@@ -2,7 +2,9 @@
 #include "../asm/Rv32I.h"
 
 RvaPrologue::RvaPrologue(int32_t frameSize, bool _saveRa)
-    : RvaInstruction(Kind::Prologue), frameSize(frameSize), _saveRa(_saveRa) {}
+    : RvaInstruction(Kind::Prologue)
+    , frameSize(frameSize)
+    , _saveRa(_saveRa) { }
 
 int32_t RvaPrologue::getFrameSize() const { return frameSize; }
 void RvaPrologue::setFrameSize(int32_t size) { frameSize = size; }

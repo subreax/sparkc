@@ -1,6 +1,5 @@
 #pragma once
 #include "ConstantFolding.h"
-#include "sparkc/skr/optimizer/SkrOptOnCfgCreatedListener.h"
 #include "UnreachableCodeElimination.h"
 #include "copyprop/CopyPropagation.h"
 #include "dselim/DeadStoreElimination.h"
@@ -8,6 +7,7 @@
 #include "sparkc/common/cfg/CfgBuilder.h"
 #include "sparkc/skr/SkrFunction.h"
 #include "sparkc/skr/instr/everything.h"
+#include "sparkc/skr/optimizer/SkrOptOnCfgCreatedListener.h"
 #include "sparkc/skr/optimizer/SkrOptimizerConfig.h"
 
 class SkrOptimizer {
@@ -17,14 +17,16 @@ public:
     SkrOptimizer(
         Allocator& a1,
         SkrFunction* rawFunc,
-        SkrOptOnCfgCreatedListener* onGraphCreated = nullptr)
-        : raw(rawFunc->getInstructions().toVector()), rawFunc(rawFunc), a1(a1),
-          onCfgCreatedListener(onGraphCreated) {}
+        SkrOptOnCfgCreatedListener* onGraphCreated = nullptr
+    )
+        : raw(rawFunc->getInstructions().toVector())
+        , rawFunc(rawFunc)
+        , a1(a1)
+        , onCfgCreatedListener(onGraphCreated) { }
 
     SkrFunction* optimize(const SkrOptimizerConfig& config) {
         if (onCfgCreatedListener != nullptr) {
-            auto* initialGraph =
-                CfgBuilder<SkrInstruction>().build_delGraphWhenDone(raw);
+            auto* initialGraph = CfgBuilder<SkrInstruction>().build_delGraphWhenDone(raw);
             notifyGraphCreated(rawFunc->getName(), 0, initialGraph);
             delete initialGraph;
         }
@@ -36,8 +38,7 @@ public:
                 ConstantFolding::run(a1, optimized);
             }
 
-            auto* graph =
-                CfgBuilder<SkrInstruction>().build_delGraphWhenDone(optimized);
+            auto* graph = CfgBuilder<SkrInstruction>().build_delGraphWhenDone(optimized);
 
             if (config.deadCodeElimination) {
                 UnreachableCodeElimination(graph).run();
@@ -67,12 +68,16 @@ public:
             rawFunc->getName(),
             rawFunc->getParams(),
             bodyBa,
-            rawFunc->getRetVar());
+            rawFunc->getRetVar()
+        );
     }
 
 private:
     void notifyGraphCreated(
-        StringRef funName, int iteration, CfGraph<SkrInstruction*>* graph) {
+        StringRef funName,
+        int iteration,
+        CfGraph<SkrInstruction*>* graph
+    ) {
         if (onCfgCreatedListener != nullptr) {
             onCfgCreatedListener->onCfgCreated(funName, iteration, graph);
         }

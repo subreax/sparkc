@@ -1,24 +1,30 @@
 #pragma once
+#include <fstream>
+#include <iostream>
+#include <sparkc/frontend/ast/everything.h>
+#include <sstream>
 #include <string>
 #include <vector>
-#include <iostream>
-#include <sstream>
-#include <fstream>
-#include <sparkc/frontend/ast/everything.h>
 
 class AstMermaidPrinter {
 private:
     struct Node {
         // fields: key value key value ...
-        Node(AstMermaidPrinter& printer, const std::string& kind, std::initializer_list<std::string> fields = {})
-            : id(genId()), kind(kind), fields(fields)
-        {
+        Node(
+            AstMermaidPrinter& printer,
+            const std::string& kind,
+            std::initializer_list<std::string> fields = {}
+        )
+            : id(genId())
+            , kind(kind)
+            , fields(fields) {
             printer.declare(*this);
         }
 
         Node(AstMermaidPrinter& printer, const std::string& kind, std::vector<std::string> fields)
-            : id(genId()), kind(kind), fields(fields)
-        {
+            : id(genId())
+            , kind(kind)
+            , fields(fields) {
             printer.declare(*this);
         }
 
@@ -34,17 +40,18 @@ private:
     };
 
 public:
-    AstMermaidPrinter(std::ostream& os) : os(os) {  }
+    AstMermaidPrinter(std::ostream& os)
+        : os(os) { }
 
     static void saveToFile(AstProgram* prog, const std::string& outFile) {
         std::ofstream astOut(outFile);
         astOut << "```mermaid\n";
         astOut << "---\n"
-        "config:\n"
-        "  look: neo\n"
-        "  theme: redux-dark\n"
-        "---\n";
-        astOut << "flowchart LR\n";
+                  "config:\n"
+                  "  look: neo\n"
+                  "  theme: redux-dark\n"
+                  "---\n"
+                  "flowchart LR\n";
 
         AstMermaidPrinter printer(astOut);
         printer.toMermaid(prog);
@@ -112,7 +119,11 @@ private:
     }
 
     std::string toMermaid(AstFunParam* param) {
-        auto node = Node(*this, "param", { "value", param->getId().toString(), "type", type2string(param->getType()) });
+        auto node = Node(
+            *this,
+            "param",
+            { "value", param->getId().toString(), "type", type2string(param->getType()) }
+        );
         return node.id;
     }
 
@@ -132,7 +143,11 @@ private:
     std::string toMermaid(AstDeclaration* decl) {
         if (decl->kind == AstDeclaration::Kind::Var) {
             auto* it = (AstVarDeclaration*) decl;
-            auto node = Node(*this, "var decl", { "name", it->getId().toString(), "type", type2string(it->getType()) });
+            auto node = Node(
+                *this,
+                "var decl",
+                { "name", it->getId().toString(), "type", type2string(it->getType()) }
+            );
             if (it->getInitializer() != nullptr) {
                 connect(node, toMermaid(it->getInitializer()));
             }
@@ -199,12 +214,17 @@ private:
         else if (kind == AstExp::Kind::Constant) {
             auto* constant = (AstConstantExp*) exp;
             auto* value = constant->getValue();
-            auto child = Node(*this, kindStr, { "value", toString(value), "type", type2string(constant) });
+            auto child
+                = Node(*this, kindStr, { "value", toString(value), "type", type2string(constant) });
             return child.id;
         }
         else if (kind == AstExp::Kind::Var) {
             auto* var = (AstVar*) exp;
-            auto node = Node(*this, kindStr, { "value", var->getId().toString(), "type", type2string(var) });
+            auto node = Node(
+                *this,
+                kindStr,
+                { "value", var->getId().toString(), "type", type2string(var) }
+            );
             return node.id;
         }
         else if (kind == AstExp::Kind::Assignment) {
@@ -216,7 +236,11 @@ private:
         }
         else if (kind == AstExp::Kind::FunCall) {
             auto* call = (AstFunCall*) exp;
-            auto node = Node(*this, kindStr, { "fn", call->getFunName().toString(), "type", type2string(call) });
+            auto node = Node(
+                *this,
+                kindStr,
+                { "fn", call->getFunName().toString(), "type", type2string(call) }
+            );
             const auto& args = call->getArgs();
             for (size_t i = 0; i < args.size(); i++) {
                 connect(node, toMermaid(args[i]));
@@ -304,19 +328,20 @@ private:
     }
 
     const char* bslashIfNeeded(const std::string& s) {
-        if (s.empty()) return "";
-        if (isalnum(s[0])) return "";
+        if (s.empty())
+            return "";
+        if (isalnum(s[0]))
+            return "";
         return "\\";
     }
 
-    std::string type2string(AstExp* exp) {
-        return type2string(exp->type);
-    }
+    std::string type2string(AstExp* exp) { return type2string(exp->type); }
 
     std::string type2string(SymbolType* type) {
         if (type) {
             return type->toString();
-        } else {
+        }
+        else {
             return "NULL";
         }
     }

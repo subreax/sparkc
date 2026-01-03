@@ -4,15 +4,21 @@
 
 class SymbolType {
 public:
-    enum class Kind { Integer, Float, Pointer, Function, Structure };
+    enum class Kind {
+        Integer,
+        Float,
+        Pointer,
+        Function,
+        Structure
+    };
 
-    SymbolType(Kind kind) : kind(kind) {  }
+    SymbolType(Kind kind)
+        : kind(kind) { }
 
     std::string toString() const;
 
     const Kind kind;
 };
-
 
 class SymbolIntType : public SymbolType {
 public:
@@ -22,7 +28,8 @@ public:
     }
 
 private:
-    SymbolIntType() : SymbolType(Kind::Integer) {  }
+    SymbolIntType()
+        : SymbolType(Kind::Integer) { }
 };
 
 class SymbolFloatType : public SymbolType {
@@ -33,15 +40,16 @@ public:
     }
 
 private:
-    SymbolFloatType() : SymbolType(Kind::Float) {  }
+    SymbolFloatType()
+        : SymbolType(Kind::Float) { }
 };
 
 class SymbolFunctionType : public SymbolType {
 public:
-    SymbolFunctionType(SymbolType* retType, BoundArray<SymbolType*> params) 
+    SymbolFunctionType(SymbolType* retType, BoundArray<SymbolType*> params)
         : SymbolType(Kind::Function)
         , params(params)
-        , retType(retType) {  }
+        , retType(retType) { }
 
     BoundArray<SymbolType*> getParams() { return params; }
     const BoundArray<SymbolType*> getParams() const { return params; }
@@ -55,7 +63,9 @@ private:
 
 class SymbolPointerType : public SymbolType {
 public:
-    SymbolPointerType(SymbolType* varType) : SymbolType(Kind::Pointer), varType(varType) {  }
+    SymbolPointerType(SymbolType* varType)
+        : SymbolType(Kind::Pointer)
+        , varType(varType) { }
 
     SymbolType* getVarType() const { return varType; }
 
@@ -65,7 +75,9 @@ private:
 
 class SymbolStructureType : public SymbolType {
 public:
-    SymbolStructureType(StringRef tag) : SymbolType(Kind::Structure), tag(tag) {  }
+    SymbolStructureType(StringRef tag)
+        : SymbolType(Kind::Structure)
+        , tag(tag) { }
 
     StringRef getTag() const { return tag; }
 

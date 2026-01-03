@@ -1,8 +1,8 @@
 #pragma once
-#include <memory>
-#include <cstring>
-#include "Allocator.h"
 #include "../OutOfBoundsException.h"
+#include "Allocator.h"
+#include <cstring>
+#include <memory>
 
 class LinearAllocator : public Allocator {
 public:
@@ -10,15 +10,14 @@ public:
         : Allocator(name)
         , begin((uint8_t*) malloc(sz))
         , ptr(begin)
-        , end(begin + sz)
-    {
+        , end(begin + sz) {
         if (zeroMem) {
             memset(begin, 0, sz);
         }
     }
 
     LinearAllocator(const char* name, size_t sz, bool zeroMem = false)
-        : LinearAllocator(StringRef::cstr(name), sz, zeroMem) {  }
+        : LinearAllocator(StringRef::cstr(name), sz, zeroMem) { }
 
     ~LinearAllocator() override {
         ::free(begin);
@@ -29,7 +28,8 @@ public:
             uint8_t* block = ptr;
             ptr += blockSz;
             return MemBlock(blockSz, block);
-        } else {
+        }
+        else {
             throw NoMemoryException(getName());
         }
     }
@@ -37,7 +37,8 @@ public:
     void free(size_t sz) {
         if (sz <= getUsedSize()) {
             ptr -= sz;
-        } else {
+        }
+        else {
             throw OutOfBoundsException(0, getCapacity(), (int32_t) getUsedSize() - (int32_t) sz);
         }
     }
@@ -65,7 +66,7 @@ public:
     const uint8_t* getPtr() const { return ptr; }
 
 private:
-    uint8_t *const begin;
+    uint8_t* const begin;
     uint8_t* ptr;
     uint8_t* end;
 };

@@ -1,6 +1,6 @@
 #pragma once
-#include <cstdint>
 #include "sparkc/backend/rv/RvReg.h"
+#include <cstdint>
 
 namespace Rv32Base {
 uint32_t rType(uint32_t opcode, uint32_t funct3, uint32_t funct7, RvReg rd, RvReg rs1, RvReg rs2);
@@ -15,4 +15,4 @@ uint32_t encodeImmJ(int32_t imm20);
 
 bool isBType(uint32_t instr);
 bool isJType(uint32_t instr);
-};
+}; // namespace Rv32Base

@@ -18,7 +18,7 @@ bool Constant::operator==(const Constant& other) const {
     }
     else if (type->kind == SymbolType::Kind::Float) {
         return floatValue() == other.floatValue();
-    } 
+    }
     else {
         sparkError("Constant", "Unknown symbol type: %d", type->kind);
         return false;

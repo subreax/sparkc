@@ -2,7 +2,9 @@
 #include "../asm/Rv32I.h"
 
 RvaMov::RvaMov(RvaValue* to, RvaValue* from)
-    : RvaInstruction(Kind::Move), to(to), from(from) {}
+    : RvaInstruction(Kind::Move)
+    , to(to)
+    , from(from) { }
 
 void RvaMov::emit(RvListing& listing) {
     auto toReg = expectReg(to);

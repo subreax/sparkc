@@ -1,12 +1,12 @@
 #pragma once
-#include <sstream>
 #include "ParseException.h"
+#include <sstream>
 
 class UndeclaredVariableException : public ParseException {
 public:
     UndeclaredVariableException(const Token& token)
-        : ParseException(Kind::UndeclaredVariable, token, buildMessage(token)) {  }
-    
+        : ParseException(Kind::UndeclaredVariable, token, buildMessage(token)) { }
+
 private:
     std::string buildMessage(const Token& token) {
         char buf[32];

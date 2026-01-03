@@ -1,7 +1,6 @@
 #include "Lexer.h"
 #include "TokenReaders.h"
 
-
 struct TokenReaderWithKind {
     TokenKind kind;
     TokenReaders::Reader read;
@@ -29,8 +28,8 @@ static constexpr TokenReaderWithKind Lexer_readers[] = {
     { T_FWD_SLASH, TokenReaders::readFwdSlash },
     { T_PERCENT, TokenReaders::readPercent },
     { T_PERCENT, TokenReaders::readPercent },
-    { T_EQUALS_EQUALS, TokenReaders::readEqualsEquals, },
-    { T_NOT_EQUALS, TokenReaders::readNotEquals, },
+    { T_EQUALS_EQUALS, TokenReaders::readEqualsEquals },
+    { T_NOT_EQUALS, TokenReaders::readNotEquals },
     { T_EQUALS, TokenReaders::readEquals },
     { T_AMP_AMP, TokenReaders::readAmpAmp },
     { T_AMP, TokenReaders::readAmp },
@@ -46,8 +45,8 @@ static constexpr TokenReaderWithKind Lexer_readers[] = {
 
 static constexpr int Lexer_readersCount = sizeof(Lexer_readers) / sizeof(TokenReaderWithKind);
 
-
-Lexer::Lexer(const char* src) : src(src) { }
+Lexer::Lexer(const char* src)
+    : src(src) { }
 
 Token Lexer::next() {
     skipWhitespaces();
@@ -68,7 +67,8 @@ Token Lexer::next() {
         pos += len;
         column += len;
         return token;
-    } else {
+    }
+    else {
         Token token(kind, StringRef(src, 1), line, column);
         pos += 1;
         column += 1;
@@ -79,7 +79,6 @@ Token Lexer::next() {
 bool Lexer::hasNext() {
     return src[pos] != 0;
 }
-
 
 void Lexer::skipWhitespaces() {
     while (isspace(src[pos])) {

@@ -1,5 +1,5 @@
 #include <catch2/catch_test_macros.hpp>
-#include "spark/common/alloc/LinearAllocator.h"
+#include <sparkc/common/alloc/LinearAllocator.h>
 
 TEST_CASE("Linear allocator test", "[linear-allocator]") {
     LinearAllocator allocator("test", 16, true);
@@ -10,7 +10,7 @@ TEST_CASE("Linear allocator test", "[linear-allocator]") {
     allocator.allocate(4);
     REQUIRE(allocator.getUsedSize() == 4);
     REQUIRE(allocator.getFreeSize() == 12);
-    
+
     allocator.allocate(11);
     REQUIRE(allocator.getUsedSize() == 15);
     REQUIRE(allocator.getFreeSize() == 1);
@@ -28,7 +28,7 @@ TEST_CASE("Linear allocator test", "[linear-allocator]") {
     REQUIRE(allocator.getUsedSize() == 7);
 
     REQUIRE_THROWS(allocator.free(8));
-    
+
     allocator.free(7);
     REQUIRE(allocator.getFreeSize() == 16);
 

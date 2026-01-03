@@ -18,11 +18,8 @@ public:
                 if (left->isConst() && right->isConst()) {
                     *it = a.create<SkrCopy>(
                         bin->getDst(),
-                        evaluate(
-                            a,
-                            left->toSkrConst(),
-                            bin->getOperator(),
-                            right->toSkrConst()));
+                        evaluate(a, left->toSkrConst(), bin->getOperator(), right->toSkrConst())
+                    );
                 }
             }
             else if (skr->kind == SkrInstruction::Kind::Branch) {
@@ -48,7 +45,8 @@ public:
                     float evaluated = (float) c->intValue();
                     *it = a.create<SkrCopy>(
                         i2f->getDst(),
-                        a.create<SkrConst>(a.create<FloatConstant>(evaluated)));
+                        a.create<SkrConst>(a.create<FloatConstant>(evaluated))
+                    );
                 }
             }
             else if (skr->kind == SkrInstruction::Kind::Float2Int) {
@@ -58,7 +56,8 @@ public:
                     int32_t evaluated = (int32_t) c->floatValue();
                     *it = a.create<SkrCopy>(
                         f2i->getDst(),
-                        a.create<SkrConst>(a.create<IntConstant>(evaluated)));
+                        a.create<SkrConst>(a.create<IntConstant>(evaluated))
+                    );
                 }
             }
             it++;
@@ -69,7 +68,11 @@ public:
 
 private:
     static SkrConst* evaluate(
-        Allocator& a, SkrConst* left, SkrBinary::Operator op, SkrConst* right) {
+        Allocator& a,
+        SkrConst* left,
+        SkrBinary::Operator op,
+        SkrConst* right
+    ) {
         auto* leftC = left->getConst();
         auto* rightC = right->getConst();
         Constant* c = nullptr;
@@ -83,39 +86,62 @@ private:
     }
 
     static IntConstant* evaluate(
-        Allocator& a, int32_t left, SkrBinary::Operator op, int32_t right) {
+        Allocator& a,
+        int32_t left,
+        SkrBinary::Operator op,
+        int32_t right
+    ) {
         int32_t res = 0;
         switch (op) {
-        case SkrBinary::Operator::Plus: res = left + right; break;
+        case SkrBinary::Operator::Plus:
+            res = left + right;
+            break;
 
-        case SkrBinary::Operator::Minus: res = left - right; break;
+        case SkrBinary::Operator::Minus:
+            res = left - right;
+            break;
 
-        case SkrBinary::Operator::Mul: res = left * right; break;
+        case SkrBinary::Operator::Mul:
+            res = left * right;
+            break;
 
         case SkrBinary::Operator::Div:
             if (right != 0) {
                 res = left / right;
             }
             else {
-                sparkError(
-                    "SkrOptimizer",
-                    "Division by zero"); // todo: replace with normal exception
+                // todo: replace with normal exception
+                sparkError("SkrOptimizer", "Division by zero");
             }
             break;
 
-        case SkrBinary::Operator::Rem: res = left % right; break;
+        case SkrBinary::Operator::Rem:
+            res = left % right;
+            break;
 
-        case SkrBinary::Operator::Equals: res = left == right; break;
+        case SkrBinary::Operator::Equals:
+            res = left == right;
+            break;
 
-        case SkrBinary::Operator::NotEquals: res = left != right; break;
+        case SkrBinary::Operator::NotEquals:
+            res = left != right;
+            break;
 
-        case SkrBinary::Operator::LessThan: res = left < right; break;
+        case SkrBinary::Operator::LessThan:
+            res = left < right;
+            break;
 
-        case SkrBinary::Operator::LessOrEqual: res = left <= right; break;
+        case SkrBinary::Operator::LessOrEqual:
+            res = left <= right;
+            break;
 
-        case SkrBinary::Operator::GreaterThan: res = left > right; break;
+        case SkrBinary::Operator::GreaterThan:
+            res = left > right;
+            break;
 
-        case SkrBinary::Operator::GreaterOrEqual: res = left >= right; break;
+        case SkrBinary::Operator::GreaterOrEqual:
+            res = left >= right;
+            break;
 
         default:
             sparkError("SkrOptimizer", "Unsupported binary operator: %d", op);
@@ -139,9 +165,8 @@ private:
                 res = left / right;
             }
             else {
-                sparkError(
-                    "SkrOptimizer",
-                    "Division by zero"); // todo: replace with normal exception
+                // todo: replace with normal exception
+                sparkError("SkrOptimizer", "Division by zero");
             }
             break;
 
@@ -172,21 +197,17 @@ private:
 
         bool res;
         if (left->isInt()) {
-            res = evaluate(
-                a, left->intValue(), branch->getOperator(), right->intValue());
+            res = evaluate(a, left->intValue(), branch->getOperator(), right->intValue());
         }
         else if (left->isFloat()) {
-            res = evaluate(
-                a,
-                left->floatValue(),
-                branch->getOperator(),
-                right->floatValue());
+            res = evaluate(a, left->floatValue(), branch->getOperator(), right->floatValue());
         }
         else {
             sparkError(
                 "ConstantFolding",
                 "Unknown type for comparison: %d",
-                left->type->kind);
+                left->type->kind
+            );
             return nullptr;
         }
 
@@ -198,8 +219,7 @@ private:
         }
     }
 
-    static bool evaluate(
-        Allocator& a, int32_t left, SkrBranch::Operator op, int32_t right) {
+    static bool evaluate(Allocator& a, int32_t left, SkrBranch::Operator op, int32_t right) {
         switch (op) {
         case SkrBranch::Operator::Equals: return left == right;
         case SkrBranch::Operator::NotEquals: return left != right;
@@ -213,8 +233,7 @@ private:
         }
     }
 
-    static bool
-    evaluate(Allocator& a, float left, SkrBranch::Operator op, float right) {
+    static bool evaluate(Allocator& a, float left, SkrBranch::Operator op, float right) {
         switch (op) {
         case SkrBranch::Operator::Equals: return left == right;
         case SkrBranch::Operator::NotEquals: return left != right;

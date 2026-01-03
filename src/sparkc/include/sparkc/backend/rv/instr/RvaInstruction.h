@@ -1,16 +1,31 @@
 #pragma once
 #include "../RvaValue.h"
 #include "../asm/RvListing.h"
-#include "../../../common/Error.h"
+#include "sparkc/common/Error.h"
 #include <cstdio>
 
 class RvaInstruction {
 public:
     enum class Kind {
-        Prologue, Epilogue, Binary, Move, Load, Store, Jump, Label, Ret, Branch, Call, GetAddress, BeginTempStack, EndTempStack, ReserveOnStack
+        Prologue,
+        Epilogue,
+        Binary,
+        Move,
+        Load,
+        Store,
+        Jump,
+        Label,
+        Ret,
+        Branch,
+        Call,
+        GetAddress,
+        BeginTempStack,
+        EndTempStack,
+        ReserveOnStack
     };
 
-    RvaInstruction(Kind kind) : kind(kind) { }
+    RvaInstruction(Kind kind)
+        : kind(kind) { }
 
     virtual void emit(RvListing& listing) = 0;
 
@@ -41,4 +56,3 @@ protected:
         return nullptr;
     }
 };
-

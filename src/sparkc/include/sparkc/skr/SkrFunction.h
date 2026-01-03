@@ -1,16 +1,21 @@
 #pragma once
-#include <vector>
+#include "../common/BoundArray.h"
 #include "instr/SkrInstruction.h"
 #include "value/SkrValue.h"
-#include "../common/BoundArray.h"
+#include <vector>
 
 class SkrFunction {
 public:
-    SkrFunction(StringRef name, BoundArray<SkrVar*> params, BoundArray<SkrInstruction*> instructions, const SkrVar* retVar)
+    SkrFunction(
+        StringRef name,
+        BoundArray<SkrVar*> params,
+        BoundArray<SkrInstruction*> instructions,
+        const SkrVar* retVar
+    )
         : instructions(instructions)
         , params(params)
         , retVar(retVar)
-        , name(name) {  }
+        , name(name) { }
 
     StringRef getName() const { return name; }
     const BoundArray<SkrVar*>& getParams() const { return params; }

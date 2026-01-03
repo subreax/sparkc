@@ -1,12 +1,12 @@
 #pragma once
-#include <cstdint>
 #include "../OutOfBoundsException.h"
+#include <cstdint>
 
 class BitArray {
 public:
     BitArray(size_t bitsCount)
         : data(allocData(bitsCount))
-        , bitsCount(bitsCount) {  }
+        , bitsCount(bitsCount) { }
 
     ~BitArray() {
         delete[] data;
@@ -67,8 +67,6 @@ private:
     size_t indexOf(size_t bit) {
         return bit / 32;
     }
-
-
 
     uint32_t* data;
     const size_t bitsCount;

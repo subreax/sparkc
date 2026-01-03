@@ -1,13 +1,13 @@
 #pragma once
 #include "Allocator.h"
 
-template<typename T>
+template <typename T>
 class StatAllocator : public Allocator {
 public:
-    template<typename... Args>
-    StatAllocator(const char* name, Args... args) 
+    template <typename... Args>
+    StatAllocator(const char* name, Args... args)
         : Allocator(name)
-        , allocator(name, args...) {  }
+        , allocator(name, args...) { }
 
     MemBlock allocate(size_t sz) override {
         return allocator.allocate(sz);
@@ -45,7 +45,7 @@ public:
     T& getAllocator() { return allocator; }
 
 private:
-    size_t calcPeak() const { 
+    size_t calcPeak() const {
         return std::max(getUsedSize(), peak);
     }
 

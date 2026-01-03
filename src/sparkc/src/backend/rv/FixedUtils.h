@@ -1,6 +1,6 @@
 #pragma once
-#include <cstdint>
 #include <cmath>
+#include <cstdint>
 
 class FixedUtils {
 public:

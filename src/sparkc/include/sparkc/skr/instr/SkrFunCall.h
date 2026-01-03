@@ -1,7 +1,7 @@
 #pragma once
-#include "SkrInstruction.h"
-#include "../value/SkrValue.h"
 #include "../../common/BoundArray.h"
+#include "../value/SkrValue.h"
+#include "SkrInstruction.h"
 
 class SkrFunCall : public SkrInstruction {
 public:
@@ -9,7 +9,7 @@ public:
         : SkrInstruction(Kind::FunCall)
         , name(name)
         , retVar(retVar)
-        , args(args) {  }
+        , args(args) { }
 
     StringRef getName() const { return name; }
     const SkrVar* getRetVar() const { return retVar; }

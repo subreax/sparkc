@@ -1,9 +1,10 @@
 #pragma once
-#include "sparkc/common/BoundArray.h"
 #include "AstProgItem.h"
+#include "sparkc/common/BoundArray.h"
 
 struct AstProgram {
-    AstProgram(const BoundArray<AstProgItem*>& items) : items(items) {  }
+    AstProgram(const BoundArray<AstProgItem*>& items)
+        : items(items) { }
 
     BoundArray<AstProgItem*> items;
 };

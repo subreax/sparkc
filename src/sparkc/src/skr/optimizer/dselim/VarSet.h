@@ -1,6 +1,6 @@
 #pragma once
-#include <vector>
 #include "sparkc/skr/value/SkrValue.h"
+#include <vector>
 
 class VarSet {
 public:
@@ -78,7 +78,6 @@ private:
         }
         return it;
     }
-
 
     std::vector<const SkrVar*> vars;
 };

@@ -1,12 +1,12 @@
 #pragma once
-#include "SkrInstruction.h"
-#include "../value/SkrValue.h"
 #include "../../frontend/ast/exp/AstBinaryExp.h"
+#include "../value/SkrValue.h"
+#include "SkrInstruction.h"
 
 class SkrBranch : public SkrInstruction {
 public:
-    enum class Operator { 
-        Equals, 
+    enum class Operator {
+        Equals,
         NotEquals,
         LessThan,
         LessOrEqual,
@@ -14,12 +14,12 @@ public:
         GreaterOrEqual
     };
 
-    SkrBranch(SkrValue* left, Operator op, SkrValue* right, StringRef label) 
+    SkrBranch(SkrValue* left, Operator op, SkrValue* right, StringRef label)
         : SkrInstruction(Kind::Branch)
         , left(left)
         , op(op)
         , right(right)
-        , label(label) {  }
+        , label(label) { }
 
     SkrValue* getLeft() const { return left; }
     Operator getOperator() const { return op; }

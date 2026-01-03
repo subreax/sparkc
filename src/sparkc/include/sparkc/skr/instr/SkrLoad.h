@@ -3,11 +3,11 @@
 
 class SkrLoad : public SkrInstruction {
 public:
-    SkrLoad(SkrValue* to, SkrValue* from, int fromOffset) 
+    SkrLoad(SkrValue* to, SkrValue* from, int fromOffset)
         : SkrInstruction(Kind::Load)
         , to(to)
         , fromOffset(fromOffset)
-        , from(from) {  }
+        , from(from) { }
 
     SkrValue* getTo() const { return to; }
     int getFromOffset() const { return fromOffset; }

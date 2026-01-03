@@ -100,8 +100,15 @@ AstProgram* SparkCompiler::buildAst(Allocator& pool, Allocator& sharedPool, cons
 
 SkrFunction* SparkCompiler::ast2skr(AstFunction* astFunc, Allocator& pool) {
     std::vector<SkrInstruction*> buf;
-    SkrFunction* skrFunc
-        = SkrEmitter::emit(astFunc, pool, ctx->symTable, ctx->typeTable, ctx->idGen, ctx->labelGen, buf);
+    SkrFunction* skrFunc = SkrEmitter::emit(
+        astFunc,
+        pool,
+        ctx->symTable,
+        ctx->typeTable,
+        ctx->idGen,
+        ctx->labelGen,
+        buf
+    );
     notifyEmitSkrFunc(skrFunc);
     return skrFunc;
 }

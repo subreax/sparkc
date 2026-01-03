@@ -1,8 +1,10 @@
 #include "Scope.h"
 
 Scope::Scope(SymbolTable& table, TypeTable& typeTable, size_t memSize)
-    : allocator("scope", memSize), stack(allocator), symbolTable(table),
-      typeTable(typeTable) {
+    : allocator("scope", memSize)
+    , stack(allocator)
+    , symbolTable(table)
+    , typeTable(typeTable) {
     init();
 }
 
@@ -14,7 +16,8 @@ void Scope::declareVar(StringRef name, StringRef id, SymbolType* type) {
 void Scope::declareFunc(
     StringRef name,
     SymbolType* retType,
-    const std::vector<SymbolType*>& params) {
+    const std::vector<SymbolType*>& params
+) {
     declareFuncInScope(name);
     symbolTable.declareFunc(name, retType, params);
 }
@@ -39,7 +42,8 @@ void Scope::open() {
     stack.push(ScopeItem(
         StringRef::nullInstance(),
         StringRef::nullInstance(),
-        ScopeItem::Kind::_Begin));
+        ScopeItem::Kind::_Begin
+    ));
 }
 
 void Scope::close() {
@@ -53,7 +57,6 @@ void Scope::close() {
 }
 
 Allocator& Scope::getTypeAllocator() const { return typeTable.getAllocator(); }
-
 
 void Scope::declareVarInScope(StringRef name, StringRef id) {
     declareInScope(name, id, ScopeItem::Kind::Var);
@@ -97,9 +100,11 @@ ScopeItem::Kind Scope::symbolKind2ScopeKind(SymbolType::Kind kind) {
     case SymbolType::Kind::Integer:
     case SymbolType::Kind::Float:
     case SymbolType::Kind::Pointer:
-    case SymbolType::Kind::Structure: return ScopeItem::Kind::Var;
+    case SymbolType::Kind::Structure:
+        return ScopeItem::Kind::Var;
 
-    case SymbolType::Kind::Function: return ScopeItem::Kind::Func;
+    case SymbolType::Kind::Function:
+        return ScopeItem::Kind::Func;
 
     default:
         sparkError("Scope", "Unknown symbol kind: %d", kind);

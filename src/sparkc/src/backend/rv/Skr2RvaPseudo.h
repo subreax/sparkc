@@ -20,7 +20,8 @@ public:
         SymbolTable& table,
         SymbolSize& ss,
         StackFrame& frame,
-        std::vector<RvaInstruction*>& buf) {
+        std::vector<RvaInstruction*>& buf
+    ) {
         Skr2RvaPseudo(allocator, idGen, table, ss, frame, buf).emit(func);
     }
 
@@ -31,10 +32,15 @@ private:
         SymbolTable& symbolTable,
         SymbolSize& ss,
         StackFrame& frame,
-        std::vector<RvaInstruction*>& out)
-        : allocator(allocator), idGen(idGen), symbolTable(symbolTable),
-          symbolSize(ss), frame(frame), out(out),
-          tempReg(newRegister(RvReg::T6)) {}
+        std::vector<RvaInstruction*>& out
+    )
+        : allocator(allocator)
+        , idGen(idGen)
+        , symbolTable(symbolTable)
+        , symbolSize(ss)
+        , frame(frame)
+        , out(out)
+        , tempReg(newRegister(RvReg::T6)) { }
 
     void emit(SkrFunction* func) {
         _retInMem = getSize(func->getRetVar()) > 8;
@@ -55,47 +61,19 @@ private:
 
         for (const auto* skr : func->getInstructions()) {
             switch (skr->kind) {
-            case SkrInstruction::Kind::Binary:
-                emitBinary((SkrBinary*) skr);
-                break;
-
+            case SkrInstruction::Kind::Binary: emitBinary((SkrBinary*) skr); break;
             case SkrInstruction::Kind::Copy: emitCopy((SkrCopy*) skr); break;
-
             case SkrInstruction::Kind::Jump: emitJump((SkrJump*) skr); break;
-
             case SkrInstruction::Kind::Label: emitLabel((SkrLabel*) skr); break;
-
-            case SkrInstruction::Kind::Branch:
-                emitBranch((SkrBranch*) skr);
-                break;
-
-            case SkrInstruction::Kind::FunCall:
-                emitFunCall((SkrFunCall*) skr);
-                break;
-
-            case SkrInstruction::Kind::Int2Float:
-                emitInt2Float((SkrInt2Float*) skr);
-                break;
-
-            case SkrInstruction::Kind::Float2Int:
-                emitFloat2Int((SkrFloat2Int*) skr);
-                break;
-
+            case SkrInstruction::Kind::Branch: emitBranch((SkrBranch*) skr); break;
+            case SkrInstruction::Kind::FunCall: emitFunCall((SkrFunCall*) skr); break;
+            case SkrInstruction::Kind::Int2Float: emitInt2Float((SkrInt2Float*) skr); break;
+            case SkrInstruction::Kind::Float2Int: emitFloat2Int((SkrFloat2Int*) skr); break;
             case SkrInstruction::Kind::Load: emitLoad((SkrLoad*) skr); break;
-
             case SkrInstruction::Kind::Store: emitStore((SkrStore*) skr); break;
-
-            case SkrInstruction::Kind::GetAddr:
-                emitGetAddr((SkrGetAddr*) skr);
-                break;
-
-            case SkrInstruction::Kind::CopyToOffset:
-                emitCopyToOffset((SkrCopyToOffset*) skr);
-                break;
-
-            case SkrInstruction::Kind::CopyFromOffset:
-                emitCopyFromOffset((SkrCopyFromOffset*) skr);
-                break;
+            case SkrInstruction::Kind::GetAddr: emitGetAddr((SkrGetAddr*) skr); break;
+            case SkrInstruction::Kind::CopyToOffset: emitCopyToOffset((SkrCopyToOffset*) skr); break;
+            case SkrInstruction::Kind::CopyFromOffset: emitCopyFromOffset((SkrCopyFromOffset*) skr); break;
 
             default:
                 sparkError("Skr2RvaPseudo", "Unknown skr kind: %d", skr->kind);
@@ -115,44 +93,51 @@ private:
     void emitBinary(SkrBinary* it) {
         auto dstType = symbolTable.get(it->getDst()->getId())->kind;
         auto op = it->getOperator();
-        if (dstType == SymbolType::Kind::Float &&
-            op == SkrBinary::Operator::Mul) {
+        if (dstType == SymbolType::Kind::Float && op == SkrBinary::Operator::Mul) {
             add<RvaBinary>(
                 toPseudo(it->getDst()),
                 toPseudo(it->getLeft()),
                 RvaBinary::Operator::_FixedMul,
-                toPseudo(it->getRight()));
+                toPseudo(it->getRight())
+            );
         }
-        else if (
-            dstType == SymbolType::Kind::Float &&
-            op == SkrBinary::Operator::Div) {
+        else if (dstType == SymbolType::Kind::Float && op == SkrBinary::Operator::Div) {
             add<RvaBinary>(
                 toPseudo(it->getDst()),
                 toPseudo(it->getLeft()),
                 RvaBinary::Operator::_FixedDiv,
-                toPseudo(it->getRight()));
+                toPseudo(it->getRight())
+            );
         }
         else {
             add<RvaBinary>(
                 toPseudo(it->getDst()),
                 toPseudo(it->getLeft()),
                 RvaBinary::mapOperator(op),
-                toPseudo(it->getRight()));
+                toPseudo(it->getRight())
+            );
         }
     }
 
-    void emitCopy(SkrCopy* it) { copy(it->getTo(), 0, it->getFrom(), 0); }
+    void emitCopy(SkrCopy* it) {
+        copy(it->getTo(), 0, it->getFrom(), 0);
+    }
 
-    void emitJump(SkrJump* it) { add<RvaJump>(it->getLabel()); }
+    void emitJump(SkrJump* it) {
+        add<RvaJump>(it->getLabel());
+    }
 
-    void emitLabel(SkrLabel* it) { add<RvaLabel>(it->getLabel()); }
+    void emitLabel(SkrLabel* it) {
+        add<RvaLabel>(it->getLabel());
+    }
 
     void emitBranch(SkrBranch* it) {
         add<RvaBranch>(
             toPseudo(it->getLeft()),
             RvaBranch::mapOperator(it->getOperator()),
             toPseudo(it->getRight()),
-            it->getLabel());
+            it->getLabel()
+        );
     }
 
     void emitFunCall(SkrFunCall* func) {
@@ -215,7 +200,8 @@ private:
             toPseudo(it->getDst()),
             toPseudo(it->getSrc()),
             RvaBinary::Operator::ShiftLeft,
-            newImm(15));
+            newImm(15)
+        );
     }
 
     void emitFloat2Int(SkrFloat2Int* it) {
@@ -224,7 +210,8 @@ private:
             toPseudo(it->getDst()),
             toPseudo(it->getSrc()),
             RvaBinary::Operator::ShiftRight,
-            newImm(15));
+            newImm(15)
+        );
     }
 
     void emitLoad(SkrLoad* it) {
@@ -247,11 +234,14 @@ private:
         copy(it->getTo(), 0, it->getFrom(), it->getFromOffset());
     }
 
-    template <typename T, typename... Args> inline void add(Args... args) {
+    template <typename T, typename... Args>
+    inline void add(Args... args) {
         out.emplace_back(allocator.create<T>(args...));
     }
 
-    inline void addInstr(RvaInstruction* instr) { out.emplace_back(instr); }
+    inline void addInstr(RvaInstruction* instr) {
+        out.emplace_back(instr);
+    }
 
     RvaValue* toPseudo(const SkrValue* value, int offsetIfMem = 0) {
         auto kind = value->kind;
@@ -271,7 +261,8 @@ private:
                 sparkError(
                     "Skr2RvaPseudo",
                     "Unknown Constant type: %d",
-                    constant->type);
+                    constant->type
+                );
             }
             return allocator.create<RvaImm>(val);
         }
@@ -290,9 +281,13 @@ private:
         }
     }
 
-    inline RvaImm* newImm(int32_t val) { return allocator.create<RvaImm>(val); }
+    inline RvaImm* newImm(int32_t val) {
+        return allocator.create<RvaImm>(val);
+    }
 
-    inline RvaRegister* newRegister(RvReg reg) { return RvaRegister::get(reg); }
+    inline RvaRegister* newRegister(RvReg reg) {
+        return RvaRegister::get(reg);
+    }
 
     inline RvaPseudoReg* newPseudo(const char* name) {
         return allocator.create<RvaPseudoReg>(idGen.unique(name));
@@ -332,8 +327,7 @@ private:
         if (idx < 8) {
             return newRegister((RvReg) ((int) RvReg::A0 + idx));
         }
-        sparkError(
-            "Skr2RvaPseudo", "getArgReg(idx): idx should be in range [0; 7]");
+        sparkError("Skr2RvaPseudo", "getArgReg(idx): idx should be in range [0; 7]");
         return newRegister(RvReg::ZERO);
     }
 
@@ -366,11 +360,7 @@ private:
         return 0;
     }
 
-    void copy(
-        const SkrValue* to,
-        int toOffset,
-        const SkrValue* from,
-        int fromOffset) {
+    void copy(const SkrValue* to, int toOffset, const SkrValue* from, int fromOffset) {
         bool isToReplacedToPtr = isReplacedToPtr(to);
         bool isFromReplacedToPtr = isReplacedToPtr(from);
         if (isToReplacedToPtr && isFromReplacedToPtr) {
@@ -378,16 +368,13 @@ private:
         }
         else if (isToReplacedToPtr) {
             if (fromOffset != 0) {
-                sparkError(
-                    "Skr2RvaPseudo",
-                    "Store value from offset is not supported");
+                sparkError("Skr2RvaPseudo", "Store value from offset is not supported");
             }
             storeBytes(to, toOffset, from);
         }
         else if (isFromReplacedToPtr) {
             if (toOffset != 0) {
-                sparkError(
-                    "Skr2RvaPseudo", "Load value to offset is not supported");
+                sparkError("Skr2RvaPseudo", "Load value to offset is not supported");
             }
             loadBytes(to, from, fromOffset);
         }
@@ -396,7 +383,8 @@ private:
             for (size_t off = 0; off < sz; off += 4) {
                 add<RvaMov>(
                     toPseudo(to, toOffset + off),
-                    toPseudo(from, fromOffset + off));
+                    toPseudo(from, fromOffset + off)
+                );
             }
         }
     }
@@ -405,7 +393,8 @@ private:
         const SkrValue* to,
         int toOffset,
         const SkrValue* from,
-        int fromOffset) {
+        int fromOffset
+    ) {
         add<RvaMov>(tempReg, toPseudo(to));
         auto* tempReg2 = newRegister(RvReg::T1);
         add<RvaMov>(tempReg2, toPseudo(from));
@@ -413,7 +402,8 @@ private:
         for (size_t off = 0; off < sz; off += 4) {
             add<RvaMov>(
                 newMemory(tempReg, toOffset + off),
-                newMemory(tempReg2, fromOffset + off));
+                newMemory(tempReg2, fromOffset + off)
+            );
         }
     }
 
@@ -421,7 +411,10 @@ private:
         add<RvaMov>(tempReg, toPseudo(to));
         size_t sz = getSize(from);
         for (size_t off = 0; off < sz; off += 4) {
-            add<RvaMov>(newMemory(tempReg, offset + off), toPseudo(from, off));
+            add<RvaMov>(
+                newMemory(tempReg, offset + off),
+                toPseudo(from, off)
+            );
         }
     }
 
@@ -429,7 +422,10 @@ private:
         add<RvaMov>(tempReg, toPseudo(from));
         size_t sz = getSize(to);
         for (size_t off = 0; off < sz; off += 4) {
-            add<RvaMov>(toPseudo(to, off), newMemory(tempReg, offset + off));
+            add<RvaMov>(
+                toPseudo(to, off),
+                newMemory(tempReg, offset + off)
+            );
         }
     }
 
@@ -437,7 +433,10 @@ private:
         int argRegIdx = 0;
         if (_retInMem) {
             setReplacedToPtr(func->getRetVar());
-            add<RvaMov>(toPseudo(func->getRetVar()), getArgReg(0));
+            add<RvaMov>(
+                toPseudo(func->getRetVar()),
+                getArgReg(0)
+            );
             argRegIdx++;
         }
 
@@ -448,7 +447,10 @@ private:
             }
 
             // todo: handle 2 regs
-            add<RvaMov>(toPseudo(param), getParam(argRegIdx));
+            add<RvaMov>(
+                toPseudo(param),
+                getParam(argRegIdx)
+            );
             argRegIdx++;
         }
     }

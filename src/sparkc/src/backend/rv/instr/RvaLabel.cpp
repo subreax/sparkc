@@ -1,7 +1,8 @@
 #include "sparkc/backend/rv/instr/RvaLabel.h"
 
 RvaLabel::RvaLabel(StringRef value)
-    : RvaInstruction(Kind::Label), value(value) {}
+    : RvaInstruction(Kind::Label)
+    , value(value) { }
 
 void RvaLabel::emit(RvListing& listing) { listing.addLabel(value); }
 

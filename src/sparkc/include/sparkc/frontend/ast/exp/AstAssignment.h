@@ -3,10 +3,10 @@
 
 class AstAssignment : public AstExp {
 public:
-    AstAssignment(AstExp* var, AstExp* exp) 
+    AstAssignment(AstExp* var, AstExp* exp)
         : AstExp(Kind::Assignment)
         , var(var)
-        , exp(exp) {  }
+        , exp(exp) { }
 
     AstExp* getVar() { return var; }
     void setVar(AstExp* var) { this->var = var; }

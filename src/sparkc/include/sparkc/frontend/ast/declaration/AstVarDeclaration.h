@@ -1,6 +1,6 @@
 #pragma once
-#include "AstDeclaration.h"
 #include "../exp/AstExp.h"
+#include "AstDeclaration.h"
 
 class AstVarDeclaration : public AstDeclaration {
 public:
@@ -12,7 +12,7 @@ public:
 
     StringRef getId() const { return id; }
     void setId(StringRef id) { this->id = id; }
-    
+
     AstExp* getInitializer() { return init; }
     void setInitializer(AstExp* init) { this->init = init; }
 

@@ -8,13 +8,17 @@
 class RvaPseudoReplacer {
 public:
     static void replace(
-        std::vector<RvaInstruction*>& rvas, StackFrame& frame, SymbolSize& ss) {
+        std::vector<RvaInstruction*>& rvas,
+        StackFrame& frame,
+        SymbolSize& ss
+    ) {
         RvaPseudoReplacer(frame, ss).replace(rvas);
     }
 
 private:
     RvaPseudoReplacer(StackFrame& frame, SymbolSize& ss)
-        : frame(frame), symbolSize(ss) {}
+        : frame(frame)
+        , symbolSize(ss) { }
 
     void replace(std::vector<RvaInstruction*>& rvas) {
         for (auto* it : rvas)
@@ -47,15 +51,9 @@ private:
         case RvaInstruction::Kind::Branch: replace((RvaBranch*) it); break;
         case RvaInstruction::Kind::Load: replace((RvaLoad*) it); break;
         case RvaInstruction::Kind::Store: replace((RvaStore*) it); break;
-        case RvaInstruction::Kind::GetAddress:
-            replace((RvaGetAddress*) it);
-            break;
-        case RvaInstruction::Kind::ReserveOnStack:
-            replace((RvaReserveOnStack*) it);
-            break;
-
+        case RvaInstruction::Kind::GetAddress: replace((RvaGetAddress*) it); break;
+        case RvaInstruction::Kind::ReserveOnStack: replace((RvaReserveOnStack*) it); break;
         case RvaInstruction::Kind::BeginTempStack: frame.save(); break;
-
         case RvaInstruction::Kind::EndTempStack: frame.restore(); break;
         }
     }

@@ -3,7 +3,9 @@
 
 class SkrLabel : public SkrInstruction {
 public:
-    SkrLabel(StringRef label) : SkrInstruction(Kind::Label), label(label) {  }
+    SkrLabel(StringRef label)
+        : SkrInstruction(Kind::Label)
+        , label(label) { }
 
     StringRef getLabel() const { return label; }
 

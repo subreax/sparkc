@@ -7,7 +7,7 @@ class AstStructField {
 public:
     AstStructField(SymbolType* type, StringRef name)
         : type(type)
-        , name(name) {  }
+        , name(name) { }
 
     SymbolType* getType() const { return type; }
     StringRef getName() const { return name; }
@@ -17,11 +17,12 @@ private:
     StringRef name;
 };
 
-
 class AstStruct : public AstProgItem {
 public:
-    AstStruct(StringRef tag, const BoundArray<AstStructField*>& fields) 
-        : AstProgItem(Kind::Struct), tag(tag), fields(fields) {  }
+    AstStruct(StringRef tag, const BoundArray<AstStructField*>& fields)
+        : AstProgItem(Kind::Struct)
+        , tag(tag)
+        , fields(fields) { }
 
     StringRef getTag() const { return tag; }
     const BoundArray<AstStructField*>& getFields() const { return fields; }

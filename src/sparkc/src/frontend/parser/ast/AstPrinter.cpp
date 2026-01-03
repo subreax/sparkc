@@ -15,7 +15,8 @@ std::string _toString(Constant* constant);
 std::string _type2string(const AstExp* exp);
 std::string _type2string(const SymbolType* type);
 
-AstPrinter::AstPrinter(std::ostream& out) : out(out) {}
+AstPrinter::AstPrinter(std::ostream& out)
+    : out(out) { }
 
 void AstPrinter::print(const AstProgram* program) {
     Printer p(out);

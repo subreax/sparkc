@@ -7,7 +7,7 @@ public:
     DuplicateSymbolDeclarationException(StringRef id, SymbolType* type)
         : SparkRuntimeException(buildMessage(id, type))
         , id(id)
-        , type(type) {  }
+        , type(type) { }
 
     StringRef getIdentifier() const { return id; }
     const SymbolType* getType() const { return type; }

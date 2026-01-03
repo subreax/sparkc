@@ -3,9 +3,9 @@
 
 class AstDereference : public AstExp {
 public:
-    AstDereference(AstExp* exp, SymbolType* type) 
+    AstDereference(AstExp* exp, SymbolType* type)
         : AstExp(Kind::Dereference, type)
-        , exp(exp) {  }
+        , exp(exp) { }
 
     AstExp* getExpression() const { return exp; }
 

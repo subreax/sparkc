@@ -1,12 +1,12 @@
 #pragma once
-#include "AstStatement.h"
 #include "../exp/AstExp.h"
+#include "AstStatement.h"
 
 class AstExpressionStatement : public AstStatement {
 public:
-    AstExpressionStatement(AstExp* exp) 
+    AstExpressionStatement(AstExp* exp)
         : AstStatement(Kind::Expression)
-        , exp(exp) {}
+        , exp(exp) { }
 
     AstExp* getExpression() { return exp; }
 

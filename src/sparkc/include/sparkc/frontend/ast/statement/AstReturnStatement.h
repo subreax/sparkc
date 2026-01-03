@@ -1,10 +1,10 @@
 #pragma once
-#include "AstStatement.h"
 #include "../exp/AstExp.h"
+#include "AstStatement.h"
 
 class AstReturnStatement : public AstStatement {
 public:
-    AstReturnStatement(AstExp* exp) 
+    AstReturnStatement(AstExp* exp)
         : AstStatement(Kind::Return)
         , exp(exp) { }
 

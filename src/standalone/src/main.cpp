@@ -1,26 +1,23 @@
-#include <iostream>
-#include <fstream>
-#include <sstream>
 #include <filesystem>
-#include <sparkc/frontend/parser/except/ParseException.h>
-#include <sparkc/frontend/ast/printer/AstPrinter.h>
+#include <fstream>
+#include <iostream>
 #include <sparkc/SparkCompiler.h>
+#include <sparkc/frontend/ast/printer/AstPrinter.h>
+#include <sparkc/frontend/parser/except/ParseException.h>
+#include <sstream>
 
 #include "FileUtils.h"
 #include "MemUtils.h"
 #include "printer/ast/AstMermaidPrinter.h"
-#include "printer/skr/SkrPrinter.h"
 #include "printer/cfg/SkrCfgMermaidPrinter.h"
-#include "printer/rva/RvaPrinter.h"
 #include "printer/mem/MemUsagePrinter.h"
+#include "printer/rva/RvaPrinter.h"
+#include "printer/skr/SkrPrinter.h"
 using namespace std;
-
-
 
 void printError(const ParseException& e, const string& source);
 string getLine(const string& src, int lineNo);
 void printMemUsage(const char* name, int usedPercentage);
-
 
 class DebugCallback : public SparkCompiler::DebugCallback {
 public:
@@ -38,7 +35,11 @@ public:
     }
 
     void onCfgCreated(StringRef funName, int iteration, CfGraph<SkrInstruction*>* graph) override {
-        SkrCfgMermaidPrinter::saveToFile(*graph, getCtx().symTable, funName.toString() + "." + std::to_string(iteration) + ".md");
+        SkrCfgMermaidPrinter::saveToFile(
+            *graph,
+            getCtx().symTable,
+            funName.toString() + "." + std::to_string(iteration) + ".md"
+        );
     }
 
     void onOptimizeSkrFunc(class SkrFunction* skrFunc) override {
@@ -66,7 +67,6 @@ public:
     }
 };
 
-
 int main(int argc, char** argv) {
     if (argc == 1) {
         cout << "Specify source file to compile" << endl;
@@ -85,8 +85,7 @@ int main(int argc, char** argv) {
     SparkBuildInfo buildInfo;
     try {
         buildInfo = compiler.build(source.c_str());
-    } 
-    catch (const ParseException& ex) {
+    } catch (const ParseException& ex) {
         printError(ex, source);
         return 1;
     }
@@ -97,10 +96,13 @@ int main(int argc, char** argv) {
     printMemUsage("pool3", buildInfo.memoryUsage.pool3);
     printMemUsage("shared", buildInfo.memoryUsage.shared);
     printMemUsage("bin", buildInfo.binarySizeUsage);
-    MemUtils::dump(binary, buildInfo.binarySize, FileUtils::changeExtension(FileUtils::getFileName(srcFile), "bin"));
+    MemUtils::dump(
+        binary,
+        buildInfo.binarySize,
+        FileUtils::changeExtension(FileUtils::getFileName(srcFile), "bin")
+    );
     return 0;
 }
-
 
 void printError(const ParseException& e, const string& source) {
     const auto& token = e.getToken();
@@ -108,7 +110,7 @@ void printError(const ParseException& e, const string& source) {
 
     ostringstream oss;
     oss << token.pos.line + 1 << " | ";
-    
+
     string lineNo = oss.str();
     cout << lineNo << getLine(source, token.pos.line) << endl;
     for (int i = 0; i < token.pos.col + lineNo.size(); i++) {
@@ -130,7 +132,8 @@ string getLine(const string& src, int lineNo) {
     size_t nextNL = src.find('\n', offset);
     if (nextNL != string::npos) {
         return src.substr(offset, nextNL - offset);
-    } else {
+    }
+    else {
         return src.substr(offset);
     }
 }

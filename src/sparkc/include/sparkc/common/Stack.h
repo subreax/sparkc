@@ -2,10 +2,12 @@
 #include "alloc/LinearAllocator.h"
 #include <stdexcept>
 
-template<typename T>
+template <typename T>
 class Stack {
 public:
-    Stack(LinearAllocator& allocator) : allocator(allocator) {  }
+    Stack(LinearAllocator& allocator)
+        : allocator(allocator) { }
+
     ~Stack() {
         allocator.free(sz * sizeof(T));
     }
@@ -22,7 +24,8 @@ public:
         if (sz > 0) {
             allocator.free(sizeof(T));
             sz--;
-        } else {
+        }
+        else {
             throw std::out_of_range("Pop failed: out of range");
         }
     }

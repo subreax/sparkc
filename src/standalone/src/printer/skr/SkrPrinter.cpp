@@ -18,10 +18,10 @@ std::ostream& operator<<(std::ostream& os, const SkrValue& skr) {
         else {
             os << "err_unknown_constant";
         }
-    } 
+    }
     else if (skr.isVar()) {
         os << ((SkrVar*) &skr)->getId().toString();
-    } 
+    }
     else {
         os << "_unknown_: " << (int) skr.kind;
     }
@@ -34,7 +34,8 @@ std::ostream& operator<<(std::ostream& os, SkrBinary::Operator op) {
     int iop = (int) op;
     if (iop < OPS_SZ) {
         os << OPS[iop];
-    } else {
+    }
+    else {
         os << "_unknown_:" << iop;
     }
     return os;
@@ -46,7 +47,8 @@ std::ostream& operator<<(std::ostream& os, SkrBranch::Operator op) {
     int iop = (int) op;
     if (iop < OPS_SZ) {
         os << OPS[iop];
-    } else {
+    }
+    else {
         os << "_unknown_:" << iop;
     }
     return os;
@@ -65,7 +67,6 @@ void SkrPrinter::print(std::ostream& os, SkrFunction* func, const SymbolTable& t
     }
     os << "): " << *funcType->getReturnType() << "\n";
 
-
     const auto& skrs = func->getInstructions();
     for (auto* skr : skrs) {
         os << "    ";
@@ -74,11 +75,17 @@ void SkrPrinter::print(std::ostream& os, SkrFunction* func, const SymbolTable& t
     }
 }
 
-void SkrPrinter::print(std::ostream& os, SkrInstruction* skr, const SymbolTable& table, bool colored) {
+void SkrPrinter::print(
+    std::ostream& os,
+    SkrInstruction* skr,
+    const SymbolTable& table,
+    bool colored
+) {
     auto kind = skr->kind;
     if (kind == SkrInstruction::Kind::Binary) {
         auto* bin = (SkrBinary*) skr;
-        os << *bin->getDst() << " = " << *bin->getLeft() << " " << bin->getOperator() << " " << *bin->getRight();
+        os << *bin->getDst() << " = "
+           << *bin->getLeft() << " " << bin->getOperator() << " " << *bin->getRight();
     }
     else if (kind == SkrInstruction::Kind::Copy) {
         auto* it = (SkrCopy*) skr;
@@ -89,7 +96,8 @@ void SkrPrinter::print(std::ostream& os, SkrInstruction* skr, const SymbolTable&
         os << "jmp ";
         if (colored) {
             os << Colored::label(it->getLabel());
-        } else {
+        }
+        else {
             os << it->getLabel().toString();
         }
     }
@@ -97,7 +105,8 @@ void SkrPrinter::print(std::ostream& os, SkrInstruction* skr, const SymbolTable&
         auto* it = (SkrLabel*) skr;
         if (colored) {
             os << Colored::label(it->getLabel()) << ":";
-        } else {
+        }
+        else {
             os << it->getLabel().toString() << ":";
         }
     }
@@ -106,7 +115,8 @@ void SkrPrinter::print(std::ostream& os, SkrInstruction* skr, const SymbolTable&
         os << "jmp ";
         if (colored) {
             os << Colored::label(it->getLabel());
-        } else {
+        }
+        else {
             os << it->getLabel().toString();
         }
         os << " if " << *it->getLeft() << " " << it->getOperator() << " " << *it->getRight();
@@ -116,7 +126,8 @@ void SkrPrinter::print(std::ostream& os, SkrInstruction* skr, const SymbolTable&
         os << *it->getRetVar() << " = ";
         if (colored) {
             os << Colored::label(it->getName());
-        } else {
+        }
+        else {
             os << it->getName().toString();
         }
         os << "(";
@@ -155,7 +166,8 @@ void SkrPrinter::print(std::ostream& os, SkrInstruction* skr, const SymbolTable&
     }
     else if (kind == SkrInstruction::Kind::CopyFromOffset) {
         auto* it = (SkrCopyFromOffset*) skr;
-        os << "copy " << *it->getTo() << " = " << it->getFromOffset() << "(" << *it->getFrom() << ")";
+        os << "copy " << *it->getTo() << " = " << it->getFromOffset() << "(" << *it->getFrom()
+           << ")";
     }
     else {
         os << "unknown skr: " << (int) kind;

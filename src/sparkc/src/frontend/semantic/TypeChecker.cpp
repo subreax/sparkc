@@ -5,16 +5,23 @@
 #include "sparkc/type/TypeTable.h"
 
 TypeChecker::TypeChecker(
-    SymbolTable& symbolTable, TypeTable& typeTable, Allocator& astAllocator)
-    : symbolTable(symbolTable), typeTable(typeTable), allocator(astAllocator) {}
+    SymbolTable& symbolTable,
+    TypeTable& typeTable,
+    Allocator& astAllocator
+)
+    : symbolTable(symbolTable)
+    , typeTable(typeTable)
+    , allocator(astAllocator) { }
 
 void TypeChecker::typeCheck(AstProgram* prog) {
     for (auto* item : prog->items) {
         if (item->kind == AstProgItem::Kind::Function) {
-            auto* func = (AstFunction*)item;
+            auto* func = (AstFunction*) item;
             typeCheck(func->getBlock(), func->getReturnType());
-        } else if (item->kind == AstProgItem::Kind::Struct) {
-        } else {
+        }
+        else if (item->kind == AstProgItem::Kind::Struct) {
+        }
+        else {
             sparkError("TypeChecker", "Unknown AstProgItem: %d", item->kind);
         }
     }
@@ -28,22 +35,23 @@ void TypeChecker::typeCheck(const AstBlock* block, SymbolType* retType) {
 
 void TypeChecker::typeCheck(AstBlockItem* item, SymbolType* retType) {
     if (item->kind == AstBlockItem::Kind::Declaration) {
-        auto* declItem = (AstDeclBlockItem*)item;
+        auto* declItem = (AstDeclBlockItem*) item;
         typeCheck(declItem->getDeclaration());
-    } else if (item->kind == AstBlockItem::Kind::Statement) {
-        auto* stItem = (AstStatementBlockItem*)item;
+    }
+    else if (item->kind == AstBlockItem::Kind::Statement) {
+        auto* stItem = (AstStatementBlockItem*) item;
         typeCheck(stItem->getStatement(), retType);
-    } else {
+    }
+    else {
         sparkError("TypeChecker", "Unknown AstBlockItem: %d", item->kind);
     }
 }
 
 void TypeChecker::typeCheck(AstDeclaration* decl) {
     if (decl->kind == AstDeclaration::Kind::Var) {
-        auto* varDecl = (AstVarDeclaration*)decl;
+        auto* varDecl = (AstVarDeclaration*) decl;
         auto* initExp = varDecl->getInitializer();
-        if (varDecl->getType()->kind == SymbolType::Kind::Pointer &&
-            initExp == nullptr) {
+        if (varDecl->getType()->kind == SymbolType::Kind::Pointer && initExp == nullptr) {
             throw TypeException("Reference is not initialized");
         }
 
@@ -57,46 +65,64 @@ void TypeChecker::typeCheck(AstDeclaration* decl) {
 void TypeChecker::typeCheck(AstStatement* st, SymbolType* retType) {
     auto kind = st->kind;
     if (kind == AstStatement::Kind::Expression) {
-        auto* expSt = (AstExpressionStatement*)st;
+        auto* expSt = (AstExpressionStatement*) st;
         typeCheck(expSt->getExpression());
-    } else if (kind == AstStatement::Kind::Return) {
-        auto* retSt = (AstReturnStatement*)st;
+    }
+    else if (kind == AstStatement::Kind::Return) {
+        auto* retSt = (AstReturnStatement*) st;
         auto* exp = retSt->getExpression();
         typeCheck(exp);
         retSt->setExpression(cast(exp, retType));
-    } else if (kind == AstStatement::Kind::If) {
-        auto* it = (AstIfStatement*)st;
+    }
+    else if (kind == AstStatement::Kind::If) {
+        auto* it = (AstIfStatement*) st;
         typeCheck(it->getCondition());
         typeCheck(it->getTrueBranch(), retType);
         auto* falseBranch = it->getFalseBranch();
         if (falseBranch != nullptr) {
             typeCheck(falseBranch, retType);
         }
-    } else if (kind == AstStatement::Kind::While) {
-        auto* it = (AstWhileStatement*)st;
+    }
+    else if (kind == AstStatement::Kind::While) {
+        auto* it = (AstWhileStatement*) st;
         typeCheck(it->getCondition());
         typeCheck(it->getStatement(), retType);
-    } else if (kind == AstStatement::Kind::Compound) {
-        typeCheck(((AstCompoundStatement*)st)->getBlock(), retType);
+    }
+    else if (kind == AstStatement::Kind::Compound) {
+        typeCheck(((AstCompoundStatement*) st)->getBlock(), retType);
     }
 }
 
 void TypeChecker::typeCheck(AstExp* exp) {
     auto kind = exp->kind;
     switch (kind) {
-    case AstExp::Kind::Constant: break;
-    case AstExp::Kind::Binary: typeCheck((AstBinaryExp*)exp); break;
-    case AstExp::Kind::Var: typeCheck((AstVar*)exp); break;
-    case AstExp::Kind::Assignment: typeCheck((AstAssignment*)exp); break;
-    case AstExp::Kind::FunCall: typeCheck((AstFunCall*)exp); break;
-    case AstExp::Kind::Dot: typeCheck((AstDot*)exp); break;
-    case AstExp::Kind::StructInit: typeCheck((AstStructInit*)exp); break;
+    case AstExp::Kind::Constant:
+        break;
+    case AstExp::Kind::Binary:
+        typeCheck((AstBinaryExp*) exp);
+        break;
+    case AstExp::Kind::Var:
+        typeCheck((AstVar*) exp);
+        break;
+    case AstExp::Kind::Assignment:
+        typeCheck((AstAssignment*) exp);
+        break;
+    case AstExp::Kind::FunCall:
+        typeCheck((AstFunCall*) exp);
+        break;
+    case AstExp::Kind::Dot:
+        typeCheck((AstDot*) exp);
+        break;
+    case AstExp::Kind::StructInit:
+        typeCheck((AstStructInit*) exp);
+        break;
     default:
         sparkError(
             "TypeChecker",
             "Unhandled AstExp: %s (%d)",
             AstExp::kindToString(kind),
-            kind);
+            kind
+        );
     }
 }
 
@@ -104,7 +130,8 @@ void TypeChecker::typeCheck(AstVar* var) {
     auto* type = symbolTable.get(var->getId());
     if (type->kind == SymbolType::Kind::Function) {
         throw TypeException(
-            "Using variable as a function: '" + var->getId().toString() + "'");
+            "Using variable as a function: '" + var->getId().toString() + "'"
+        );
     }
 
     var->type = type;
@@ -121,10 +148,11 @@ void TypeChecker::typeCheck(AstBinaryExp* bin) {
 }
 
 void TypeChecker::typeCheck(AstFunCall* call) {
-    auto* funType = (SymbolFunctionType*)symbolTable.get(call->getFunName());
+    auto* funType = (SymbolFunctionType*) symbolTable.get(call->getFunName());
     if (funType->kind != SymbolType::Kind::Function) {
         throw TypeException(
-            "Function '" + call->getFunName().toString() + "' doesn't exist");
+            "Function '" + call->getFunName().toString() + "' doesn't exist"
+        );
     }
 
     auto params = funType->getParams();
@@ -132,8 +160,8 @@ void TypeChecker::typeCheck(AstFunCall* call) {
     auto args = call->getArgs();
     if (args.size() != paramsCount) {
         throw TypeException(
-            "Function '" + call->getFunName().toString() +
-            "' called with wrong number of arguments");
+            "Function '" + call->getFunName().toString() + "' called with wrong number of arguments"
+        );
     }
 
     for (size_t i = 0; i < args.size(); i++) {
@@ -152,8 +180,10 @@ void TypeChecker::typeCheck(AstAssignment* ass) {
         throw TypeException(
             std::string(
                 "Expressions can only be assigned to variables or dots, not to "
-                "a ") +
-            AstExp::kindToString(kind));
+                "a "
+            )
+            + AstExp::kindToString(kind)
+        );
     }
 
     typeCheck(ass->getVar());
@@ -170,16 +200,17 @@ void TypeChecker::typeCheck(AstDot* it) {
     auto* fromType = it->getFrom()->type;
     if (fromType->kind != SymbolType::Kind::Structure) {
         throw TypeException(
-            "Trying to access a struct member on a non-struct type");
+            "Trying to access a struct member on a non-struct type"
+        );
     }
 
     if (it->getField()->kind != AstExp::Kind::Var) {
         throw TypeException("Wtf is hapenned around a struct var");
     }
 
-    auto accessedField = ((AstVar*)it->getField())->getId();
+    auto accessedField = ((AstVar*) it->getField())->getId();
 
-    auto* structType = (SymbolStructureType*)fromType;
+    auto* structType = (SymbolStructureType*) fromType;
     const auto& structFields = typeTable.get(structType->getTag());
     for (auto field : structFields) {
         if (field.name == accessedField) {
@@ -198,8 +229,8 @@ void TypeChecker::typeCheck(AstStructInit* it) {
     auto fields = typeTable.get(tag);
     if (args.size() != fields.size()) {
         throw TypeException(
-            "Structure '" + tag.toString() +
-            "' initialized with wrong number of arguments");
+            "Structure '" + tag.toString() + "' initialized with wrong number of arguments"
+        );
     }
 
     for (size_t i = 0; i < args.size(); i++) {
@@ -225,11 +256,15 @@ SymbolType* TypeChecker::getCommonType(SymbolType* t1, SymbolType* t2) {
 
     if (k1 == SymbolType::Kind::Function || k2 == SymbolType::Kind::Function) {
         throw TypeException("Common type with function doesn't exist");
-    } else if (
-        k1 == SymbolType::Kind::Integer && k2 == SymbolType::Kind::Float) {
+    }
+    else if (
+        k1 == SymbolType::Kind::Integer && k2 == SymbolType::Kind::Float
+    ) {
         return t2;
-    } else if (
-        k1 == SymbolType::Kind::Float && k2 == SymbolType::Kind::Integer) {
+    }
+    else if (
+        k1 == SymbolType::Kind::Float && k2 == SymbolType::Kind::Integer
+    ) {
         return t1;
     }
 
@@ -244,7 +279,7 @@ SymbolType* TypeChecker::getCommonType(SymbolType* t1, SymbolType* t2) {
 
 SymbolType* TypeChecker::dereference(SymbolType* t) {
     if (t->kind == SymbolType::Kind::Pointer) {
-        return ((SymbolPointerType*)t)->getVarType();
+        return ((SymbolPointerType*) t)->getVarType();
     }
     return t;
 }

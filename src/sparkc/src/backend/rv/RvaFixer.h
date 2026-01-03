@@ -16,7 +16,8 @@ public:
 
 private:
     RvaFixer(std::vector<RvaInstruction*>& out, Allocator& rvaAllocator)
-        : out(out), allocator(rvaAllocator) {}
+        : out(out)
+        , allocator(rvaAllocator) { }
 
     void fix(const std::vector<RvaInstruction*>& orig) {
         for (RvaInstruction* rva : orig) {
@@ -27,26 +28,18 @@ private:
             case RvaInstruction::Kind::Branch: fix((RvaBranch*) rva); break;
             case RvaInstruction::Kind::Load: fix((RvaLoad*) rva); break;
             case RvaInstruction::Kind::Store: fix((RvaStore*) rva); break;
-            case RvaInstruction::Kind::GetAddress:
-                fix((RvaGetAddress*) rva);
-                break;
-
+            case RvaInstruction::Kind::GetAddress: fix((RvaGetAddress*) rva); break;
             case RvaInstruction::Kind::Call: clone((RvaCall*) rva); break;
-            case RvaInstruction::Kind::Epilogue:
-                clone((RvaEpilogue*) rva);
-                break;
-            case RvaInstruction::Kind::Prologue:
-                clone((RvaPrologue*) rva);
-                break;
+            case RvaInstruction::Kind::Epilogue: clone((RvaEpilogue*) rva); break;
+            case RvaInstruction::Kind::Prologue: clone((RvaPrologue*) rva); break;
             case RvaInstruction::Kind::Jump: clone((RvaJump*) rva); break;
             case RvaInstruction::Kind::Label: clone((RvaLabel*) rva); break;
-            case RvaInstruction::Kind::Ret:
-                add(allocator.create<RvaRet>());
-                break;
+            case RvaInstruction::Kind::Ret: add(allocator.create<RvaRet>()); break;
 
             case RvaInstruction::Kind::BeginTempStack:
             case RvaInstruction::Kind::EndTempStack:
-            case RvaInstruction::Kind::ReserveOnStack: break;
+            case RvaInstruction::Kind::ReserveOnStack:
+                break;
 
             default: sparkError("RvaFixer", "Unknown RvaInstruction: %d", kind);
             }
@@ -58,25 +51,23 @@ private:
         auto toKind = it->to->kind;
 
         if (toKind == RvaValue::Kind::Register) {
-            if (fromKind == RvaValue::Kind::Register ||
-                fromKind == RvaValue::Kind::Imm) {
+            if (fromKind == RvaValue::Kind::Register || fromKind == RvaValue::Kind::Imm) {
                 add(allocator.create<RvaMov>(clone(it->to), clone(it->from)));
             }
             else if (fromKind == RvaValue::Kind::Memory) {
-                add(allocator.create<RvaLoad>(
-                    clone(it->to), (RvaMemory*) clone(it->from)));
+                add(allocator.create<RvaLoad>(clone(it->to), (RvaMemory*) clone(it->from)));
             }
             else {
                 sparkError(
                     "RvaFixer",
                     "Failed to fix RvaMov: unknown 'from' param: %d",
-                    fromKind);
+                    fromKind
+                );
             }
         }
         else if (toKind == RvaValue::Kind::Memory) {
             auto* regFrom = moveToReg(it->from, RvReg::T0);
-            add(allocator.create<RvaStore>(
-                (RvaMemory*) clone(it->to), regFrom));
+            add(allocator.create<RvaStore>((RvaMemory*) clone(it->to), regFrom));
         }
         else {
             add(allocator.create<RvaMov>(clone(it->to), clone(it->from)));
@@ -112,21 +103,20 @@ private:
         RvaRegister* dstReg,
         RvaRegister* leftReg,
         RvaValue* rightVal,
-        RvaRegister* tmpReg) {
-        add(allocator.create<RvaBinary>(
-            tmpReg, leftReg, RvaBinary::Operator::MulH, rightVal));
-        add(allocator.create<RvaBinary>(
-            dstReg, leftReg, RvaBinary::Operator::Mul, rightVal));
-        add(allocator.create<RvaBinary>(
-            dstReg, dstReg, RvaBinary::Operator::ShiftRight, newImm(15)));
-        add(allocator.create<RvaBinary>(
-            tmpReg, tmpReg, RvaBinary::Operator::ShiftLeft, newImm(17)));
-        add(allocator.create<RvaBinary>(
-            dstReg, dstReg, RvaBinary::Operator::Or, tmpReg));
+        RvaRegister* tmpReg
+    ) {
+        add(allocator.create<RvaBinary>(tmpReg, leftReg, RvaBinary::Operator::MulH, rightVal));
+        add(allocator.create<RvaBinary>(dstReg, leftReg, RvaBinary::Operator::Mul, rightVal));
+        add(allocator.create<RvaBinary>(dstReg, dstReg, RvaBinary::Operator::ShiftRight, newImm(15)));
+        add(allocator.create<RvaBinary>(tmpReg, tmpReg, RvaBinary::Operator::ShiftLeft, newImm(17)));
+        add(allocator.create<RvaBinary>(dstReg, dstReg, RvaBinary::Operator::Or, tmpReg));
     }
 
     void emitFixedDiv(
-        RvaRegister* dstReg, RvaRegister* leftReg, RvaValue* rightVal) {
+        RvaRegister* dstReg,
+        RvaRegister* leftReg,
+        RvaValue* rightVal
+    ) {
         sparkError("RvaFixer", "Not implemented");
     }
 
@@ -152,9 +142,7 @@ private:
     void fix(RvaGetAddress* it) {
         auto* toReg = moveToReg(it->to, RvReg::T0);
         if (it->of->kind != RvaValue::Kind::Memory) {
-            sparkError(
-                "RvaFixer",
-                "Failed to fix RvaGetAddress: 'of' is not a memory");
+            sparkError("RvaFixer", "Failed to fix RvaGetAddress: 'of' is not a memory");
         }
 
         auto* mem = (RvaMemory*) it->of;
@@ -162,7 +150,8 @@ private:
             toReg,
             RvaRegister::get(mem->getBase()),
             RvaBinary::Operator::Plus,
-            allocator.create<RvaImm>(mem->getOffset())));
+            allocator.create<RvaImm>(mem->getOffset())
+        ));
         storeIfNeeded(it->to, toReg);
     }
 
@@ -220,13 +209,11 @@ private:
     }
 
     void clone(RvaPrologue* pr) {
-        add(allocator.create<RvaPrologue>(
-            pr->getFrameSize(), pr->willSaveRa()));
+        add(allocator.create<RvaPrologue>(pr->getFrameSize(), pr->willSaveRa()));
     }
 
     void clone(RvaEpilogue* ep) {
-        add(allocator.create<RvaEpilogue>(
-            ep->getFrameSize(), ep->willLoadRa()));
+        add(allocator.create<RvaEpilogue>(ep->getFrameSize(), ep->willLoadRa()));
     }
 
     void clone(RvaJump* jump) {
@@ -251,15 +238,11 @@ private:
         case RvaValue::Kind::Register: return v;
         case RvaValue::Kind::Memory: {
             auto* mem = (RvaMemory*) v;
-            return allocator.create<RvaMemory>(
-                mem->getBase(), mem->getOffset());
+            return allocator.create<RvaMemory>(mem->getBase(), mem->getOffset());
         }
 
         default:
-            sparkError(
-                "RvaFixer",
-                "Failed to clone RvaValue: unknown kind %d",
-                v->kind);
+            sparkError("RvaFixer", "Failed to clone RvaValue: unknown kind %d", v->kind);
             return nullptr;
         }
     }

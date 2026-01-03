@@ -1,12 +1,12 @@
 #pragma once
-#include "LivenessAnalysis.h"
 #include "../SkrOptimizerUtils.h"
+#include "LivenessAnalysis.h"
 
 class DeadStoreElimination {
 public:
     DeadStoreElimination(CfGraph<SkrInstruction*>* graph, const SkrVar* retVar)
         : graph(graph)
-        , retVar(retVar) {  }
+        , retVar(retVar) { }
 
     void run() {
         LivenessAnalysis la(graph);

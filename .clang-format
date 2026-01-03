@@ -2,6 +2,7 @@ BasedOnStyle: WebKit
 AlignAfterOpenBracket: BlockIndent
 AllowAllArgumentsOnNextLine: false
 AllowAllParametersOfDeclarationOnNextLine: false
+AllowShortCaseLabelsOnASingleLine: true
 BinPackArguments: false
 BinPackParameters: false
 BraceWrapping:
@@ -24,6 +25,6 @@ BraceWrapping:
   SplitEmptyRecord: false
   SplitEmptyNamespace: false
 BreakBeforeBraces: Custom
-ColumnLimit: 120
+BreakTemplateDeclarations: Yes
 FixNamespaceComments: true
 SpaceAfterCStyleCast: true

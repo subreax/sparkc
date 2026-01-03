@@ -3,9 +3,16 @@
 #include "sparkc/common/Error.h"
 
 RvaBranch::RvaBranch(
-    RvaValue* left, Operator op, RvaValue* right, StringRef label)
-    : RvaInstruction(Kind::Branch), left(left), op(op), right(right),
-      label(label) {}
+    RvaValue* left,
+    Operator op,
+    RvaValue* right,
+    StringRef label
+)
+    : RvaInstruction(Kind::Branch)
+    , left(left)
+    , op(op)
+    , right(right)
+    , label(label) { }
 
 void RvaBranch::emit(RvListing& listing) {
     auto L = expectReg(left);

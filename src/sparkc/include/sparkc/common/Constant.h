@@ -1,14 +1,15 @@
 #pragma once
-#include <cstdint>
 #include "../symbol/SymbolType.h"
 #include "Error.h"
+#include <cstdint>
 
 class IntConstant;
 class FloatConstant;
 
 class Constant {
 public:
-    Constant(SymbolType* type) : type(type) {  }
+    Constant(SymbolType* type)
+        : type(type) { }
 
     bool isInt() const { return type->kind == SymbolType::Kind::Integer; }
     bool isFloat() const { return type->kind == SymbolType::Kind::Float; }
@@ -18,13 +19,14 @@ public:
 
     bool operator==(const Constant& other) const;
 
-    SymbolType *const type;
+    SymbolType* const type;
 };
 
 class IntConstant : public Constant {
 public:
-    IntConstant(int32_t val) 
-        : Constant(SymbolIntType::getInstance()), val(val) {  }
+    IntConstant(int32_t val)
+        : Constant(SymbolIntType::getInstance())
+        , val(val) { }
 
     static IntConstant* get0() {
         static IntConstant c(0);
@@ -41,8 +43,9 @@ public:
 
 class FloatConstant : public Constant {
 public:
-    FloatConstant(float val) 
-        : Constant(SymbolFloatType::getInstance()), val(val) {  }
+    FloatConstant(float val)
+        : Constant(SymbolFloatType::getInstance())
+        , val(val) { }
 
     float val;
 };

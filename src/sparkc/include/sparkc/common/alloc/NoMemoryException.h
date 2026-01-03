@@ -4,5 +4,6 @@
 
 class NoMemoryException : public SparkRuntimeException {
 public:
-    NoMemoryException(StringRef allocatorName) : SparkRuntimeException("Failed to allocate memory in allocator " + allocatorName.toString()) { }
+    NoMemoryException(StringRef allocatorName)
+        : SparkRuntimeException("Failed to allocate memory in allocator " + allocatorName.toString()) { }
 };

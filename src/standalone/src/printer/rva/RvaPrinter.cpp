@@ -1,34 +1,61 @@
 #include "RvaPrinter.h"
-#include <iomanip>
-#include <cstring>
 #include "../Colored.h"
+#include <cstring>
+#include <iomanip>
 
+// clang-format off
 static constexpr const char* _REG_STR[] = {
     "zero", "ra", "sp", "gp", "tp", "t0", "t1", "t2", "s0", "s1",
     "a0", "a1", "a2", "a3", "a4", "a5", "a6", "a7", "s2", "s3",
     "s4", "s5", "s6", "s7", "s8", "s9", "s10", "s11", "t3", "t4",
     "t5", "t6"
 };
+// clang-format on
 
-static constexpr const char* _RVA_BINARY_OP[] = { "+", "-", "*", "mulh", "/", "%", "==", "!=", "<", "<=", ">", ">=", "<<", ">>", "|", "fixmul" };
+static constexpr const char* _RVA_BINARY_OP[] = {
+    "+",
+    "-",
+    "*",
+    "mulh",
+    "/",
+    "%",
+    "==",
+    "!=",
+    "<",
+    "<=",
+    ">",
+    ">=",
+    "<<",
+    ">>",
+    "|",
+    "fixmul"
+};
 static constexpr int _RVA_BINARY_OP_SZ = sizeof(_RVA_BINARY_OP) / sizeof(const char*);
 
-static constexpr const char* _RVA_BRANCH_OP[] = { "==", "!=", "<", "<=", ">", ">=" };
+static constexpr const char* _RVA_BRANCH_OP[] = {
+    "==",
+    "!=",
+    "<",
+    "<=",
+    ">",
+    ">="
+};
 static constexpr int _RVA_BRANCH_OP_SZ = sizeof(_RVA_BRANCH_OP) / sizeof(const char*);
 
 inline const char* sign(int v) {
     if (v >= 0) {
         return "+";
-    } else {
+    }
+    else {
         return "";
     }
 }
 
-
 std::ostream& operator<<(std::ostream& os, RvReg reg) {
     if ((int) reg < 32) {
         os << _REG_STR[(int) reg];
-    } else {
+    }
+    else {
         os << "unknown_reg";
     }
     return os;
@@ -37,7 +64,8 @@ std::ostream& operator<<(std::ostream& os, RvReg reg) {
 std::ostream& operator<<(std::ostream& os, RvaBinary::Operator op) {
     if ((int) op < _RVA_BINARY_OP_SZ) {
         os << _RVA_BINARY_OP[(int) op];
-    } else {
+    }
+    else {
         os << "unknown_op_" << (int) op;
     }
     return os;
@@ -46,7 +74,8 @@ std::ostream& operator<<(std::ostream& os, RvaBinary::Operator op) {
 std::ostream& operator<<(std::ostream& os, RvaBranch::Operator op) {
     if ((int) op < _RVA_BRANCH_OP_SZ) {
         os << _RVA_BRANCH_OP[(int) op];
-    } else {
+    }
+    else {
         os << "unknown_op_" << (int) op;
     }
     return os;
@@ -65,9 +94,8 @@ std::ostream& operator<<(std::ostream& os, const RvaValue& value) {
     case RvaValue::Kind::PseudoMem: {
         auto* it = (const RvaPseudoMem*) &value;
         os << "pm(" << it->getId().toString() << sign(it->getOffset()) << it->getOffset() << ")";
-    }
-        break;
-    
+    } break;
+
     case RvaValue::Kind::Register:
         os << ((const RvaRegister*) &value)->getReg();
         break;
@@ -75,8 +103,7 @@ std::ostream& operator<<(std::ostream& os, const RvaValue& value) {
     case RvaValue::Kind::Memory: {
         auto* it = (const RvaMemory*) &value;
         os << "[" << it->getBase() << sign(it->getOffset()) << it->getOffset() << "]";
-    }
-        break;
+    } break;
 
     default:
         sparkError("RvaPrinter", "Unknown RvaValue");
@@ -84,7 +111,6 @@ std::ostream& operator<<(std::ostream& os, const RvaValue& value) {
     }
     return os;
 }
-
 
 void printType(std::ostream& os, const char* type) {
     char buf[16];
@@ -145,7 +171,8 @@ void printEpilogue(std::ostream& os, const RvaEpilogue* it) {
 
 void printBranch(std::ostream& os, const RvaBranch* it) {
     printType(os, "branch");
-    os << "branch to " << Colored::label(it->label) << " if " << *it->left << " " << it->op << " " << *it->right;
+    os << "branch to " << Colored::label(it->label) << " if " << *it->left << " " << it->op << " "
+       << *it->right;
 }
 
 void printCall(std::ostream& os, const RvaCall* it) {
@@ -174,7 +201,7 @@ void RvaPrinter::print(std::ostream& os, const std::vector<RvaInstruction*>& ins
         case RvaInstruction::Kind::Binary:
             printBinary(os, (const RvaBinary*) instr);
             break;
-        
+
         case RvaInstruction::Kind::Move:
             printMove(os, (const RvaMov*) instr);
             break;
@@ -202,7 +229,7 @@ void RvaPrinter::print(std::ostream& os, const std::vector<RvaInstruction*>& ins
         case RvaInstruction::Kind::Prologue:
             printPrologue(os, (const RvaPrologue*) instr);
             break;
-        
+
         case RvaInstruction::Kind::Epilogue:
             printEpilogue(os, (const RvaEpilogue*) instr);
             break;
@@ -231,7 +258,8 @@ void RvaPrinter::print(std::ostream& os, const std::vector<RvaInstruction*>& ins
             printAllocateOnStack(os, (const RvaReserveOnStack*) instr);
             break;
 
-        default: os << "unknown rva kind: " << (int) instr->kind;
+        default:
+            os << "unknown rva kind: " << (int) instr->kind;
         }
         os << "\n";
     }

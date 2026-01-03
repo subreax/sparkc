@@ -3,13 +3,13 @@
 
 class SparkRuntimeException : public std::runtime_error {
 public:
-    SparkRuntimeException(const std::string& msg) 
+    SparkRuntimeException(const std::string& msg)
         : std::runtime_error("")
-        , msg(msg) {  }
+        , msg(msg) { }
 
     SparkRuntimeException(const char* msg)
         : std::runtime_error("")
-        , msg(msg) {  }
+        , msg(msg) { }
 
     const char* what() const noexcept override { return msg.c_str(); }
 

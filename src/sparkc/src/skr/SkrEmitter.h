@@ -20,7 +20,8 @@ public:
         TypeTable& typeTable,
         IdentifierGen& idGen,
         LabelGen& labelGen,
-        std::vector<SkrInstruction*>& buf);
+        std::vector<SkrInstruction*>& buf
+    );
 
 private:
     SkrEmitter(
@@ -29,7 +30,8 @@ private:
         LabelGen& labelGen,
         SymbolTable& symbolTable,
         TypeTable& typeTable,
-        std::vector<SkrInstruction*>& out);
+        std::vector<SkrInstruction*>& out
+    );
 
     SkrFunction* emit(AstFunction* func);
 

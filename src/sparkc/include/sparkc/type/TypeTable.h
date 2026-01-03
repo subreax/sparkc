@@ -1,12 +1,17 @@
 #pragma once
-#include <unordered_map>
-#include "../symbol/SymbolType.h"
-#include "../common/StringRef.h"
 #include "../common/Error.h"
+#include "../common/StringRef.h"
+#include "../symbol/SymbolType.h"
+#include <unordered_map>
 
 struct StructField {
-    StructField(StringRef name, SymbolType* type, size_t offset = 0) : name(name), type(type), offset(offset) {  }
-    StructField(const char* name, SymbolType* type) : StructField(StringRef::cstr(name), type) {  }
+    StructField(StringRef name, SymbolType* type, size_t offset = 0)
+        : name(name)
+        , type(type)
+        , offset(offset) { }
+
+    StructField(const char* name, SymbolType* type)
+        : StructField(StringRef::cstr(name), type) { }
 
     StringRef name;
     SymbolType* type;
@@ -15,11 +20,13 @@ struct StructField {
 
 class TypeTable {
 public:
-    TypeTable(Allocator& allocator) : allocator(allocator) {  }
+    TypeTable(Allocator& allocator)
+        : allocator(allocator) { }
 
     void declare(StringRef tag, const std::vector<StructField>& fields) {
         if (table.find(tag) != table.end()) {
-            sparkError("TypeTable", "'" + tag.toString() + "' is already declared"); // todo
+            // todo
+            sparkError("TypeTable", "'" + tag.toString() + "' is already declared");
         }
 
         for (size_t i = 0; i < fields.size(); i++) {
@@ -27,7 +34,8 @@ public:
                 const auto& f1 = fields[i];
                 const auto& f2 = fields[j];
                 if (f1.name == f2.name) {
-                    sparkError("TypeTable", "Names in struct '" + tag.toString() + "' are not unique"); // todo
+                    // todo
+                    sparkError("TypeTable", "Names in struct '" + tag.toString() + "' are not unique");
                 }
             }
         }
@@ -40,7 +48,8 @@ public:
             if (field.type->kind == SymbolType::Kind::Structure) {
                 auto fieldTag = ((SymbolStructureType*) field.type)->getTag();
                 offset += getStructSize(fieldTag);
-            } else {
+            }
+            else {
                 offset += 4;
             }
         }
@@ -67,7 +76,8 @@ public:
             if (field.type->kind == SymbolType::Kind::Structure) {
                 auto* structType = (SymbolStructureType*) field.type;
                 sz += getStructSize(structType->getTag());
-            } else {
+            }
+            else {
                 sz += 4;
             }
         }

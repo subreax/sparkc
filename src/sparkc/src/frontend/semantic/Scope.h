@@ -5,12 +5,18 @@
 #include "sparkc/symbol/SymbolTable.h"
 #include "sparkc/type/TypeTable.h"
 
-
 struct ScopeItem {
-    enum class Kind { Var, Func, Struct, _Begin };
+    enum class Kind {
+        Var,
+        Func,
+        Struct,
+        _Begin
+    };
 
     ScopeItem(StringRef name, StringRef id, Kind kind)
-        : name(name), id(id), kind(kind) {}
+        : name(name)
+        , id(id)
+        , kind(kind) { }
 
     StringRef name;
     StringRef id;
@@ -18,7 +24,7 @@ struct ScopeItem {
 };
 
 class Scope {
-  public:
+public:
     Scope(SymbolTable& table, TypeTable& typeTable, size_t memSize);
 
     void declareVar(StringRef name, StringRef id, SymbolType* type);
@@ -26,7 +32,8 @@ class Scope {
     void declareFunc(
         StringRef name,
         SymbolType* retType,
-        const std::vector<SymbolType*>& params);
+        const std::vector<SymbolType*>& params
+    );
 
     void declareStruct(StringRef tag, const std::vector<StructField>& fields);
     const ScopeItem& get(StringRef name, ScopeItem::Kind kind) const;
@@ -34,7 +41,7 @@ class Scope {
     void close();
     Allocator& getTypeAllocator() const;
 
-  private:
+private:
     void declareVarInScope(StringRef name, StringRef id);
     void declareFuncInScope(StringRef name);
     void declareStructInScope(StringRef tag);

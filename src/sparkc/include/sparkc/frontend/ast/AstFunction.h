@@ -1,10 +1,10 @@
 #pragma once
-#include "AstProgItem.h"
-#include <vector>
+#include "AstBlock.h"
 #include "AstBlockItem.h"
 #include "AstFunParam.h"
-#include "AstBlock.h"
+#include "AstProgItem.h"
 #include "sparkc/common/BoundArray.h"
+#include <vector>
 
 class AstFunction : public AstProgItem {
 public:
@@ -13,7 +13,7 @@ public:
         , name(name)
         , retType(retType)
         , params(params)
-        , block(block) {  }
+        , block(block) { }
 
     StringRef getName() const { return name; }
     SymbolType* getReturnType() const { return retType; }

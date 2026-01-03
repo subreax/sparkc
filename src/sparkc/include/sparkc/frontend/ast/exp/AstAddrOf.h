@@ -3,7 +3,9 @@
 
 class AstAddrOf : public AstExp {
 public:
-    AstAddrOf(AstExp* exp, SymbolType* type) : AstExp(Kind::AddrOf, type), exp(exp) {  }
+    AstAddrOf(AstExp* exp, SymbolType* type)
+        : AstExp(Kind::AddrOf, type)
+        , exp(exp) { }
 
     AstExp* getExpression() const { return exp; }
 

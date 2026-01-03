@@ -3,9 +3,9 @@
 
 class AstCast : public AstExp {
 public:
-    AstCast(AstExp* exp, SymbolType* targetType) 
+    AstCast(AstExp* exp, SymbolType* targetType)
         : AstExp(Kind::Cast, targetType)
-        , exp(exp) {  }
+        , exp(exp) { }
 
     AstExp* getExp() { return exp; }
 

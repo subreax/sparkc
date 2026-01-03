@@ -1,7 +1,7 @@
 #pragma once
-#include <vector>
 #include "sparkc/common/cfg/CfGraph.h"
 #include "sparkc/skr/instr/SkrCopy.h"
+#include <vector>
 
 class CopyPropagation {
 public:
@@ -10,17 +10,21 @@ public:
 
 private:
     SkrInstruction* rewriteInstruction(
-        SkrInstruction* instr, 
+        SkrInstruction* instr,
         const std::vector<SkrCopy*>& reachingCopies
     );
 
     SkrInstruction* rewriteInstruction(
-        CfgBlock<SkrInstruction*>* block, 
-        class RCABlock* annotated, 
+        CfgBlock<SkrInstruction*>* block,
+        class RCABlock* annotated,
         size_t instrIdx
     );
 
-    void replace(const BoundArray<SkrValue*>& values, const std::vector<SkrCopy*>& copies, std::vector<SkrValue*>& out);
+    void replace(
+        const BoundArray<SkrValue*>& values,
+        const std::vector<SkrCopy*>& copies,
+        std::vector<SkrValue*>& out
+    );
 
     static SkrValue* replace(SkrValue* value, const std::vector<SkrCopy*>& copies);
     static bool shouldBeRemoved(SkrInstruction* skr);

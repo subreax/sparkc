@@ -4,7 +4,7 @@
 
 class UnexpectedTokenException : public ParseException {
 public:
-    UnexpectedTokenException(TokenKind expected, const Token& actual) 
+    UnexpectedTokenException(TokenKind expected, const Token& actual)
         : ParseException(Kind::UnexpectedToken, actual, buildErrorMessage(expected, actual))
         , expected(expected)
         , actual(actual) { }

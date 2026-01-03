@@ -3,11 +3,11 @@
 
 class SkrStore : public SkrInstruction {
 public:
-    SkrStore(SkrVar* to, int toOffset, SkrValue* from) 
+    SkrStore(SkrVar* to, int toOffset, SkrValue* from)
         : SkrInstruction(Kind::Store)
         , to(to)
         , toOffset(toOffset)
-        , from(from) {  }
+        , from(from) { }
 
     SkrVar* getTo() const { return to; }
     int getToOffset() const { return toOffset; }

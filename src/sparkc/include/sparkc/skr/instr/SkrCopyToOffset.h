@@ -7,7 +7,7 @@ public:
         : SkrInstruction(Kind::CopyToOffset)
         , to(to)
         , toOffset(toOffset)
-        , from(from) {  }
+        , from(from) { }
 
     SkrVar* getTo() const { return to; }
     int getToOffset() const { return toOffset; }

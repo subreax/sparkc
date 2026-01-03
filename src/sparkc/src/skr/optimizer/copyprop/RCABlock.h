@@ -1,7 +1,7 @@
 #pragma once
-#include "sparkc/skr/instr/SkrCopy.h"
 #include "ReachingCopies.h"
 #include "ReachingCopiesUtils.h"
+#include "sparkc/skr/instr/SkrCopy.h"
 
 struct RCABlock {
     RCABlock() = default;
@@ -41,7 +41,10 @@ struct RCABlock {
     std::vector<SkrCopy*> blockCopies;
 
 private:
-    static bool areCopiesEqual(const std::vector<SkrCopy*>& v1, const std::vector<SkrCopy*>& v2) {
+    static bool areCopiesEqual(
+        const std::vector<SkrCopy*>& v1,
+        const std::vector<SkrCopy*>& v2
+    ) {
         if (v1.size() != v2.size()) {
             return false;
         }

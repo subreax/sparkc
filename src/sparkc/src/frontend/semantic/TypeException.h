@@ -3,6 +3,6 @@
 
 class TypeException : public SparkRuntimeException {
 public:
-    TypeException(const std::string& msg) 
-        : SparkRuntimeException(msg) {  }
+    TypeException(const std::string& msg)
+        : SparkRuntimeException(msg) { }
 };

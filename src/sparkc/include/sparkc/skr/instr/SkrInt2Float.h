@@ -6,7 +6,7 @@ public:
     SkrInt2Float(SkrVar* dst, SkrValue* src)
         : SkrInstruction(Kind::Int2Float)
         , dst(dst)
-        , src(src) {  }
+        , src(src) { }
 
     SkrVar* getDst() { return dst; }
     const SkrVar* getDst() const { return dst; }

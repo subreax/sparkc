@@ -1,13 +1,14 @@
 #pragma once
-#include <string>
 #include <sparkc/common/LabelGen.h>
+#include <string>
 
 class Colored {
 public:
     static std::string label(StringRef s) {
         if (LabelGen::isPublic(s)) {
             return "\033[32m" + s.toString() + "\033[0m";
-        } else {
+        }
+        else {
             return "\033[31m" + s.toString() + "\033[0m";
         }
     }

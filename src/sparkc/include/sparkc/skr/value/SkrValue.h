@@ -1,15 +1,19 @@
 #pragma once
-#include <cstdint>
 #include "sparkc/common/Constant.h"
+#include <cstdint>
 
 class SkrConst;
 class SkrVar;
 
 class SkrValue {
 public:
-    enum class Kind { Const, Var };
+    enum class Kind {
+        Const,
+        Var
+    };
 
-    SkrValue(Kind kind) : kind(kind) {  }
+    SkrValue(Kind kind)
+        : kind(kind) { }
 
     bool isConst() const { return kind == Kind::Const; }
     bool isVar() const { return kind == Kind::Var; }
@@ -36,7 +40,6 @@ public:
     const Kind kind;
 };
 
-
 class SkrConst : public SkrValue {
 public:
     static SkrConst* getInt0() {
@@ -49,7 +52,9 @@ public:
         return &one;
     }
 
-    SkrConst(Constant* c) : SkrValue(Kind::Const), c(c) { }
+    SkrConst(Constant* c)
+        : SkrValue(Kind::Const)
+        , c(c) { }
 
     Constant* getConst() const { return c; }
 
@@ -57,14 +62,14 @@ private:
     Constant* c;
 };
 
-
 class SkrVar : public SkrValue {
 public:
-    SkrVar(StringRef id) : SkrValue(Kind::Var), id(id) {  }
+    SkrVar(StringRef id)
+        : SkrValue(Kind::Var)
+        , id(id) { }
 
     StringRef getId() const { return id; }
 
 private:
     StringRef id;
 };
-

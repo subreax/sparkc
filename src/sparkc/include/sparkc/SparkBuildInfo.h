@@ -1,23 +1,23 @@
 #pragma once
-#include <vector>
 #include "SparkMemoryPercentUsage.h"
-#include "common/StringRef.h"
-#include "common/Error.h"
 #include "backend/rv/asm/RvListing.h"
+#include "common/Error.h"
+#include "common/StringRef.h"
+#include <vector>
 
 struct SparkBuildInfo {
     SparkBuildInfo() = default;
 
     SparkBuildInfo(
-        const SparkMemoryPercentUsage& memUsage, 
-        const std::vector<RvListing::Label>& publicLabelsOffsets, 
+        const SparkMemoryPercentUsage& memUsage,
+        const std::vector<RvListing::Label>& publicLabelsOffsets,
         size_t binarySize,
         size_t binarySizeUsage
     )
         : memoryUsage(memUsage)
         , publicLabelsOffsets(publicLabelsOffsets)
         , binarySize(binarySize)
-        , binarySizeUsage(binarySizeUsage) {  }
+        , binarySizeUsage(binarySizeUsage) { }
 
     size_t findLabel(const char* name) {
         auto nameRef = StringRef::cstr(name);
@@ -37,4 +37,3 @@ struct SparkBuildInfo {
     size_t binarySize;
     size_t binarySizeUsage;
 };
-

@@ -3,8 +3,9 @@
 #include "sparkc/common/Error.h"
 #include "sparkc/common/LabelGen.h"
 
-
-RvListing::RvListing(uint8_t* out, size_t cap) : out(out), cap(cap) {  }
+RvListing::RvListing(uint8_t* out, size_t cap)
+    : out(out)
+    , cap(cap) { }
 
 void RvListing::add(uint32_t instr) {
     write_u32(instr, offset);
@@ -60,7 +61,8 @@ void RvListing::getPublicLabels(std::vector<Label>& out) {
 void RvListing::write_u32(uint32_t instr, int32_t offset) {
     if (offset + 4 <= cap) {
         *((uint32_t*) (out + offset)) = instr;
-    } else {
+    }
+    else {
         sparkError("RvListing", "Not enough memory to write compiled program");
     }
 }

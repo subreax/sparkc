@@ -1,15 +1,16 @@
 #pragma once
+#include "alloc/Allocator.h"
 #include <cstdint>
 #include <stdexcept>
 #include <vector>
-#include "alloc/Allocator.h"
 
-template<typename BoundArray>
+template <typename BoundArray>
 class BaConstIterator {
 public:
     using ItemType = typename BoundArray::ItemType;
 
-    BaConstIterator(ItemType* ptr) : ptr(ptr) {  }
+    BaConstIterator(ItemType* ptr)
+        : ptr(ptr) { }
 
     bool operator==(BaConstIterator it1) const {
         return ptr == it1.ptr;
@@ -32,7 +33,7 @@ private:
     ItemType* ptr;
 };
 
-template<typename BoundArray>
+template <typename BoundArray>
 class BaIterator : public BaConstIterator<BoundArray> {
 public:
     using ItemType = typename BoundArray::ItemType;
@@ -48,15 +49,16 @@ public:
     }
 };
 
-
-template<typename T>
+template <typename T>
 class BoundArray {
 public:
     using ItemType = T;
     using Iterator = BaIterator<BoundArray<T>>;
     using ConstIterator = BaConstIterator<BoundArray<T>>;
 
-    BoundArray(MemBlock block) : mem((T*) block.mem), itemsCount(block.sz / sizeof(T)) {  }
+    BoundArray(MemBlock block)
+        : mem((T*) block.mem)
+        , itemsCount(block.sz / sizeof(T)) { }
 
     static BoundArray<T> create(size_t itemsCount, Allocator& allocator) {
         return BoundArray<T>(allocator.allocate(itemsCount * sizeof(T)));
@@ -95,7 +97,8 @@ public:
     void set(size_t idx, const T& value) {
         if (idx < itemsCount) {
             mem[idx] = value;
-        } else {
+        }
+        else {
             throw std::out_of_range("BoundArray index is out of range");
         }
     }
@@ -140,7 +143,7 @@ private:
     size_t itemsCount;
 };
 
-template<typename T>
+template <typename T>
 static bool operator==(const BoundArray<T>& ba, const std::vector<T>& vec) {
     if (ba.size() != vec.size()) {
         return false;
@@ -154,17 +157,17 @@ static bool operator==(const BoundArray<T>& ba, const std::vector<T>& vec) {
     return true;
 }
 
-template<typename T>
+template <typename T>
 static bool operator==(const std::vector<T>& vec, const BoundArray<T>& ba) {
     return ba == vec;
 }
 
-template<typename T>
+template <typename T>
 static bool operator!=(const BoundArray<T>& ba, const std::vector<T>& vec) {
     return !(ba == vec);
 }
 
-template<typename T>
+template <typename T>
 static bool operator!=(const std::vector<T>& vec, const BoundArray<T>& ba) {
     return (!ba == vec);
 }

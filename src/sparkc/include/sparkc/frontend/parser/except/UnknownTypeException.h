@@ -3,5 +3,6 @@
 
 class UnknownTypeException : public ParseException {
 public:
-    UnknownTypeException(const Token& token) : ParseException(Kind::UnknownType, token, "Unknown type") { }
+    UnknownTypeException(const Token& token)
+        : ParseException(Kind::UnknownType, token, "Unknown type") { }
 };

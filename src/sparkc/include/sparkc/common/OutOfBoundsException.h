@@ -1,5 +1,6 @@
 #pragma once
 #include "SparkRuntimeException.h"
+#include <cstdint>
 #include <sstream>
 
 class OutOfBoundsException : public SparkRuntimeException {

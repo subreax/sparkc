@@ -7,7 +7,7 @@ public:
     static void print(const std::string& name, size_t used, size_t cap) {
         auto percentage = used * 100 / cap;
         printf("%-13s", name.c_str());
-        
+
         char buf[16];
         snprintf(buf, sizeof(buf), "%5d ", used);
         printf("%5s ", buf);
@@ -24,8 +24,8 @@ public:
         }
         std::cout << "] " << std::endl;
     }
-    
-    template<typename T>
+
+    template <typename T>
     static void print(const StatAllocator<T>& allocator) {
         print(allocator.getName().toString(), allocator.getUsedSize(), allocator.getCapacity());
     }

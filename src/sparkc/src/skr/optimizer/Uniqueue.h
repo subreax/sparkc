@@ -1,8 +1,8 @@
 #pragma once
-#include <vector>
 #include <algorithm>
+#include <vector>
 
-template<typename T>
+template <typename T>
 class Uniqueue {
 public:
     void add(const T& value) {

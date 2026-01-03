@@ -1,13 +1,13 @@
 #pragma once
-#include "SkrInstruction.h"
 #include "../value/SkrValue.h"
+#include "SkrInstruction.h"
 
 class SkrCopy : public SkrInstruction {
 public:
-    SkrCopy(SkrVar* to, SkrValue* from) 
+    SkrCopy(SkrVar* to, SkrValue* from)
         : SkrInstruction(Kind::Copy)
         , to(to)
-        , from(from) {  }
+        , from(from) { }
 
     SkrValue* getFrom() { return from; }
     SkrVar* getTo() { return to; }

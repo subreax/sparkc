@@ -1,14 +1,15 @@
 #pragma once
-#include <unordered_map>
 #include "../common/StringRef.h"
 #include "../common/alloc/Allocator.h"
 #include "SymbolType.h"
 #include "except/DuplicateSymbolDeclarationException.h"
 #include "except/UndeclaredSymbolException.h"
+#include <unordered_map>
 
 class SymbolTable {
 public:
-    SymbolTable(Allocator& allocator) : allocator(allocator) {  }
+    SymbolTable(Allocator& allocator)
+        : allocator(allocator) { }
 
     void declare(StringRef name, SymbolType* type) {
         auto it = table.find(name);

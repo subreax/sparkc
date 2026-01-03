@@ -1,8 +1,8 @@
 #pragma once
 #include <cstdint>
-#include <string>
 #include <cstdio>
 #include <sparkc/common/alloc/LinearAllocator.h>
+#include <string>
 
 class MemUtils {
 public:

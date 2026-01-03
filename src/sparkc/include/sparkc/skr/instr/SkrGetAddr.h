@@ -6,7 +6,7 @@ public:
     SkrGetAddr(SkrVar* to, SkrVar* var)
         : SkrInstruction(Kind::GetAddr)
         , to(to)
-        , var(var) {  }
+        , var(var) { }
 
     SkrVar* getTo() const { return to; }
     SkrVar* getVar() const { return var; }

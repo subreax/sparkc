@@ -8,7 +8,8 @@
 
 class StackFrame {
 public:
-    StackFrame(Allocator& rvaAlloc) : rvaAlloc(rvaAlloc) {}
+    StackFrame(Allocator& rvaAlloc)
+        : rvaAlloc(rvaAlloc) { }
 
     void occupy(int bytes) {
         if (s0size == 0) {
@@ -38,7 +39,9 @@ public:
         }
         else {
             return rvaAlloc.create<RvaMemory>(
-                mem->getBase(), mem->getOffset() + offset);
+                mem->getBase(),
+                mem->getOffset() + offset
+            );
         }
     }
 

@@ -1,10 +1,10 @@
 #pragma once
-#include "AstStatement.h"
 #include "../exp/AstExp.h"
+#include "AstStatement.h"
 
 class AstIfStatement : public AstStatement {
 public:
-    AstIfStatement(AstExp* condition, AstStatement* ifTrue, AstStatement* ifFalse = nullptr) 
+    AstIfStatement(AstExp* condition, AstStatement* ifTrue, AstStatement* ifFalse = nullptr)
         : AstStatement(Kind::If)
         , condition(condition)
         , ifTrue(ifTrue)

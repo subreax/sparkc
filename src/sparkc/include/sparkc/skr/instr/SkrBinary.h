@@ -1,10 +1,10 @@
 #pragma once
-#include "SkrInstruction.h"
 #include "../value/SkrValue.h"
+#include "SkrInstruction.h"
 
 class SkrBinary : public SkrInstruction {
 public:
-    enum class Operator { 
+    enum class Operator {
         Plus,
         Minus,
         Mul,
@@ -23,7 +23,7 @@ public:
         , dst(dst)
         , left(left)
         , op(op)
-        , right(right) {  }
+        , right(right) { }
 
     SkrVar* getDst() { return dst; }
     SkrValue* getLeft() { return left; }

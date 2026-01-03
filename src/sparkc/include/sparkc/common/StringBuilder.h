@@ -1,18 +1,18 @@
 #pragma once
-#include <cstring>
-#include <cstdint>
-#include <cstdlib>
 #include "StringRef.h"
 #include "alloc/MemBlock.h"
+#include <cstdint>
+#include <cstdlib>
+#include <cstring>
 
 class StringBuilder {
 public:
-    StringBuilder(char* buf, size_t capacity) 
+    StringBuilder(char* buf, size_t capacity)
         : buf(buf)
-        , capacity(capacity) {  }
+        , capacity(capacity) { }
 
-    StringBuilder(MemBlock block) 
-        : StringBuilder((char*) block.mem, block.sz) {  }
+    StringBuilder(MemBlock block)
+        : StringBuilder((char*) block.mem, block.sz) { }
 
     StringBuilder& append(StringRef str, size_t maxChars = SIZE_MAX) {
         return append(str.getReference(), str.getLength(), maxChars);
