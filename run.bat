@@ -1,4 +1,4 @@
 @echo off
-cd bin
-spark-compiler ../%*
+cd playground
+"../bin/spark-compiler.exe" %*
 cd ..

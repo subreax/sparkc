@@ -1,3 +1,5 @@
-build/**
-out/**
-.vscode/**
+/build
+/.vscode
+/playground
+/bin/spark-compiler.exe
+/bin/tests.exe
