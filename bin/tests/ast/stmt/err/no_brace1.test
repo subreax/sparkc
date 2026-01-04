@@ -1,0 +1,5 @@
+#src
+int main() {
+    return 0;
+
+#expect_failure

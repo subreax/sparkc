@@ -1,0 +1,4 @@
+#src
+struct wrong(int a, int a);
+
+#expect_failure

@@ -1,3 +1,4 @@
 #pragma once
+#include "ParserTest.h"
 
-void testAst(const char* tag, const char* src, const char* expectedTree);
+void testAst(const ParserTest& test);

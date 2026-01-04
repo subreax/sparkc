@@ -1,0 +1,5 @@
+#src
+int main) {
+}
+
+#expect_failure

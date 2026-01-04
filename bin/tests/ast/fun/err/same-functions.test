@@ -1,0 +1,10 @@
+#src
+int fun1(int a) {
+    return 0;
+}
+
+int fun1(int a) {
+    return 0;
+}
+
+#expect_failure

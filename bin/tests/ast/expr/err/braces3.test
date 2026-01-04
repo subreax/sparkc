@@ -1,0 +1,6 @@
+#src
+int main() {
+    return ((5 * 9);
+}
+
+#expect_failure

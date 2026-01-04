@@ -1,0 +1,65 @@
+#src
+struct color(float r, float g, float b, float a);
+
+color pixel() {
+    return color(1.0, 0.5, 0.0, 1.0);
+}
+
+#expect
+AstProgram(
+  items: [
+    AstStruct(
+      tag: 'color',
+      fields: [
+        Field(
+          type: 'float',
+          name: 'r'
+        ),
+        Field(
+          type: 'float',
+          name: 'g'
+        ),
+        Field(
+          type: 'float',
+          name: 'b'
+        ),
+        Field(
+          type: 'float',
+          name: 'a'
+        )
+      ]
+    ),
+    AstFunction(
+      name: 'pixel',
+      returnType: 'color',
+      params: [],
+      body: AstBlock(
+        items: [
+          AstReturnStatement(
+            exp: AstStructInit(
+              type: 'color',
+              args: [
+                AstConstantExp(
+                  type: 'float',
+                  value: '1'
+                ),
+                AstConstantExp(
+                  type: 'float',
+                  value: '0.5'
+                ),
+                AstConstantExp(
+                  type: 'float',
+                  value: '0'
+                ),
+                AstConstantExp(
+                  type: 'float',
+                  value: '1'
+                )
+              ]
+            )
+          )
+        ]
+      )
+    )
+  ]
+)

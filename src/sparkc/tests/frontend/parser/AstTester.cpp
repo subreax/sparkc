@@ -6,7 +6,7 @@
 #include "sparkc/type/TypeTable.h"
 #include <catch2/catch_test_macros.hpp>
 
-void testAst(const char* tag, const char* src, const char* expectedTree) {
+std::string buildAst(const char* src) {
     LinearAllocator allocator("parser", 2048, true);
     LinearAllocator commonAllocator("common", 2048, true);
     SymbolTable symbolTable(commonAllocator);
@@ -21,6 +21,16 @@ void testAst(const char* tag, const char* src, const char* expectedTree) {
 
     std::ostringstream actualTree;
     AstPrinter(actualTree).print(program);
-    INFO("Failed test: " << tag);
-    REQUIRE(actualTree.str() == expectedTree);
+    return actualTree.str();
+}
+
+void testAst(const ParserTest& test) {
+    INFO("Test: " << test.path);
+    if (!test.expectFailure) {
+        auto actualTree = buildAst(test.src.c_str());
+        REQUIRE(actualTree == test.expectedTree);
+    }
+    else {
+        REQUIRE_THROWS(buildAst(test.src.c_str()));
+    }
 }

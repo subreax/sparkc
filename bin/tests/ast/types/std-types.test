@@ -1,0 +1,34 @@
+#src
+float test(int a, float b) {
+    return 0.0;
+}
+
+#expect
+AstProgram(
+  items: [
+    AstFunction(
+      name: 'test',
+      returnType: 'float',
+      params: [
+        AstFunParam(
+          type: 'int',
+          name: 'a.0'
+        ),
+        AstFunParam(
+          type: 'float',
+          name: 'b.1'
+        )
+      ],
+      body: AstBlock(
+        items: [
+          AstReturnStatement(
+            exp: AstConstantExp(
+              type: 'float',
+              value: '0'
+            )
+          )
+        ]
+      )
+    )
+  ]
+)

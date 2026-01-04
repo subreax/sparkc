@@ -1,0 +1,153 @@
+#src
+struct color(float r, float g, float b);
+struct grad(color from, color to);
+
+int test() {
+    grad g;
+    g.from.r = 1.0;
+    g.from.g = 0.8;
+    g.to = color(0.1, 0.2, 0.3);
+    return 0;
+}
+
+#expect
+AstProgram(
+  items: [
+    AstStruct(
+      tag: 'color',
+      fields: [
+        Field(
+          type: 'float',
+          name: 'r'
+        ),
+        Field(
+          type: 'float',
+          name: 'g'
+        ),
+        Field(
+          type: 'float',
+          name: 'b'
+        )
+      ]
+    ),
+    AstStruct(
+      tag: 'grad',
+      fields: [
+        Field(
+          type: 'color',
+          name: 'from'
+        ),
+        Field(
+          type: 'color',
+          name: 'to'
+        )
+      ]
+    ),
+    AstFunction(
+      name: 'test',
+      returnType: 'int',
+      params: [],
+      body: AstBlock(
+        items: [
+          AstVarDeclaration(
+            type: 'grad',
+            name: 'g.0'
+          ),
+          AstExpressionStatement(
+            exp: AstAssignment(
+              type: 'float',
+              var: AstDot(
+                type: 'float',
+                from: AstDot(
+                  type: 'color',
+                  from: AstVar(
+                    type: 'grad',
+                    id: 'g.0'
+                  ),
+                  field: AstVar(
+                    type: 'color',
+                    id: 'from'
+                  )
+                ),
+                field: AstVar(
+                  type: 'float',
+                  id: 'r'
+                )
+              ),
+              exp: AstConstantExp(
+                type: 'float',
+                value: '1'
+              )
+            )
+          ),
+          AstExpressionStatement(
+            exp: AstAssignment(
+              type: 'float',
+              var: AstDot(
+                type: 'float',
+                from: AstDot(
+                  type: 'color',
+                  from: AstVar(
+                    type: 'grad',
+                    id: 'g.0'
+                  ),
+                  field: AstVar(
+                    type: 'color',
+                    id: 'from'
+                  )
+                ),
+                field: AstVar(
+                  type: 'float',
+                  id: 'g'
+                )
+              ),
+              exp: AstConstantExp(
+                type: 'float',
+                value: '0.8'
+              )
+            )
+          ),
+          AstExpressionStatement(
+            exp: AstAssignment(
+              type: 'color',
+              var: AstDot(
+                type: 'color',
+                from: AstVar(
+                  type: 'grad',
+                  id: 'g.0'
+                ),
+                field: AstVar(
+                  type: 'color',
+                  id: 'to'
+                )
+              ),
+              exp: AstStructInit(
+                type: 'color',
+                args: [
+                  AstConstantExp(
+                    type: 'float',
+                    value: '0.1'
+                  ),
+                  AstConstantExp(
+                    type: 'float',
+                    value: '0.2'
+                  ),
+                  AstConstantExp(
+                    type: 'float',
+                    value: '0.3'
+                  )
+                ]
+              )
+            )
+          ),
+          AstReturnStatement(
+            exp: AstConstantExp(
+              type: 'int',
+              value: '0'
+            )
+          )
+        ]
+      )
+    )
+  ]
+)

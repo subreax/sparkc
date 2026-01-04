@@ -49,6 +49,7 @@ void loadTestFile(const std::string& path, ParserTest& out) {
 
     std::string line;
     Section section = S_SRC;
+    bool expectFailure = false;
 
     while (getline(fin, line)) {
         if (line == "#src") {
@@ -56,6 +57,9 @@ void loadTestFile(const std::string& path, ParserTest& out) {
         }
         else if (line == "#expect") {
             section = S_EXPECTED;
+        }
+        else if (line == "#expect_failure") {
+            expectFailure = true;
         }
         else {
             sections[section] << line << "\n";
@@ -66,5 +70,6 @@ void loadTestFile(const std::string& path, ParserTest& out) {
     out.path = path;
     out.src = trim(sections[S_SRC].str());
     out.expectedTree = trim(sections[S_EXPECTED].str());
+    out.expectFailure = expectFailure;
 }
 }; // namespace ParserTestLoader
