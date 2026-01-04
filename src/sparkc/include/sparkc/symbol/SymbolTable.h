@@ -11,7 +11,7 @@ public:
     SymbolTable(Allocator& allocator)
         : allocator(allocator) { }
 
-    void declare(StringRef name, SymbolType* type) {
+    void declareVar(StringRef name, SymbolType* type) {
         auto it = table.find(name);
         if (it != table.end()) {
             throw DuplicateSymbolDeclarationException(name, type);

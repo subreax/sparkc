@@ -184,7 +184,7 @@ private:
 
     void placeArgOnStack(const SkrValue* skrArg, size_t sz, int regIdx) {
         StringRef argId = idGen.unique("arg");
-        symbolTable.declare(argId, getType(skrArg));
+        symbolTable.declareVar(argId, getType(skrArg));
         SkrVar* arg = allocator.create<SkrVar>(argId);
 
         copy(arg, 0, skrArg, 0);

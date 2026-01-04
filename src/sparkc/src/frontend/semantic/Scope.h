@@ -25,33 +25,19 @@ struct ScopeItem {
 
 class Scope {
 public:
-    Scope(SymbolTable& table, TypeTable& typeTable, size_t memSize);
+    void declareVar(StringRef name, StringRef id);
+    void declareFunc(StringRef name);
+    void declareStruct(StringRef tag);
 
-    void declareVar(StringRef name, StringRef id, SymbolType* type);
-
-    void declareFunc(
-        StringRef name,
-        SymbolType* retType,
-        const std::vector<SymbolType*>& params
-    );
-
-    void declareStruct(StringRef tag, const std::vector<StructField>& fields);
     const ScopeItem& get(StringRef name, ScopeItem::Kind kind) const;
+
     void open();
     void close();
-    Allocator& getTypeAllocator() const;
 
 private:
-    void declareVarInScope(StringRef name, StringRef id);
-    void declareFuncInScope(StringRef name);
-    void declareStructInScope(StringRef tag);
-    void declareInScope(StringRef name, StringRef id, ScopeItem::Kind kind);
-    void init();
-
     static ScopeItem::Kind symbolKind2ScopeKind(SymbolType::Kind kind);
 
-    LinearAllocator allocator;
+    void declareInScope(StringRef name, StringRef id, ScopeItem::Kind kind);
+
     Stack<ScopeItem> stack;
-    SymbolTable& symbolTable;
-    TypeTable& typeTable;
 };

@@ -93,7 +93,7 @@ void SparkCompiler::recreateContext() {
 AstProgram* SparkCompiler::buildAst(Allocator& pool, Allocator& sharedPool, const char* src) {
     Lexer lexer(src);
     auto* astProgram = Parser(lexer, pool, sharedPool).parseProgram();
-    Semantic(ctx->symTable, ctx->typeTable, ctx->idGen, pool, 1024).process(astProgram);
+    Semantic(ctx->symTable, ctx->typeTable, ctx->idGen, pool).process(astProgram);
     notifyAstBuild(astProgram);
     return astProgram;
 }

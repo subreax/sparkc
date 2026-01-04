@@ -17,7 +17,7 @@ std::string buildAst(const char* src) {
     Parser parser(lexer, allocator, commonAllocator);
 
     AstProgram* program = parser.parseProgram();
-    Semantic(symbolTable, typeTable, idGen, allocator, 2048).process(program);
+    Semantic(symbolTable, typeTable, idGen, allocator).process(program);
 
     std::ostringstream actualTree;
     AstPrinter(actualTree).print(program);

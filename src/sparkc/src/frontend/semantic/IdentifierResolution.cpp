@@ -3,11 +3,13 @@
 IdentifierResolution::IdentifierResolution(
     SymbolTable& symbolTable,
     TypeTable& typeTable,
-    IdentifierGen& idGen,
-    size_t scopeMem
+    IdentifierGen& idGen
 )
-    : scope(symbolTable, typeTable, scopeMem)
-    , idGen(idGen) { }
+    : idGen(idGen)
+    , symbolTable(symbolTable)
+    , typeTable(typeTable) {
+    addExistingDeclarationsToScope();
+}
 
 void IdentifierResolution::resolve(AstProgram* program) {
     for (auto* it : program->items) {
@@ -21,13 +23,32 @@ void IdentifierResolution::resolve(AstProgram* program) {
     }
 }
 
+void IdentifierResolution::addExistingDeclarationsToScope() {
+    for (const auto& structEntry : typeTable) {
+        scope.declareStruct(structEntry.first);
+    }
+
+    for (const auto& entry : symbolTable) {
+        scope.declareFunc(entry.first);
+    }
+}
+
+StringRef IdentifierResolution::declareVar(StringRef name, SymbolType* type) {
+    auto id = idGen.unique(name);
+    scope.declareVar(name, id);
+    symbolTable.declareVar(id, type);
+    return id;
+}
+
 void IdentifierResolution::declareFunction(AstFunction* func) {
     const auto& params = func->getParams();
     std::vector<SymbolType*> paramTypes(params.size());
     for (size_t i = 0; i < params.size(); i++) {
         paramTypes[i] = params[i]->getType();
     }
-    scope.declareFunc(func->getName(), func->getReturnType(), paramTypes);
+
+    scope.declareFunc(func->getName());
+    symbolTable.declareFunc(func->getName(), func->getReturnType(), paramTypes);
 }
 
 void IdentifierResolution::declareStruct(AstStruct* it) {
@@ -36,7 +57,8 @@ void IdentifierResolution::declareStruct(AstStruct* it) {
         fields.emplace_back(field->getName(), field->getType());
     }
 
-    scope.declareStruct(it->getTag(), fields);
+    scope.declareStruct(it->getTag());
+    typeTable.declare(it->getTag(), fields);
 }
 
 void IdentifierResolution::resolve(AstProgItem* progItem) {
@@ -47,11 +69,7 @@ void IdentifierResolution::resolve(AstProgItem* progItem) {
         resolve((AstFunction*) progItem);
     }
     else {
-        sparkError(
-            "IdentifierResolution",
-            "Unknown AstProgItem: %d",
-            progItem->kind
-        );
+        sparkError("IdentifierResolution", "Unknown AstProgItem: %d", progItem->kind);
     }
 }
 
@@ -101,105 +119,126 @@ void IdentifierResolution::resolve(AstDeclaration* decl) {
         varDecl->setId(declareVar(varDecl->getId(), varDecl->getType()));
     }
     else {
-        sparkError(
-            "IdentifierResolution",
-            "Unknown AstDeclaration: %d",
-            decl->kind
-        );
+        sparkError("IdentifierResolution", "Unknown AstDeclaration: %d", decl->kind);
     }
 }
 
 void IdentifierResolution::resolve(AstStatement* st) {
-    if (st->kind == AstStatement::Kind::Return) {
-        resolve(((AstReturnStatement*) st)->getExpression());
+    switch (st->kind) {
+    case AstStatement::Kind::Return: {
+        auto* it = (AstReturnStatement*) st;
+        resolve(it->getExpression());
+        break;
     }
-    else if (st->kind == AstStatement::Kind::Expression) {
-        resolve(((AstExpressionStatement*) st)->getExpression());
+
+    case AstStatement::Kind::Expression: {
+        auto* it = (AstExpressionStatement*) st;
+        resolve(it->getExpression());
+        break;
     }
-    else if (st->kind == AstStatement::Kind::If) {
+
+    case AstStatement::Kind::If: {
         auto* it = (AstIfStatement*) st;
         resolve(it->getCondition());
         resolve(it->getTrueBranch());
-        auto* falseBranch = it->getFalseBranch();
-        if (falseBranch != nullptr) {
+
+        if (auto* falseBranch = it->getFalseBranch()) {
             resolve(falseBranch);
         }
+        break;
     }
-    else if (st->kind == AstStatement::Kind::While) {
+
+    case AstStatement::Kind::While: {
         auto* it = (AstWhileStatement*) st;
         resolve(it->getCondition());
         resolve(it->getStatement());
+        break;
     }
-    else if (st->kind == AstStatement::Kind::Compound) {
+
+    case AstStatement::Kind::Compound: {
         auto* it = (AstCompoundStatement*) st;
         resolve(it->getBlock());
+        break;
     }
-    else {
-        sparkError(
-            "IdentifierResolution",
-            "Unknown AstStatement: %d",
-            st->kind
-        );
+
+    default: {
+        sparkError("IdentifierResolution", "Unknown AstStatement: %d", st->kind);
+        break;
+    }
     }
 }
 
 void IdentifierResolution::resolve(AstExp* exp) {
-    auto kind = exp->kind;
-    if (kind == AstExp::Kind::Constant) {
-    }
-    else if (kind == AstExp::Kind::Binary) {
+    switch (exp->kind) {
+    case AstExp::Kind::Constant:
+        break;
+
+    case AstExp::Kind::Binary: {
         auto* it = (AstBinaryExp*) exp;
         resolve(it->getLeft());
         resolve(it->getRight());
+        break;
     }
-    else if (kind == AstExp::Kind::Var) {
+
+    case AstExp::Kind::Var: {
         auto* it = (AstVar*) exp;
         it->setId(scope.get(it->getId(), ScopeItem::Kind::Var).id);
+        break;
     }
-    else if (kind == AstExp::Kind::Assignment) {
+
+    case AstExp::Kind::Assignment: {
         auto* it = (AstAssignment*) exp;
         resolve(it->getVar());
         resolve(it->getExp());
+        break;
     }
-    else if (kind == AstExp::Kind::FunCall) {
+
+    case AstExp::Kind::FunCall: {
         auto* it = (AstFunCall*) exp;
         checkDeclaration(it->getFunName(), ScopeItem::Kind::Func);
         for (auto* arg : it->getArgs()) {
             resolve(arg);
         }
+        break;
     }
-    else if (kind == AstExp::Kind::Cast) {
+
+    case AstExp::Kind::Cast: {
         auto* it = (AstCast*) exp;
         resolve(it->getExp());
+        break;
     }
-    else if (kind == AstExp::Kind::Dereference) {
+
+    case AstExp::Kind::Dereference: {
         auto* it = (AstDereference*) exp;
         resolve(it->getExpression());
+        break;
     }
-    else if (kind == AstExp::Kind::AddrOf) {
+
+    case AstExp::Kind::AddrOf: {
         auto* it = (AstAddrOf*) exp;
         resolve(it->getExpression());
+        break;
     }
-    else if (kind == AstExp::Kind::Dot) {
+
+    case AstExp::Kind::Dot: {
         auto* it = (AstDot*) exp;
         resolve(it->getFrom());
+        break;
     }
-    else if (kind == AstExp::Kind::StructInit) {
+
+    case AstExp::Kind::StructInit: {
         auto* it = (AstStructInit*) exp;
         checkDeclaration(it->getTag(), ScopeItem::Kind::Struct);
         for (auto* arg : it->getArgs()) {
             resolve(arg);
         }
+        break;
     }
-    else {
-        sparkError("IdentifierResolution", "Unknown AstExp: %d", kind);
-    }
-}
 
-StringRef IdentifierResolution::declareVar(StringRef name, SymbolType* type) {
-    auto id = idGen.unique(name);
-    scope.declareVar(name, id, type);
-    return id;
+    default:
+        sparkError("IdentifierResolution", "Unknown AstExp: %d", exp->kind);
+        break;
+    }
 }
 
 void IdentifierResolution::checkDeclaration(StringRef name, ScopeItem::Kind kind) {

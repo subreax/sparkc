@@ -17,13 +17,22 @@ public:
     bool isTypeDeclared(StringRef type);
 
 private:
+    template <typename T, typename... Args>
+    inline T* newNode(Args... args) {
+        return allocator.create<T>(args...);
+    }
+
     AstStruct* tryParseStruct();
     AstFunction* parseFunction();
     AstFunParam* parseFunParam();
     AstBlock* parseBlock();
     AstBlockItem* parseBlockItem();
     AstDeclaration* tryParseDeclaration();
+
     AstStatement* parseStatement();
+    AstIfStatement* parseIfStatement();
+    AstStatement* parseWhileStatement();
+
     AstExp* parseExpression(int prevPrecedence = 0);
     AstExp* parseFactor();
     void parseFunArgs(std::vector<AstExp*>& outArgs);
@@ -32,7 +41,6 @@ private:
 
     static int32_t parseInt(const Token& token);
     static float parseFloat(const Token& token);
-    static int getPrecedence(TokenKind tk);
 
     Token takeToken();
     Token expect(TokenKind kind);

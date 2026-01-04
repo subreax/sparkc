@@ -69,7 +69,7 @@ AstProgram(
     }
 
     AstProgram* program = parser.parseProgram();
-    Semantic(symbolTable, typeTable, idGen, allocator, 2048).process(program);
+    Semantic(symbolTable, typeTable, idGen, allocator).process(program);
 
     std::ostringstream actualTree;
     AstPrinter(actualTree).print(program);

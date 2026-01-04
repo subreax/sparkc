@@ -6,14 +6,20 @@
 
 class IdentifierResolution {
 public:
-    IdentifierResolution(SymbolTable& symbolTable, TypeTable& typeTable, IdentifierGen& idGen, size_t scopeMem);
+    IdentifierResolution(
+        SymbolTable& symbolTable,
+        TypeTable& typeTable,
+        IdentifierGen& idGen
+    );
 
     void resolve(AstProgram* program);
 
 private:
+    void addExistingDeclarationsToScope();
+
+    StringRef declareVar(StringRef name, SymbolType* type);
     void declareFunction(AstFunction* func);
     void declareStruct(AstStruct* it);
-    StringRef declareVar(StringRef name, SymbolType* type);
 
     void resolve(AstProgItem* progItem);
     void resolve(AstFunction* it);
@@ -28,4 +34,6 @@ private:
 
     Scope scope;
     IdentifierGen& idGen;
+    SymbolTable& symbolTable;
+    TypeTable& typeTable;
 };

@@ -96,26 +96,13 @@ void TypeChecker::typeCheck(AstStatement* st, SymbolType* retType) {
 void TypeChecker::typeCheck(AstExp* exp) {
     auto kind = exp->kind;
     switch (kind) {
-    case AstExp::Kind::Constant:
-        break;
-    case AstExp::Kind::Binary:
-        typeCheck((AstBinaryExp*) exp);
-        break;
-    case AstExp::Kind::Var:
-        typeCheck((AstVar*) exp);
-        break;
-    case AstExp::Kind::Assignment:
-        typeCheck((AstAssignment*) exp);
-        break;
-    case AstExp::Kind::FunCall:
-        typeCheck((AstFunCall*) exp);
-        break;
-    case AstExp::Kind::Dot:
-        typeCheck((AstDot*) exp);
-        break;
-    case AstExp::Kind::StructInit:
-        typeCheck((AstStructInit*) exp);
-        break;
+    case AstExp::Kind::Constant: break;
+    case AstExp::Kind::Binary: typeCheck((AstBinaryExp*) exp); break;
+    case AstExp::Kind::Var: typeCheck((AstVar*) exp); break;
+    case AstExp::Kind::Assignment: typeCheck((AstAssignment*) exp); break;
+    case AstExp::Kind::FunCall: typeCheck((AstFunCall*) exp); break;
+    case AstExp::Kind::Dot: typeCheck((AstDot*) exp); break;
+    case AstExp::Kind::StructInit: typeCheck((AstStructInit*) exp); break;
     default:
         sparkError(
             "TypeChecker",
@@ -129,9 +116,7 @@ void TypeChecker::typeCheck(AstExp* exp) {
 void TypeChecker::typeCheck(AstVar* var) {
     auto* type = symbolTable.get(var->getId());
     if (type->kind == SymbolType::Kind::Function) {
-        throw TypeException(
-            "Using variable as a function: '" + var->getId().toString() + "'"
-        );
+        throw TypeException("Using variable as a function: '" + var->getId().toString() + "'");
     }
 
     var->type = type;
@@ -150,18 +135,14 @@ void TypeChecker::typeCheck(AstBinaryExp* bin) {
 void TypeChecker::typeCheck(AstFunCall* call) {
     auto* funType = (SymbolFunctionType*) symbolTable.get(call->getFunName());
     if (funType->kind != SymbolType::Kind::Function) {
-        throw TypeException(
-            "Function '" + call->getFunName().toString() + "' doesn't exist"
-        );
+        throw TypeException("Function '" + call->getFunName().toString() + "' doesn't exist");
     }
 
     auto params = funType->getParams();
     auto paramsCount = params.size();
     auto args = call->getArgs();
     if (args.size() != paramsCount) {
-        throw TypeException(
-            "Function '" + call->getFunName().toString() + "' called with wrong number of arguments"
-        );
+        throw TypeException("Function '" + call->getFunName().toString() + "' called with wrong number of arguments");
     }
 
     for (size_t i = 0; i < args.size(); i++) {
@@ -178,10 +159,7 @@ void TypeChecker::typeCheck(AstAssignment* ass) {
     auto kind = ass->getVar()->kind;
     if (kind != AstExp::Kind::Var && kind != AstExp::Kind::Dot) {
         throw TypeException(
-            std::string(
-                "Expressions can only be assigned to variables or dots, not to "
-                "a "
-            )
+            std::string("Expressions can only be assigned to variables or dots, not to a ")
             + AstExp::kindToString(kind)
         );
     }
@@ -199,9 +177,7 @@ void TypeChecker::typeCheck(AstDot* it) {
     it->setFrom(dereference(it->getFrom()));
     auto* fromType = it->getFrom()->type;
     if (fromType->kind != SymbolType::Kind::Structure) {
-        throw TypeException(
-            "Trying to access a struct member on a non-struct type"
-        );
+        throw TypeException("Trying to access a struct member on a non-struct type");
     }
 
     if (it->getField()->kind != AstExp::Kind::Var) {
@@ -257,14 +233,10 @@ SymbolType* TypeChecker::getCommonType(SymbolType* t1, SymbolType* t2) {
     if (k1 == SymbolType::Kind::Function || k2 == SymbolType::Kind::Function) {
         throw TypeException("Common type with function doesn't exist");
     }
-    else if (
-        k1 == SymbolType::Kind::Integer && k2 == SymbolType::Kind::Float
-    ) {
+    else if (k1 == SymbolType::Kind::Integer && k2 == SymbolType::Kind::Float) {
         return t2;
     }
-    else if (
-        k1 == SymbolType::Kind::Float && k2 == SymbolType::Kind::Integer
-    ) {
+    else if (k1 == SymbolType::Kind::Float && k2 == SymbolType::Kind::Integer) {
         return t1;
     }
 

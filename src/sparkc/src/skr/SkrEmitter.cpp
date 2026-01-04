@@ -554,7 +554,7 @@ void SkrEmitter::removeUselessJumpToRet() {
 
 SkrVar* SkrEmitter::createVar(StringRef name, SymbolType* type) {
     auto id = idGen.unique(name);
-    symbolTable.declare(id, type);
+    symbolTable.declareVar(id, type);
     return allocator.create<SkrVar>(id);
 }
 
@@ -565,7 +565,7 @@ SkrVar* SkrEmitter::createVar(const char* name, SymbolType* type) {
 SkrVar*
 SkrEmitter::createVar(StringRef name, const char* suffix, SymbolType* type) {
     auto id = idGen.unique(name, suffix);
-    symbolTable.declare(id, type);
+    symbolTable.declareVar(id, type);
     return allocator.create<SkrVar>(id);
 }
 

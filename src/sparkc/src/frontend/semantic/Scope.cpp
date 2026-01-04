@@ -1,30 +1,15 @@
 #include "Scope.h"
 
-Scope::Scope(SymbolTable& table, TypeTable& typeTable, size_t memSize)
-    : allocator("scope", memSize)
-    , stack(allocator)
-    , symbolTable(table)
-    , typeTable(typeTable) {
-    init();
+void Scope::declareVar(StringRef name, StringRef id) {
+    declareInScope(name, id, ScopeItem::Kind::Var);
 }
 
-void Scope::declareVar(StringRef name, StringRef id, SymbolType* type) {
-    declareVarInScope(name, id);
-    symbolTable.declare(id, type);
+void Scope::declareFunc(StringRef name) {
+    declareInScope(name, name, ScopeItem::Kind::Func);
 }
 
-void Scope::declareFunc(
-    StringRef name,
-    SymbolType* retType,
-    const std::vector<SymbolType*>& params
-) {
-    declareFuncInScope(name);
-    symbolTable.declareFunc(name, retType, params);
-}
-
-void Scope::declareStruct(StringRef tag, const std::vector<StructField>& fields) {
-    declareStructInScope(tag);
-    typeTable.declare(tag, fields);
+void Scope::declareStruct(StringRef tag) {
+    declareInScope(tag, tag, ScopeItem::Kind::Struct);
 }
 
 const ScopeItem& Scope::get(StringRef name, ScopeItem::Kind kind) const {
@@ -56,20 +41,6 @@ void Scope::close() {
     }
 }
 
-Allocator& Scope::getTypeAllocator() const { return typeTable.getAllocator(); }
-
-void Scope::declareVarInScope(StringRef name, StringRef id) {
-    declareInScope(name, id, ScopeItem::Kind::Var);
-}
-
-void Scope::declareFuncInScope(StringRef name) {
-    declareInScope(name, name, ScopeItem::Kind::Func);
-}
-
-void Scope::declareStructInScope(StringRef tag) {
-    declareInScope(tag, tag, ScopeItem::Kind::Struct);
-}
-
 void Scope::declareInScope(StringRef name, StringRef id, ScopeItem::Kind kind) {
     for (size_t i = 0; i < stack.getSize(); i++) {
         auto& it = stack.peek(i);
@@ -83,16 +54,6 @@ void Scope::declareInScope(StringRef name, StringRef id, ScopeItem::Kind kind) {
     }
 
     stack.push(ScopeItem(name, id, kind));
-}
-
-void Scope::init() {
-    for (const auto& structEntry : typeTable) {
-        declareStructInScope(structEntry.first);
-    }
-
-    for (const auto& entry : symbolTable) {
-        declareFuncInScope(entry.first);
-    }
 }
 
 ScopeItem::Kind Scope::symbolKind2ScopeKind(SymbolType::Kind kind) {

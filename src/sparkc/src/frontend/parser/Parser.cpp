@@ -1,4 +1,5 @@
 #include "Parser.h"
+#include "Precedence.h"
 
 Parser::Parser(Lexer& lexer, Allocator& allocator, Allocator& sharedAllocator)
     : lexer(lexer)
@@ -19,7 +20,7 @@ AstProgram* Parser::parseProgram() {
         items.emplace_back(parseFunction());
     }
     auto arrFunctions = BoundArray<AstProgItem*>::fromVector(items, allocator);
-    return allocator.create<AstProgram>(arrFunctions);
+    return newNode<AstProgram>(arrFunctions);
 }
 
 bool Parser::hasNext() const { return current.kind != T_EOF; }
@@ -34,7 +35,7 @@ AstStruct* Parser::tryParseStruct() {
         while (hasNext() && current.kind != T_CLOSE_PAR) {
             auto* type = parseType();
             auto name = expect(T_IDENTIFIER).value;
-            fields.emplace_back(allocator.create<AstStructField>(type, name));
+            fields.emplace_back(newNode<AstStructField>(type, name));
             if (current.kind == T_COMMA) {
                 takeToken();
             }
@@ -42,7 +43,7 @@ AstStruct* Parser::tryParseStruct() {
         expect(T_CLOSE_PAR);
         expect(T_SEMICOLON);
 
-        return allocator.create<AstStruct>(tag, BoundArray<AstStructField*>::fromVector(fields, allocator));
+        return newNode<AstStruct>(tag, BoundArray<AstStructField*>::fromVector(fields, allocator));
     }
     return nullptr;
 }
@@ -65,13 +66,13 @@ AstFunction* Parser::parseFunction() {
     AstBlock* block = parseBlock();
 
     auto paramsBa = BoundArray<AstFunParam*>::fromVector(params, allocator);
-    return allocator.create<AstFunction>(funName, retType, paramsBa, block);
+    return newNode<AstFunction>(funName, retType, paramsBa, block);
 }
 
 AstFunParam* Parser::parseFunParam() {
     auto* type = parseType();
     auto id = expect(T_IDENTIFIER).value;
-    return allocator.create<AstFunParam>(id, type);
+    return newNode<AstFunParam>(id, type);
 }
 
 AstBlock* Parser::parseBlock() {
@@ -83,15 +84,15 @@ AstBlock* Parser::parseBlock() {
     expect(T_CLOSE_BRACE);
 
     auto itemsBa = BoundArray<AstBlockItem*>::fromVector(items, allocator);
-    return allocator.create<AstBlock>(itemsBa);
+    return newNode<AstBlock>(itemsBa);
 }
 
 AstBlockItem* Parser::parseBlockItem() {
     auto* decl = tryParseDeclaration();
     if (decl != nullptr) {
-        return allocator.create<AstDeclBlockItem>(decl);
+        return newNode<AstDeclBlockItem>(decl);
     }
-    return allocator.create<AstStatementBlockItem>(parseStatement());
+    return newNode<AstStatementBlockItem>(parseStatement());
 }
 
 AstDeclaration* Parser::tryParseDeclaration() {
@@ -104,7 +105,7 @@ AstDeclaration* Parser::tryParseDeclaration() {
             initializer = parseExpression();
         }
         expect(T_SEMICOLON);
-        return allocator.create<AstVarDeclaration>(varName, type, initializer);
+        return newNode<AstVarDeclaration>(varName, type, initializer);
     }
     else {
         return nullptr;
@@ -112,86 +113,105 @@ AstDeclaration* Parser::tryParseDeclaration() {
 }
 
 AstStatement* Parser::parseStatement() {
-    if (current.kind == T_RETURN_KEYWORD) {
+    switch (current.kind) {
+    case T_RETURN_KEYWORD: {
         takeToken();
         AstExp* exp = parseExpression();
         expect(T_SEMICOLON);
-        return allocator.create<AstReturnStatement>(exp);
+        return newNode<AstReturnStatement>(exp);
     }
-    else if (current.kind == T_IF_KEYWORD) {
-        takeToken();
-        expect(T_OPEN_PAR);
-        AstExp* cond = parseExpression();
-        expect(T_CLOSE_PAR);
-        AstStatement* ifTrue = parseStatement();
-        AstStatement* ifFalse = nullptr;
-        if (current.kind == T_ELSE_KEYWORD) {
-            takeToken();
-            ifFalse = parseStatement();
-        }
-        return allocator.create<AstIfStatement>(cond, ifTrue, ifFalse);
-    }
-    else if (current.kind == T_WHILE_KEYWORD) {
-        takeToken();
-        expect(T_OPEN_PAR);
-        auto* cond = parseExpression();
-        expect(T_CLOSE_PAR);
-        auto* st = parseStatement();
-        return allocator.create<AstWhileStatement>(cond, st);
-    }
-    else if (current.kind == T_OPEN_BRACE) {
-        AstBlock* block = parseBlock();
-        return allocator.create<AstCompoundStatement>(block);
-    }
-    else {
+
+    case T_IF_KEYWORD:
+        return parseIfStatement();
+
+    case T_WHILE_KEYWORD:
+        return parseWhileStatement();
+
+    case T_OPEN_BRACE:
+        return newNode<AstCompoundStatement>(parseBlock());
+
+    default: {
         AstExp* exp = parseExpression();
-        expect(TokenKind::T_SEMICOLON);
-        return allocator.create<AstExpressionStatement>(exp);
+        expect(T_SEMICOLON);
+        return newNode<AstExpressionStatement>(exp);
     }
+    }
+}
+
+AstIfStatement* Parser::parseIfStatement() {
+    expect(T_IF_KEYWORD);
+    expect(T_OPEN_PAR);
+    AstExp* cond = parseExpression();
+    expect(T_CLOSE_PAR);
+
+    AstStatement* ifTrue = parseStatement();
+    AstStatement* ifFalse = nullptr;
+
+    if (current.kind == T_ELSE_KEYWORD) {
+        takeToken();
+        ifFalse = parseStatement();
+    }
+
+    return newNode<AstIfStatement>(cond, ifTrue, ifFalse);
+}
+
+AstStatement* Parser::parseWhileStatement() {
+    expect(T_WHILE_KEYWORD);
+    expect(T_OPEN_PAR);
+    AstExp* cond = parseExpression();
+    expect(T_CLOSE_PAR);
+
+    AstStatement* body = parseStatement();
+    return newNode<AstWhileStatement>(cond, body);
 }
 
 AstExp* Parser::parseExpression(int prevPrecedence) {
     AstExp* left = parseFactor();
-    int precedence = getPrecedence(current.kind);
+    int precedence = Precedence::get(current.kind);
     while (precedence >= prevPrecedence) {
         auto op = takeToken();
         if (op.kind == T_EQUALS) {
             AstExp* right = parseExpression(precedence);
-            left = allocator.create<AstAssignment>(left, right);
+            left = newNode<AstAssignment>(left, right);
         }
         else if (op.kind == T_PERIOD) {
             AstExp* right = parseExpression(precedence + 1);
-            left = allocator.create<AstDot>(left, right);
+            left = newNode<AstDot>(left, right);
         }
         else {
             AstExp* right = parseExpression(precedence + 1);
-            left = allocator.create<AstBinaryExp>(left, AstBinaryExp::toBinaryOperator(op.kind), right);
+            left = newNode<AstBinaryExp>(left, AstBinaryExp::toBinaryOperator(op.kind), right);
         }
-        precedence = getPrecedence(current.kind);
+        precedence = Precedence::get(current.kind);
     }
     return left;
 }
 
 AstExp* Parser::parseFactor() {
-    if (current.kind == T_INT_CONSTANT) {
+    switch (current.kind) {
+    case T_INT_CONSTANT: {
         auto token = takeToken();
         int32_t value = parseInt(token);
-        auto* c = allocator.create<IntConstant>(value);
-        return allocator.create<AstConstantExp>(c);
+        auto* c = newNode<IntConstant>(value);
+        return newNode<AstConstantExp>(c);
     }
-    else if (current.kind == T_FLOAT_CONSTANT) {
+
+    case T_FLOAT_CONSTANT: {
         auto token = takeToken();
-        auto* c = allocator.create<FloatConstant>(parseFloat(token));
-        return allocator.create<AstConstantExp>(c);
+        auto* c = newNode<FloatConstant>(parseFloat(token));
+        return newNode<AstConstantExp>(c);
     }
-    else if (current.kind == T_OPEN_PAR) {
+
+    case T_OPEN_PAR: {
         takeToken();
         auto exp = parseExpression();
         expect(T_CLOSE_PAR);
         return exp;
     }
-    else if (current.kind == T_IDENTIFIER) {
+
+    case T_IDENTIFIER: {
         auto id = takeToken().value;
+
         if (current.kind == T_OPEN_PAR) {
             takeToken();
             std::vector<AstExp*> args;
@@ -200,18 +220,18 @@ AstExp* Parser::parseFactor() {
 
             auto argsBA = BoundArray<AstExp*>::fromVector(args, allocator);
             if (isTypeDeclared(id)) {
-                return allocator.create<AstStructInit>(id, argsBA);
+                return newNode<AstStructInit>(id, argsBA);
             }
             else {
-                return allocator.create<AstFunCall>(id, argsBA);
+                return newNode<AstFunCall>(id, argsBA);
             }
         }
         else {
-            return allocator.create<AstVar>(id);
+            return newNode<AstVar>(id);
         }
     }
-    else {
-        throw WrongExprException(current);
+
+    default: throw WrongExprException(current);
     }
 }
 
@@ -306,44 +326,6 @@ Token Parser::expect(TokenKind kind) {
     }
     else {
         throw UnexpectedTokenException(kind, current);
-    }
-}
-
-int Parser::getPrecedence(TokenKind tk) {
-    switch (tk) {
-    case T_PERIOD:
-        return 100;
-
-    case T_ASTERISK:
-    case T_FWD_SLASH:
-    case T_PERCENT:
-        return 50;
-
-    case T_PLUS:
-    case T_HYPHEN:
-        return 40;
-
-    case T_GREATER_THAN:
-    case T_LESS_THAN:
-    case T_GREATER_OR_EQ:
-    case T_LESS_OR_EQ:
-        return 35;
-
-    case T_EQUALS_EQUALS:
-    case T_NOT_EQUALS:
-        return 30;
-
-    case T_AMP_AMP:
-        return 10;
-
-    case T_VBAR_VBAR:
-        return 5;
-
-    case T_EQUALS:
-        return 1;
-
-    default:
-        return -1;
     }
 }
 
