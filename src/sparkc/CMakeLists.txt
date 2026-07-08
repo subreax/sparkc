@@ -1,15 +1,6 @@
 add_library(sparkc)
 
-include(CMakePrintHelpers)
-Include(FetchContent)
-
-FetchContent_Declare(
-  Catch2
-  GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-  GIT_TAG        v3.8.1
-)
-
-FetchContent_MakeAvailable(Catch2)
+find_package(Catch2 3 REQUIRED)
 
 
 set(SPARKC_INCL_PUB
@@ -47,6 +38,7 @@ set(SPARKC_INCL_PUB
   include/sparkc/common/OutOfBoundsException.h
   include/sparkc/common/SparkRuntimeException.h
   include/sparkc/common/Stack.h
+  include/sparkc/common/StackOnAlloc.h
   include/sparkc/common/StringBuilder.h
   include/sparkc/common/StringRef.h
   include/sparkc/common/alloc/Allocator.h
