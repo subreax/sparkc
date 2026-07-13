@@ -1,4 +1,2 @@
 @echo off
-cd bin
-tests.exe
-cd ..
+build\lib\sparkc\tests.exe

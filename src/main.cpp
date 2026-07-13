@@ -75,7 +75,11 @@ int main(int argc, char** argv) {
 
     uint8_t binary[1024];
     const char* srcFile = argv[1];
-    string source = FileUtils::readFile(srcFile);
+    string source;
+    if (!FileUtils::readFile(srcFile, source)) {
+        std::cout << "Failed to open file " << srcFile << endl;
+        return 1;
+    }
 
     DebugCallback debugCallback;
 

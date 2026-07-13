@@ -6,15 +6,16 @@
 
 class FileUtils {
 public:
-    static std::string readFile(const std::string& path) {
+    static bool readFile(const std::string& path, std::string& out) {
         std::ifstream fin(path);
         if (!fin) {
-            return "";
+            return false;
         }
 
         std::ostringstream oss;
         oss << fin.rdbuf();
-        return oss.str();
+        out = oss.str();
+        return true;
     }
 
     static std::string getFileName(const std::string& path) {

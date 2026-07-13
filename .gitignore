@@ -1,5 +1,3 @@
-/build
-/.vscode
-/playground
-/bin/spark-compiler.exe
-/bin/tests.exe
+.vscode/
+build/
+playground/
