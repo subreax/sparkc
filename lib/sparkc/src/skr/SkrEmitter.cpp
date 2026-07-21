@@ -181,6 +181,9 @@ SkrExpRes SkrEmitter::emit(AstExp* exp, SkrVar* dst) {
     if (kind == AstExp::Kind::Constant) {
         auto* it = (AstConstantExp*) exp;
         auto* c = getSkrConst(it->getValue());
+        if (dst) {
+            out.emplace_back(allocator.create<SkrCopy>(dst, c));
+        }
         return SkrExpRes::val(c);
     }
     /* else if (kind == AstExp::Kind::Dereference) {
