@@ -1,21 +1,12 @@
 #pragma once
 #include "sparkc/common/StringRef.h"
+#include "sparkc/backend/rv/asm/Label.h"
 #include <cstdint>
 #include <cstring>
 #include <vector>
 
 class RvListing {
 public:
-    struct Label {
-        Label() = default;
-        Label(int32_t offset, StringRef value)
-            : offset(offset)
-            , value(value) { }
-
-        int32_t offset = 0;
-        StringRef value = StringRef::nullInstance();
-    };
-
     RvListing(uint8_t* out, size_t cap);
 
     void add(uint32_t instr);
@@ -28,8 +19,7 @@ public:
     void link();
 
     size_t getSize() const;
-
-    void getPublicLabels(std::vector<Label>& out);
+    std::vector<Label> getPublicLabels() const;
 
 private:
     struct Unresolved {

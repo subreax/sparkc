@@ -21,6 +21,7 @@ set(SPARKC_SRC
   src/backend/rv/instr/RvaRet.cpp
   src/backend/rv/instr/RvaStore.cpp
   src/common/Constant.cpp
+  src/common/Error.cpp
   src/common/StringRef.cpp
   src/frontend/lexer/Lexer.cpp
   src/frontend/lexer/Token.cpp
@@ -34,7 +35,9 @@ set(SPARKC_SRC
   src/skr/value/SkrValue.cpp
   src/skr/optimizer/SkrCfgOverloadings.cpp
   src/skr/optimizer/copyprop/CopyPropagation.cpp
+  src/symbol/SymbolTable.cpp
   src/symbol/SymbolType.cpp
+  src/type/TypeTable.cpp
 )
 
 target_sources(sparkc PRIVATE ${SPARKC_SRC})

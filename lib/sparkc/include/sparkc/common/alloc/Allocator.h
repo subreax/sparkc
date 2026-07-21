@@ -2,6 +2,7 @@
 #include "../StringRef.h"
 #include "MemBlock.h"
 #include "NoMemoryException.h"
+#include "MemoryUsage.h"
 
 class Allocator {
 public:
@@ -19,6 +20,10 @@ public:
     virtual size_t getFreeSize() const = 0;
     virtual size_t getUsedSize() const = 0;
     virtual size_t getCapacity() const = 0;
+
+    MemoryUsage getMemoryUsage() const {
+        return MemoryUsage(getUsedSize(), getCapacity());
+    }
 
     template <typename T, typename... Args>
     inline T* create(Args... args) {

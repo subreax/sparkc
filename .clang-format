@@ -28,3 +28,5 @@ BreakBeforeBraces: Custom
 BreakTemplateDeclarations: Yes
 FixNamespaceComments: true
 SpaceAfterCStyleCast: true
+SortIncludes: Never
+IncludeBlocks: Preserve

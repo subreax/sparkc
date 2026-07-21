@@ -1,126 +1,76 @@
 #pragma once
-#include "SparkBuildInfo.h"
-#include "SparkCompilerContext.h"
-#include "SparkPools.h"
-#include "sparkc/skr/optimizer/SkrOptOnCfgCreatedListener.h"
-#include "sparkc/skr/optimizer/SkrOptimizerConfig.h"
-#include "sparkc/symbol/SymbolTable.h"
+#include "sparkc/common/StringRef.h"
 #include "sparkc/symbol/SymbolType.h"
+#include "sparkc/SparkDebugCallback.h"
+#include "sparkc/symbol/SymbolTable.h"
 #include "sparkc/type/TypeTable.h"
-#include <string>
+#include "MemUsageStats.h"
 #include <vector>
+#include <unordered_map>
+
+class BuildResult {
+public:
+    class Function {
+    public:
+        Function(void* ptr, StringRef name, SymbolFunctionType* type)
+            : ptr(ptr), name(name), type(type) {  }
+
+        void* getPointer() const { return ptr; }
+        const StringRef& getName() const { return name; }
+        SymbolFunctionType* getType() const { return type; }
+
+    private:
+        void* ptr;
+        StringRef name;
+        SymbolFunctionType* type;
+    };
+
+
+    BuildResult() = default;
+    BuildResult(size_t binarySize, const std::unordered_map<StringRef, Function>& functions)
+        : binarySize(binarySize)
+        , functions(functions) { }
+
+    size_t getBinarySize() const {
+        return binarySize;
+    }
+
+    Function* lookupFunction(StringRef name) {
+        auto it = functions.find(name);
+        if (it != functions.end()) {
+            return &it->second;
+        }
+        return nullptr;
+    }
+
+private:
+    size_t binarySize;
+    std::unordered_map<StringRef, Function> functions;
+};
+
+struct SparkCompilerOptimizations {
+    bool constantFolding;
+    bool deadCodeElimination;
+    bool copyPropagation;
+    bool deadStoreElimination;
+};
+
+struct SparkCompilerConfig {
+    uint8_t* outBin;
+    size_t outCap;
+    size_t poolSize;
+    SparkCompilerOptimizations optimizations;
+    SparkDebugCallback* debugCallback;
+};
 
 class SparkCompiler {
 public:
-    class DebugCallback : public SkrOptOnCfgCreatedListener {
-    public:
-        virtual ~DebugCallback() = default;
+    static void init(const SparkCompilerConfig& config);
+    static void destroy();
 
-        virtual void onAstBuild(class AstProgram* ast) { }
-        virtual void onEmitSkrFunc(class SkrFunction* skrFunc) { }
-        virtual void onOptimizeSkrFunc(class SkrFunction* skrFunc) { }
-        virtual void onEmitRva(const std::vector<class RvaInstruction*>& rva) { }
-        virtual void onReplaceRvaPseudo(const std::vector<class RvaInstruction*>& rva) { }
-        virtual void onFixRva(const std::vector<class RvaInstruction*>& rva) { }
+    static BuildResult build(const char* src);
+    static MemUsageStats getMemoryUsage();
 
-        void setCtx(class SparkCompilerContext* ctx) { this->ctx = ctx; }
-
-    protected:
-        const SparkCompilerContext& getCtx() { return *ctx; }
-
-    private:
-        const SparkCompilerContext* ctx;
-    };
-
-    struct Initializer {
-        Initializer(size_t mem, uint8_t* outBin, size_t outCap)
-            : mem(mem)
-            , outBin(outBin)
-            , outCap(outCap) { }
-
-        size_t mem;
-        uint8_t* outBin;
-        size_t outCap;
-
-        DebugCallback* debugCallback = nullptr;
-        bool constantFolding = true;
-        bool deadCodeElim = true;
-        bool copyPropagation = true;
-        bool deadStoreElim = true;
-    };
-
-    SparkCompiler(const Initializer& init);
-
-    ~SparkCompiler();
-
-    void addStruct(const char* tag, std::initializer_list<StructField> fields);
-
-    void addFunction(void* ptr, const char* name, SymbolType* retType, std::initializer_list<SymbolType*> params);
-
-    SparkBuildInfo build(const char* src);
-
-    void setDebugCallback(DebugCallback* callback);
-
-private:
-    void reset();
-
-    void recreateContext();
-
-    class AstProgram* buildAst(Allocator& pool, Allocator& sharedPool, const char* src);
-
-    class SkrFunction* ast2skr(class AstFunction* astFunc, Allocator& pool);
-
-    void skr2rva(
-        class SkrFunction* skrFunc,
-        Allocator& skrOutPool,
-        Allocator& tempPool,
-        std::vector<class RvaInstruction*>& out
-    );
-
-    void notifyAstBuild(class AstProgram* ast) {
-        if (debugCallback) {
-            debugCallback->onAstBuild(ast);
-        }
-    }
-
-    void notifyEmitSkrFunc(class SkrFunction* skrFunc) {
-        if (debugCallback) {
-            debugCallback->onEmitSkrFunc(skrFunc);
-        }
-    }
-
-    void notifyOptimizeSkrFunc(class SkrFunction* skrFunc) {
-        if (debugCallback) {
-            debugCallback->onOptimizeSkrFunc(skrFunc);
-        }
-    }
-
-    void notifyEmitRva(const std::vector<class RvaInstruction*>& rva) {
-        if (debugCallback) {
-            debugCallback->onEmitRva(rva);
-        }
-    }
-
-    void notifyReplaceRvaPseudo(const std::vector<class RvaInstruction*>& rva) {
-        if (debugCallback) {
-            debugCallback->onReplaceRvaPseudo(rva);
-        }
-    }
-
-    void notifyFixRva(const std::vector<class RvaInstruction*>& rva) {
-        if (debugCallback) {
-            debugCallback->onFixRva(rva);
-        }
-    }
-
-    SparkPools pools;
-    std::vector<StringRef> parserTypes;
-    SkrOptimizerConfig skrOptimizerConfig;
-
-    class SparkCompilerContext* ctx = nullptr;
-
-    DebugCallback* debugCallback = nullptr;
-
-    uint8_t* const outBin;
-    const size_t outCap;
+    static const SymbolTable& getSymbolTable();
+    static const TypeTable& getTypeTable();
 };

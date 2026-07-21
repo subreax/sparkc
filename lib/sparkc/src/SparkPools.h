@@ -1,7 +1,7 @@
 #pragma once
-#include "sparkc/SparkMemoryPercentUsage.h"
 #include "sparkc/common/alloc/LinearAllocator.h"
 #include "sparkc/common/alloc/StatAllocator.h"
+#include "sparkc/MemUsageStats.h"
 
 class SparkPools {
 public:
@@ -23,12 +23,12 @@ public:
         // clang-format on
     }
 
-    SparkMemoryPercentUsage getMemoryUsage() const {
-        return SparkMemoryPercentUsage(
-            pool1.getPeakUsageInPercent(),
-            pool2.getPeakUsageInPercent(),
-            pool3.getPeakUsageInPercent(),
-            shared.getPeakUsageInPercent()
+    MemUsageStats getMemoryUsage() const {
+        return MemUsageStats(
+            pool1.getPeakMemoryUsage(),
+            pool2.getPeakMemoryUsage(),
+            pool3.getPeakMemoryUsage(),
+            shared.getPeakMemoryUsage()
         );
     }
 

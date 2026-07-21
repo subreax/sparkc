@@ -22,10 +22,11 @@ void RvListing::addLabel(StringRef label) {
 }
 
 void RvListing::addExternalLabel(StringRef label, void* ptr) {
-    size_t offset = ((uint8_t*) ptr) - out;
+    size_t offset = ((uint8_t*) ptr) - out; /* todo: is size_t a typo? */
     labels.emplace_back(offset, label);
 }
 
+/* todo: clarify function name. addLabel function adds label to labels, but this adds to unresolved. */
 void RvListing::addWithLabel(uint32_t instr, StringRef label) {
     write_u32(instr, offset);
     unresolved.emplace_back(offset, label);
@@ -36,9 +37,11 @@ void RvListing::link() {
     for (Unresolved& u : unresolved) {
         uint32_t instr = *(uint32_t*) (out + u.offset);
         if (Rv32Base::isBType(instr)) {
+            // todo: check that imm value fits in the instruction
             instr |= Rv32Base::encodeImmB(calculateOffsetToLabel(u.offset, u.label));
         }
         else if (Rv32Base::isJType(instr)) {
+            // todo: check that imm value fits in the instruction
             instr |= Rv32Base::encodeImmJ(calculateOffsetToLabel(u.offset, u.label));
         }
         else {
@@ -50,12 +53,14 @@ void RvListing::link() {
 
 size_t RvListing::getSize() const { return offset; }
 
-void RvListing::getPublicLabels(std::vector<Label>& out) {
+std::vector<Label> RvListing::getPublicLabels() const {
+    std::vector<Label> outLabels;
     for (auto& label : labels) {
         if (LabelGen::isPublic(label.value)) {
-            out.emplace_back(label);
+            outLabels.emplace_back(label);
         }
     }
+    return outLabels;
 }
 
 void RvListing::write_u32(uint32_t instr, int32_t offset) {

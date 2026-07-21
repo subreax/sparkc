@@ -1,133 +1,147 @@
 #include "sparkc/SparkCompiler.h"
+#include "SparkPools.h"
 
-#include "backend/rv/RvaFixer.h"
-#include "backend/rv/RvaPseudoReplacer.h"
-#include "backend/rv/Skr2RvaPseudo.h"
 #include "frontend/lexer/Lexer.h"
 #include "frontend/parser/Parser.h"
 #include "frontend/semantic/Semantic.h"
 #include "skr/SkrEmitter.h"
 #include "skr/optimizer/SkrOptimizer.h"
-#include "sparkc/SparkCompilerContext.h"
+#include "backend/rv/RvaFixer.h"
+#include "backend/rv/RvaPseudoReplacer.h"
+#include "backend/rv/Skr2RvaPseudo.h"
+#include "sparkc/backend/rv/asm/RvAssembler.h"
+#include "sparkc/backend/rv/instr/RvaInstruction.h"
 
-SparkCompiler::SparkCompiler(const SparkCompiler::Initializer& init)
-    : pools(init.mem)
-    , outBin(init.outBin)
-    , outCap(init.outCap)
-    , debugCallback(init.debugCallback)
-    , skrOptimizerConfig(init.constantFolding, init.deadCodeElim, init.copyPropagation, init.deadStoreElim) {
-    reset();
-}
+static SparkPools* pools = nullptr;
+static uint8_t* outBin = nullptr;
+static size_t outCap = 0;
 
-SparkCompiler::~SparkCompiler() { delete ctx; }
+static SparkDebugCallback nullDebugCallback;
+static SparkDebugCallback* debugCallback = &nullDebugCallback;
 
-void SparkCompiler::addStruct(const char* tag, std::initializer_list<StructField> fields) {
-    parserTypes.emplace_back(StringRef::cstr(tag));
-    ctx->typeTable.declare(StringRef::cstr(tag), fields);
-}
+static SymbolTable* symTable = nullptr;
+static TypeTable* typeTable = nullptr;
 
-void SparkCompiler::addFunction(
-    void* ptr,
-    const char* name,
-    SymbolType* retType,
-    std::initializer_list<SymbolType*> params
-) {
-    ctx->symTable.declareFunc(StringRef::cstr(name), retType, params);
-    ctx->assembler.addExternalLabel(StringRef::cstr(name), ptr);
-}
+static SkrOptimizerConfig skrOptimizerConfig;
 
-SparkBuildInfo SparkCompiler::build(const char* src) {
-    try {
-        AstProgram* ast = buildAst(pools.pool1, pools.shared, src);
-        for (auto* item : ast->items) {
-            if (item->kind != AstProgItem::Kind::Function) {
-                continue;
-            }
+static BuildResult buildResult(RvAssembler& assembler);
 
-            auto* astFunc = (AstFunction*) item;
-            auto* skrFunc = ast2skr(astFunc, pools.pool2);
-            skrFunc = SkrOptimizer(pools.pool2, skrFunc, debugCallback).optimize(skrOptimizerConfig);
-            notifyOptimizeSkrFunc(skrFunc);
-
-            std::vector<RvaInstruction*> rvas;
-            skr2rva(skrFunc, pools.pool2, pools.pool3, rvas);
-
-            ctx->assembler.compile(rvas);
-
-            pools.pool2.reset();
-            pools.pool3.reset();
-        }
-        ctx->assembler.link();
-
-        SparkBuildInfo buildInfo(
-            pools.getMemoryUsage(),
-            ctx->assembler.getPublicLabels(),
-            ctx->assembler.getSize(),
-            ctx->assembler.getSize() * 100 / outCap
-        );
-        reset();
-        return buildInfo;
-    } catch (...) {
-        reset();
-        std::rethrow_exception(std::current_exception());
+void SparkCompiler::init(const SparkCompilerConfig& config) {
+    if (pools != nullptr) {
+        sparkError("SparkCompiler2", "SparkCompiler already initialized");
     }
+
+    pools = new SparkPools(config.poolSize);
+    outBin = config.outBin;
+    outCap = config.outCap;
+    debugCallback = config.debugCallback;
+    skrOptimizerConfig.constantFolding = config.optimizations.constantFolding;
+    skrOptimizerConfig.copyPropagation = config.optimizations.copyPropagation;
+    skrOptimizerConfig.deadCodeElimination = config.optimizations.deadCodeElimination;
+    skrOptimizerConfig.deadStoreElimination = config.optimizations.deadStoreElimination;
 }
 
-void SparkCompiler::setDebugCallback(DebugCallback* callback) { this->debugCallback = callback; }
-
-void SparkCompiler::reset() {
-    pools.reset();
-    parserTypes.clear();
-    recreateContext();
-
-    if (debugCallback) {
-        debugCallback->setCtx(ctx);
-    }
+void SparkCompiler::destroy() {
 }
 
-void SparkCompiler::recreateContext() {
-    delete ctx;
-    ctx = new SparkCompilerContext(pools.shared, outBin, outCap);
-}
+BuildResult SparkCompiler::build(const char* src) {
+    delete symTable;
+    delete typeTable;
+    pools->reset();
 
-AstProgram* SparkCompiler::buildAst(Allocator& pool, Allocator& sharedPool, const char* src) {
+    symTable = new SymbolTable(pools->shared);
+    typeTable = new TypeTable(pools->shared);
+    SymbolSize symSize(*symTable, *typeTable);
+    IdentifierGen idGen(pools->shared);
+    LabelGen labelGen(pools->shared);
+    RvAssembler assembler(outBin, outCap);
+
     Lexer lexer(src);
-    auto* astProgram = Parser(lexer, pool, sharedPool).parseProgram();
-    Semantic(ctx->symTable, ctx->typeTable, ctx->idGen, pool).process(astProgram);
-    notifyAstBuild(astProgram);
-    return astProgram;
+    Parser parser(lexer, pools->pool1, pools->shared);
+    AstProgram* ast = parser.parseProgram();
+
+    Semantic(*symTable, *typeTable, idGen, pools->pool1).process(ast);
+    debugCallback->onAstBuild(ast);
+
+    std::vector<SkrInstruction*> skrsBuf;
+    std::vector<RvaInstruction*> tempRvas;
+    std::vector<RvaInstruction*> rvas;
+
+    for (auto* astItem : ast->items) {
+        if (astItem->kind != AstProgItem::Kind::Function) {
+            continue;
+        }
+
+        auto* skrFunc = SkrEmitter::emit(
+            (AstFunction*) astItem,
+            pools->pool2,
+            *symTable,
+            *typeTable,
+            idGen,
+            labelGen,
+            skrsBuf
+        );
+        debugCallback->onEmitSkrFunc(skrFunc);
+
+        skrFunc = SkrOptimizer(
+                      pools->pool2,
+                      skrFunc,
+                      [&](StringRef funName, int iteration, CfGraph<SkrInstruction*>* graph) {
+                          debugCallback->onCfgCreated(funName, iteration, graph);
+                      }
+        ).optimize(skrOptimizerConfig);
+        debugCallback->onOptimizeSkrFunc(skrFunc);
+
+        StackFrame stackFrame(pools->pool3);
+        Skr2RvaPseudo::emit(skrFunc, pools->pool3, idGen, *symTable, symSize, stackFrame, tempRvas);
+        debugCallback->onEmitRva(tempRvas);
+
+        RvaPseudoReplacer::replace(tempRvas, stackFrame, symSize);
+        debugCallback->onReplaceRvaPseudo(tempRvas);
+
+        pools->pool2.reset();
+        skrsBuf.clear();
+        RvaFixer::fix(tempRvas, rvas, pools->pool2);
+        debugCallback->onFixRva(rvas);
+
+        assembler.compile(rvas);
+
+        pools->pool2.reset();
+        pools->pool3.reset();
+    }
+
+    assembler.link();
+    return buildResult(assembler);
 }
 
-SkrFunction* SparkCompiler::ast2skr(AstFunction* astFunc, Allocator& pool) {
-    std::vector<SkrInstruction*> buf;
-    SkrFunction* skrFunc = SkrEmitter::emit(
-        astFunc,
-        pool,
-        ctx->symTable,
-        ctx->typeTable,
-        ctx->idGen,
-        ctx->labelGen,
-        buf
-    );
-    notifyEmitSkrFunc(skrFunc);
-    return skrFunc;
+MemUsageStats SparkCompiler::getMemoryUsage() {
+    return pools->getMemoryUsage();
 }
 
-void SparkCompiler::skr2rva(
-    SkrFunction* skrFunc,
-    Allocator& skrRvaPool,
-    Allocator& tempPool,
-    std::vector<RvaInstruction*>& out
-) {
-    std::vector<RvaInstruction*> buf;
-    StackFrame frame(tempPool);
-    Skr2RvaPseudo::emit(skrFunc, tempPool, ctx->idGen, ctx->symTable, ctx->symSize, frame, buf);
-    notifyEmitRva(buf);
-    skrRvaPool.reset(); // now our data in tempPool
-    RvaPseudoReplacer::replace(buf, frame, ctx->symSize);
-    notifyReplaceRvaPseudo(buf);
+const SymbolTable& SparkCompiler::getSymbolTable() {
+    return *symTable;
+}
 
-    RvaFixer::fix(buf, out, skrRvaPool);
-    notifyFixRva(out);
-    tempPool.reset(); // now our data in skrRvaPool
+const TypeTable& SparkCompiler::getTypeTable() {
+    return *typeTable;
+}
+
+static BuildResult buildResult(RvAssembler& assembler) {
+    std::unordered_map<StringRef, BuildResult::Function> functions;
+
+    auto publicLabels = assembler.getPublicLabels();
+    for (const auto& label : publicLabels) {
+        auto* type = symTable->get(label.value);
+        if (type->kind == SymbolType::Kind::Function) {
+            void* ptr = outBin + label.offset;
+            auto fun = BuildResult::Function(
+                ptr,
+                label.value,
+                (SymbolFunctionType*) type
+            );
+            functions.emplace(label.value, fun);
+        }
+    }
+
+    return BuildResult(assembler.getSize(), functions);
 }

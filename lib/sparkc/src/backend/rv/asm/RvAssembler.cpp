@@ -15,11 +15,4 @@ void RvAssembler::compile(const std::vector<RvaInstruction*>& rvas) {
 
 void RvAssembler::link() {
     listing.link();
-    listing.getPublicLabels(publicLabels);
 }
-
-const std::vector<RvListing::Label>& RvAssembler::getPublicLabels() const {
-    return publicLabels;
-}
-
-size_t RvAssembler::getSize() const { return listing.getSize(); }

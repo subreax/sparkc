@@ -23,7 +23,7 @@ public:
         ::free(begin);
     }
 
-    MemBlock allocate(size_t blockSz) {
+    MemBlock allocate(size_t blockSz) override {
         if (blockSz <= getFreeSize()) {
             uint8_t* block = ptr;
             ptr += blockSz;

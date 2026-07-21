@@ -1,5 +1,6 @@
 #pragma once
 #include "Allocator.h"
+#include "MemoryUsage.h"
 
 template <typename T>
 class StatAllocator : public Allocator {
@@ -34,12 +35,8 @@ public:
         peak = 0;
     }
 
-    size_t getPeakUsage() const {
-        return calcPeak();
-    }
-
-    size_t getPeakUsageInPercent() const {
-        return calcPeak() * 100 / getCapacity();
+    MemoryUsage getPeakMemoryUsage() const {
+        return MemoryUsage(peak, getCapacity());
     }
 
     T& getAllocator() { return allocator; }

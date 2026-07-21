@@ -1,5 +1,6 @@
 #pragma once
 #include "sparkc/backend/rv/asm/RvListing.h"
+#include "sparkc/backend/rv/asm/Label.h"
 #include "sparkc/backend/rv/instr/RvaInstruction.h"
 #include <vector>
 
@@ -14,11 +15,14 @@ public:
     void compile(const std::vector<RvaInstruction*>& rvas);
     void link();
 
-    const std::vector<RvListing::Label>& getPublicLabels() const;
+    std::vector<Label> getPublicLabels() const {
+        return listing.getPublicLabels();
+    }
 
-    size_t getSize() const;
+    size_t getSize() const {
+        return listing.getSize();
+    }
 
 private:
     RvListing listing;
-    std::vector<RvListing::Label> publicLabels;
 };

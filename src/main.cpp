@@ -17,50 +17,50 @@ using namespace std;
 
 void printError(const ParseException& e, const string& source);
 string getLine(const string& src, int lineNo);
-void printMemUsage(const char* name, int usedPercentage);
+void printMemUsage(const char* name, MemoryUsage memUsage);
 
-class DebugCallback : public SparkCompiler::DebugCallback {
+class DebugCallback : public SparkDebugCallback {
 public:
-    void onAstBuild(class AstProgram* ast) override {
+    void onAstBuild(AstProgram* ast) override {
         AstPrinter(cout).print(ast);
         cout << endl;
 
         AstMermaidPrinter::saveToFile(ast, "ast.md");
     }
 
-    void onEmitSkrFunc(class SkrFunction* skrFunc) override {
+    void onEmitSkrFunc(SkrFunction* skrFunc) override {
         cout << "== skr ==" << endl;
-        SkrPrinter::print(cout, skrFunc, getCtx().symTable);
+        SkrPrinter::print(cout, skrFunc, SparkCompiler::getSymbolTable());
         cout << endl;
     }
 
     void onCfgCreated(StringRef funName, int iteration, CfGraph<SkrInstruction*>* graph) override {
         SkrCfgMermaidPrinter::saveToFile(
             *graph,
-            getCtx().symTable,
+            SparkCompiler::getSymbolTable(),
             funName.toString() + "." + std::to_string(iteration) + ".md"
         );
     }
 
-    void onOptimizeSkrFunc(class SkrFunction* skrFunc) override {
+    void onOptimizeSkrFunc(SkrFunction* skrFunc) override {
         cout << "== skr optimized ==" << endl;
-        SkrPrinter::print(cout, skrFunc, getCtx().symTable);
+        SkrPrinter::print(cout, skrFunc, SparkCompiler::getSymbolTable());
         cout << endl;
     }
 
-    void onEmitRva(const std::vector<class RvaInstruction*>& rva) override {
+    void onEmitRva(const std::vector<RvaInstruction*>& rva) override {
         cout << "== rva ==" << endl;
         RvaPrinter::print(cout, rva);
         cout << endl;
     }
 
-    void onReplaceRvaPseudo(const std::vector<class RvaInstruction*>& rva) override {
+    void onReplaceRvaPseudo(const std::vector<RvaInstruction*>& rva) override {
         cout << "== rva pseudo replaced ==" << endl;
         RvaPrinter::print(cout, rva);
         cout << endl;
     }
 
-    void onFixRva(const std::vector<class RvaInstruction*>& rva) override {
+    void onFixRva(const std::vector<RvaInstruction*>& rva) override {
         cout << "== rva fixed ==" << endl;
         RvaPrinter::print(cout, rva);
         cout << endl;
@@ -83,26 +83,35 @@ int main(int argc, char** argv) {
 
     DebugCallback debugCallback;
 
-    SparkCompiler::Initializer sci(16384, binary, sizeof(binary));
-    sci.debugCallback = &debugCallback;
-    SparkCompiler compiler(sci);
-    SparkBuildInfo buildInfo;
+    SparkCompilerConfig config;
+    config.poolSize = 16384;
+    config.outBin = binary;
+    config.outCap = sizeof(binary);
+    config.debugCallback = &debugCallback;
+    config.optimizations.constantFolding = true;
+    config.optimizations.copyPropagation = true;
+    config.optimizations.deadCodeElimination = true;
+    config.optimizations.deadStoreElimination = true;
+    SparkCompiler::init(config);
+
+    BuildResult buildResult;
     try {
-        buildInfo = compiler.build(source.c_str());
+        buildResult = SparkCompiler::build(source.c_str());
     } catch (const ParseException& ex) {
         printError(ex, source);
         return 1;
     }
 
     cout << "== memory stats ==" << endl;
-    printMemUsage("pool1", buildInfo.memoryUsage.pool1);
-    printMemUsage("pool2", buildInfo.memoryUsage.pool2);
-    printMemUsage("pool3", buildInfo.memoryUsage.pool3);
-    printMemUsage("shared", buildInfo.memoryUsage.shared);
-    printMemUsage("bin", buildInfo.binarySizeUsage);
+    auto memoryUsage = SparkCompiler::getMemoryUsage();
+    printMemUsage("pool1", memoryUsage.pool1);
+    printMemUsage("pool2", memoryUsage.pool2);
+    printMemUsage("pool3", memoryUsage.pool3);
+    printMemUsage("shared", memoryUsage.shared);
+    printMemUsage("bin", MemoryUsage(buildResult.getBinarySize(), sizeof(binary)));
     MemUtils::dump(
         binary,
-        buildInfo.binarySize,
+        buildResult.getBinarySize(),
         FileUtils::changeExtension(FileUtils::getFileName(srcFile), "bin")
     );
     return 0;
@@ -142,6 +151,6 @@ string getLine(const string& src, int lineNo) {
     }
 }
 
-void printMemUsage(const char* name, int usedPercentage) {
-    cout << name << ": " << usedPercentage << "%" << endl;
+void printMemUsage(const char* name, MemoryUsage memUsage) {
+    cout << name << ": " << memUsage.getUsageInPercents() << "%" << endl;
 }

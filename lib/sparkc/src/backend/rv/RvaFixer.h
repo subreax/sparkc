@@ -7,10 +7,11 @@
 
 class RvaFixer {
 public:
-    static void
-    fix(const std::vector<RvaInstruction*>& orig,
+    static void fix(
+        const std::vector<RvaInstruction*>& orig,
         std::vector<RvaInstruction*>& out,
-        Allocator& rvaAllocator) {
+        Allocator& rvaAllocator
+    ) {
         RvaFixer(out, rvaAllocator).fix(orig);
     }
 

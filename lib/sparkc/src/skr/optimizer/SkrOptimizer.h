@@ -1,4 +1,5 @@
 #pragma once
+#include <functional>
 #include "ConstantFolding.h"
 #include "UnreachableCodeElimination.h"
 #include "copyprop/CopyPropagation.h"
@@ -7,17 +8,17 @@
 #include "sparkc/common/cfg/CfgBuilder.h"
 #include "sparkc/skr/SkrFunction.h"
 #include "sparkc/skr/instr/everything.h"
-#include "sparkc/skr/optimizer/SkrOptOnCfgCreatedListener.h"
 #include "sparkc/skr/optimizer/SkrOptimizerConfig.h"
 
 class SkrOptimizer {
 public:
+    using OnCfgGraphCreatedListener = std::function<void(StringRef funName, int iteration, CfGraph<SkrInstruction*>* graph)>;
     static constexpr size_t MAX_ITERATIONS = 50;
 
     SkrOptimizer(
         Allocator& a1,
         SkrFunction* rawFunc,
-        SkrOptOnCfgCreatedListener* onGraphCreated = nullptr
+        OnCfgGraphCreatedListener onGraphCreated = nullListener
     )
         : raw(rawFunc->getInstructions().toVector())
         , rawFunc(rawFunc)
@@ -25,12 +26,6 @@ public:
         , onCfgCreatedListener(onGraphCreated) { }
 
     SkrFunction* optimize(const SkrOptimizerConfig& config) {
-        if (onCfgCreatedListener != nullptr) {
-            auto* initialGraph = CfgBuilder<SkrInstruction>().build_delGraphWhenDone(raw);
-            notifyGraphCreated(rawFunc->getName(), 0, initialGraph);
-            delete initialGraph;
-        }
-
         std::vector<SkrInstruction*> optimized = raw;
 
         for (size_t i = 1; i <= MAX_ITERATIONS; i++) {
@@ -39,6 +34,9 @@ public:
             }
 
             auto* graph = CfgBuilder<SkrInstruction>().build_delGraphWhenDone(optimized);
+            if (i == 1) {
+                onCfgCreatedListener(rawFunc->getName(), 0, graph);
+            }
 
             if (config.deadCodeElimination) {
                 UnreachableCodeElimination(graph).run();
@@ -50,7 +48,7 @@ public:
                 DeadStoreElimination(graph, rawFunc->getRetVar()).run();
             }
 
-            notifyGraphCreated(rawFunc->getName(), i, graph);
+            onCfgCreatedListener(rawFunc->getName(), i, graph);
 
             optimized.clear();
             graph->toPlain(optimized);
@@ -73,18 +71,10 @@ public:
     }
 
 private:
-    void notifyGraphCreated(
-        StringRef funName,
-        int iteration,
-        CfGraph<SkrInstruction*>* graph
-    ) {
-        if (onCfgCreatedListener != nullptr) {
-            onCfgCreatedListener->onCfgCreated(funName, iteration, graph);
-        }
-    }
+    static void nullListener(StringRef funName, int iteration, CfGraph<SkrInstruction*>* graph) { }
 
     std::vector<SkrInstruction*> raw;
     SkrFunction* rawFunc;
     Allocator& a1;
-    SkrOptOnCfgCreatedListener* onCfgCreatedListener = nullptr;
+    OnCfgGraphCreatedListener onCfgCreatedListener = nullListener;
 };

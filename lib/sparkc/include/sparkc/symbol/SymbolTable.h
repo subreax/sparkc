@@ -1,9 +1,9 @@
 #pragma once
-#include "../common/StringRef.h"
-#include "../common/alloc/Allocator.h"
+#include "sparkc/common/StringRef.h"
+#include "sparkc/common/alloc/Allocator.h"
+#include "sparkc/symbol/except/UndeclaredSymbolException.h"
+#include "sparkc/symbol/except/UndeclaredSymbolException.h"
 #include "SymbolType.h"
-#include "except/DuplicateSymbolDeclarationException.h"
-#include "except/UndeclaredSymbolException.h"
 #include <unordered_map>
 
 class SymbolTable {
@@ -11,26 +11,8 @@ public:
     SymbolTable(Allocator& allocator)
         : allocator(allocator) { }
 
-    void declareVar(StringRef name, SymbolType* type) {
-        auto it = table.find(name);
-        if (it != table.end()) {
-            throw DuplicateSymbolDeclarationException(name, type);
-        }
-
-        table.emplace(name, type);
-    }
-
-    void declareFunc(StringRef name, SymbolType* retType, const std::vector<SymbolType*>& params) {
-        BoundArray<SymbolType*> paramTypes = BoundArray<SymbolType*>::fromVector(params, allocator);
-        auto* type = allocator.create<SymbolFunctionType>(retType, paramTypes);
-
-        auto it = table.find(name);
-        if (it != table.end()) {
-            throw DuplicateSymbolDeclarationException(name, type);
-        }
-
-        table.emplace(name, type);
-    }
+    void declareVar(StringRef name, SymbolType* type);
+    void declareFunc(StringRef name, SymbolType* retType, const std::vector<SymbolType*>& params);
 
     SymbolType* get(StringRef name) const {
         auto it = table.find(name);

@@ -1,5 +1,5 @@
 #pragma once
-#include "../common/BoundArray.h"
+#include "sparkc/common/BoundArray.h"
 #include "instr/SkrInstruction.h"
 #include "value/SkrValue.h"
 #include <vector>
