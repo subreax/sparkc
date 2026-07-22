@@ -1,0 +1,69 @@
+#src
+int min(int a, float b) {
+    if (a > b) {
+      return b;
+    }
+    return a;
+}
+
+#expect
+AstProgram(
+  items: [
+    AstFunction(
+      name: 'min',
+      returnType: 'int',
+      params: [
+        AstFunParam(
+          type: 'int',
+          name: 'a.0'
+        ),
+        AstFunParam(
+          type: 'float',
+          name: 'b.1'
+        )
+      ],
+      body: AstBlock(
+        items: [
+          AstIfStatement(
+            cond: AstBinaryExp(
+              type: 'float',
+              op: '>',
+              left: AstCast(
+                type: 'float',
+                exp: AstVar(
+                  type: 'int',
+                  id: 'a.0'
+                )
+              ),
+              right: AstVar(
+                type: 'float',
+                id: 'b.1'
+              )
+            ),
+            true: AstCompoundStatement(
+              block: AstBlock(
+                items: [
+                  AstReturnStatement(
+                    exp: AstCast(
+                      type: 'int',
+                      exp: AstVar(
+                        type: 'float',
+                        id: 'b.1'
+                      )
+                    )
+                  )
+                ]
+              )
+            )
+          ),
+          AstReturnStatement(
+            exp: AstVar(
+              type: 'int',
+              id: 'a.0'
+            )
+          )
+        ]
+      )
+    )
+  ]
+)

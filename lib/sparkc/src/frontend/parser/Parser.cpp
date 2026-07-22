@@ -1,5 +1,6 @@
 #include "Parser.h"
 #include "Precedence.h"
+#include "ConstParser.h"
 
 Parser::Parser(Lexer& lexer, Allocator& allocator, Allocator& sharedAllocator)
     : lexer(lexer)
@@ -55,13 +56,18 @@ AstFunction* Parser::parseFunction() {
 
     expect(T_OPEN_PAR);
     std::vector<AstFunParam*> params;
-    while (hasNext() && current.kind != T_CLOSE_PAR) {
+    bool expectNextArg = true;
+    while (expectNextArg && current.kind != T_CLOSE_PAR) {
         params.emplace_back(parseFunParam());
         if (current.kind == T_COMMA) {
             takeToken();
+            expectNextArg = true;
+        }
+        else {
+            expectNextArg = false;
         }
     }
-    takeToken();
+    expect(T_CLOSE_PAR);
 
     AstBlock* block = parseBlock();
 
@@ -245,34 +251,19 @@ void Parser::parseFunArgs(std::vector<AstExp*>& outArgs) {
 }
 
 int32_t Parser::parseInt(const Token& token) {
-    if (token.value.getLength() > 12) {
+    int32_t parsed;
+    if (!ConstParser::parseInt(token.value, parsed)) {
         throw ParseConstException(token);
     }
-
-    char buf[16];
-    int len = token.value.copyTo(buf, sizeof(buf));
-    char* end;
-    int32_t value = strtol(buf, &end, 10);
-    if (*end != 0) {
-        throw ParseConstException(token);
-    }
-    return value;
+    return parsed;
 }
 
 float Parser::parseFloat(const Token& token) {
-    if (token.value.getLength() > 12) {
+    float parsed;
+    if (!ConstParser::parseFloat(token.value, parsed)) {
         throw ParseConstException(token);
     }
-
-    char buf[16];
-    int len = token.value.copyTo(buf, sizeof(buf));
-
-    char* end;
-    float value = strtof(buf, &end);
-    if (*end != 0) {
-        throw ParseConstException(token);
-    }
-    return value;
+    return parsed;
 }
 
 SymbolType* Parser::parseType() {

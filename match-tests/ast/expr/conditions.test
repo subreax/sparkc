@@ -1,0 +1,180 @@
+#src
+int main() {
+    int a = 4;
+    int b = 3;
+    int res;
+    res = a == b;
+    res = a != b;
+    res = a > b;
+    res = a >= b;
+    res = a < b;
+    res = a <= b;
+    return res;
+}
+
+#expect
+AstProgram(
+  items: [
+    AstFunction(
+      name: 'main',
+      returnType: 'int',
+      params: [],
+      body: AstBlock(
+        items: [
+          AstVarDeclaration(
+            type: 'int',
+            name: 'a.0',
+            init: AstConstantExp(
+              type: 'int',
+              value: '4'
+            )
+          ),
+          AstVarDeclaration(
+            type: 'int',
+            name: 'b.1',
+            init: AstConstantExp(
+              type: 'int',
+              value: '3'
+            )
+          ),
+          AstVarDeclaration(
+            type: 'int',
+            name: 'res.2'
+          ),
+          AstExpressionStatement(
+            exp: AstAssignment(
+              type: 'int',
+              var: AstVar(
+                type: 'int',
+                id: 'res.2'
+              ),
+              exp: AstBinaryExp(
+                type: 'int',
+                op: '==',
+                left: AstVar(
+                  type: 'int',
+                  id: 'a.0'
+                ),
+                right: AstVar(
+                  type: 'int',
+                  id: 'b.1'
+                )
+              )
+            )
+          ),
+          AstExpressionStatement(
+            exp: AstAssignment(
+              type: 'int',
+              var: AstVar(
+                type: 'int',
+                id: 'res.2'
+              ),
+              exp: AstBinaryExp(
+                type: 'int',
+                op: '!=',
+                left: AstVar(
+                  type: 'int',
+                  id: 'a.0'
+                ),
+                right: AstVar(
+                  type: 'int',
+                  id: 'b.1'
+                )
+              )
+            )
+          ),
+          AstExpressionStatement(
+            exp: AstAssignment(
+              type: 'int',
+              var: AstVar(
+                type: 'int',
+                id: 'res.2'
+              ),
+              exp: AstBinaryExp(
+                type: 'int',
+                op: '>',
+                left: AstVar(
+                  type: 'int',
+                  id: 'a.0'
+                ),
+                right: AstVar(
+                  type: 'int',
+                  id: 'b.1'
+                )
+              )
+            )
+          ),
+          AstExpressionStatement(
+            exp: AstAssignment(
+              type: 'int',
+              var: AstVar(
+                type: 'int',
+                id: 'res.2'
+              ),
+              exp: AstBinaryExp(
+                type: 'int',
+                op: '>=',
+                left: AstVar(
+                  type: 'int',
+                  id: 'a.0'
+                ),
+                right: AstVar(
+                  type: 'int',
+                  id: 'b.1'
+                )
+              )
+            )
+          ),
+          AstExpressionStatement(
+            exp: AstAssignment(
+              type: 'int',
+              var: AstVar(
+                type: 'int',
+                id: 'res.2'
+              ),
+              exp: AstBinaryExp(
+                type: 'int',
+                op: '<',
+                left: AstVar(
+                  type: 'int',
+                  id: 'a.0'
+                ),
+                right: AstVar(
+                  type: 'int',
+                  id: 'b.1'
+                )
+              )
+            )
+          ),
+          AstExpressionStatement(
+            exp: AstAssignment(
+              type: 'int',
+              var: AstVar(
+                type: 'int',
+                id: 'res.2'
+              ),
+              exp: AstBinaryExp(
+                type: 'int',
+                op: '<=',
+                left: AstVar(
+                  type: 'int',
+                  id: 'a.0'
+                ),
+                right: AstVar(
+                  type: 'int',
+                  id: 'b.1'
+                )
+              )
+            )
+          ),
+          AstReturnStatement(
+            exp: AstVar(
+              type: 'int',
+              id: 'res.2'
+            )
+          )
+        ]
+      )
+    )
+  ]
+)

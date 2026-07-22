@@ -1,0 +1,25 @@
+#src
+int main() {
+    return 123456789;
+}
+
+#expect
+AstProgram(
+  items: [
+    AstFunction(
+      name: 'main',
+      returnType: 'int',
+      params: [],
+      body: AstBlock(
+        items: [
+          AstReturnStatement(
+            exp: AstConstantExp(
+              type: 'int',
+              value: '123456789'
+            )
+          )
+        ]
+      )
+    )
+  ]
+)

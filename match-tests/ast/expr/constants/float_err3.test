@@ -1,0 +1,7 @@
+#src
+int main() {
+    float a = 5..3f;
+    return 0;
+}
+
+#expect_failure

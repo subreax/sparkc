@@ -1,0 +1,52 @@
+#src
+int main() {
+    float a = 12.34;
+    float b = 12.34f;
+    float c = 12.34F;
+    return 0;
+}
+
+#expect
+AstProgram(
+  items: [
+    AstFunction(
+      name: 'main',
+      returnType: 'int',
+      params: [],
+      body: AstBlock(
+        items: [
+          AstVarDeclaration(
+            type: 'float',
+            name: 'a.0',
+            init: AstConstantExp(
+              type: 'float',
+              value: '12.34'
+            )
+          ),
+          AstVarDeclaration(
+            type: 'float',
+            name: 'b.1',
+            init: AstConstantExp(
+              type: 'float',
+              value: '12.34'
+            )
+          ),
+          AstVarDeclaration(
+            type: 'float',
+            name: 'c.2',
+            init: AstConstantExp(
+              type: 'float',
+              value: '12.34'
+            )
+          ),
+          AstReturnStatement(
+            exp: AstConstantExp(
+              type: 'int',
+              value: '0'
+            )
+          )
+        ]
+      )
+    )
+  ]
+)

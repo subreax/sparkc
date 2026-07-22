@@ -89,33 +89,28 @@ StringRef TokenReaders::readIntConstant(const char* src) {
     }
 }
 
-// todo: fix
 StringRef TokenReaders::readFloatConstant(const char* src) {
     int i = 0;
-    bool wasDot = false;
     while (isdigit(src[i])) {
         i++;
     }
-    if (i == 0) {
-        return StringRef::nullInstance();
-    }
 
     if (src[i] == '.') {
-        wasDot = true;
         i++;
     }
     else {
-        return StringRef::nullInstance(); // because it is integer
+        return StringRef::nullInstance(); // because it is integer or not a number
     }
 
+    int oldI = i;
     while (isdigit(src[i])) {
         i++;
     }
-    if (src[i] == '.') {
-        return StringRef::nullInstance(); // we have read value '5.' or '5.5.'
+    if (i == oldI) {
+        return StringRef::nullInstance(); // after dot should be at least 1 digit
     }
 
-    if (src[i] == 'f') {
+    if (src[i] == 'f' || src[i] == 'F') {
         i++;
     }
 

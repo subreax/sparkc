@@ -77,6 +77,13 @@ public:
         return !(*this == other);
     }
 
+    char operator[](size_t idx) const {
+        if (idx < length) {
+            return str[idx];
+        }
+        return 0;
+    }
+
 private:
     const char* str;
     size_t length;

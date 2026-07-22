@@ -26,6 +26,7 @@ set(SPARKC_SRC
   src/frontend/lexer/Lexer.cpp
   src/frontend/lexer/Token.cpp
   src/frontend/lexer/TokenReaders.cpp
+  src/frontend/parser/ConstParser.cpp
   src/frontend/parser/Parser.cpp
   src/frontend/parser/ast/AstPrinter.cpp
   src/frontend/semantic/IdentifierResolution.cpp

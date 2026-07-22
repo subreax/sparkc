@@ -1,0 +1,51 @@
+#src
+int main() {
+    int a = 2;
+    int b = 3;
+    return a + b;
+}
+
+#expect
+AstProgram(
+  items: [
+    AstFunction(
+      name: 'main',
+      returnType: 'int',
+      params: [],
+      body: AstBlock(
+        items: [
+          AstVarDeclaration(
+            type: 'int',
+            name: 'a.0',
+            init: AstConstantExp(
+              type: 'int',
+              value: '2'
+            )
+          ),
+          AstVarDeclaration(
+            type: 'int',
+            name: 'b.1',
+            init: AstConstantExp(
+              type: 'int',
+              value: '3'
+            )
+          ),
+          AstReturnStatement(
+            exp: AstBinaryExp(
+              type: 'int',
+              op: '+',
+              left: AstVar(
+                type: 'int',
+                id: 'a.0'
+              ),
+              right: AstVar(
+                type: 'int',
+                id: 'b.1'
+              )
+            )
+          )
+        ]
+      )
+    )
+  ]
+)
