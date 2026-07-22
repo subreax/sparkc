@@ -38,6 +38,8 @@ private:
 
     int32_t getLabelOffset(StringRef label);
 
+    bool isLabelExternal(const Label& label) const;
+
     uint8_t* out;
     size_t cap;
     int32_t offset = 0;

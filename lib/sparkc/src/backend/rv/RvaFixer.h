@@ -90,9 +90,6 @@ private:
             auto* tmpReg = getReg(RvReg::T6);
             emitFixedMul(dstReg, leftReg, right, tmpReg);
         }
-        else if (it->op == RvaBinary::Operator::_FixedDiv) {
-            emitFixedDiv(dstReg, leftReg, right);
-        }
         else {
             add(allocator.create<RvaBinary>(dstReg, leftReg, it->op, right));
         }
@@ -111,14 +108,6 @@ private:
         add(allocator.create<RvaBinary>(dstReg, dstReg, RvaBinary::Operator::ShiftRight, newImm(15)));
         add(allocator.create<RvaBinary>(tmpReg, tmpReg, RvaBinary::Operator::ShiftLeft, newImm(17)));
         add(allocator.create<RvaBinary>(dstReg, dstReg, RvaBinary::Operator::Or, tmpReg));
-    }
-
-    void emitFixedDiv(
-        RvaRegister* dstReg,
-        RvaRegister* leftReg,
-        RvaValue* rightVal
-    ) {
-        sparkError("RvaFixer", "Not implemented");
     }
 
     void fix(RvaBranch* it) {

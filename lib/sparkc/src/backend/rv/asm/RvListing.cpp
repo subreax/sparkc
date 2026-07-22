@@ -56,7 +56,7 @@ size_t RvListing::getSize() const { return offset; }
 std::vector<Label> RvListing::getPublicLabels() const {
     std::vector<Label> outLabels;
     for (auto& label : labels) {
-        if (LabelGen::isPublic(label.value)) {
+        if (!isLabelExternal(label) && LabelGen::isPublic(label.value)) {
             outLabels.emplace_back(label);
         }
     }
@@ -84,4 +84,8 @@ int32_t RvListing::getLabelOffset(StringRef label) {
     }
     sparkError("RvListing", "Label not found: %s", label);
     return 0;
+}
+
+bool RvListing::isLabelExternal(const Label& label) const {
+    return label.offset < 0 || label.offset >= cap;
 }

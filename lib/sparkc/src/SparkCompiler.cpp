@@ -22,6 +22,7 @@ static SparkDebugCallback* debugCallback = &nullDebugCallback;
 static SymbolTable* symTable = nullptr;
 static TypeTable* typeTable = nullptr;
 
+static SparkRuntime runtime;
 static SkrOptimizerConfig skrOptimizerConfig;
 
 static BuildResult buildResult(RvAssembler& assembler);
@@ -34,6 +35,7 @@ void SparkCompiler::init(const SparkCompilerConfig& config) {
     pools = new SparkPools(config.poolSize);
     outBin = config.outBin;
     outCap = config.outCap;
+    runtime = config.runtime;
     debugCallback = config.debugCallback;
     skrOptimizerConfig.constantFolding = config.optimizations.constantFolding;
     skrOptimizerConfig.copyPropagation = config.optimizations.copyPropagation;
@@ -55,6 +57,8 @@ BuildResult SparkCompiler::build(const char* src) {
     IdentifierGen idGen(pools->shared);
     LabelGen labelGen(pools->shared);
     RvAssembler assembler(outBin, outCap);
+
+    assembler.addExternalLabel(StringRef::cstr(SparkRuntime::divq15FunName), (void*) runtime.divq15);
 
     Lexer lexer(src);
     Parser parser(lexer, pools->pool1, pools->shared);

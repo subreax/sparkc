@@ -67,6 +67,10 @@ public:
     }
 };
 
+int32_t divq15(int32_t a, int32_t b) {
+    return (int64_t(a) << 15) / b;
+}
+
 int main(int argc, char** argv) {
     if (argc == 1) {
         cout << "Specify source file to compile" << endl;
@@ -92,6 +96,7 @@ int main(int argc, char** argv) {
     config.optimizations.copyPropagation = true;
     config.optimizations.deadCodeElimination = true;
     config.optimizations.deadStoreElimination = true;
+    config.runtime.divq15 = divq15;
     SparkCompiler::init(config);
 
     BuildResult buildResult;

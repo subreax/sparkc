@@ -8,6 +8,7 @@
 #include "sparkc/skr/SkrFunction.h"
 #include "sparkc/skr/instr/everything.h"
 #include "sparkc/symbol/SymbolTable.h"
+#include "sparkc/SparkRuntime.h"
 #include <unordered_set>
 #include <vector>
 
@@ -102,12 +103,7 @@ private:
             );
         }
         else if (dstType == SymbolType::Kind::Float && op == SkrBinary::Operator::Div) {
-            add<RvaBinary>(
-                toPseudo(it->getDst()),
-                toPseudo(it->getLeft()),
-                RvaBinary::Operator::_FixedDiv,
-                toPseudo(it->getRight())
-            );
+            emitFixedDiv(it->getDst(), it->getLeft(), it->getRight());
         }
         else {
             add<RvaBinary>(
@@ -117,6 +113,19 @@ private:
                 toPseudo(it->getRight())
             );
         }
+    }
+
+    void emitFixedDiv(
+        SkrVar* dst,
+        SkrValue* left,
+        SkrValue* right
+    ) {
+        uint8_t arrayBuf[sizeof(SkrValue*) * 2];
+        BoundArray<SkrValue*> args(MemBlock(sizeof(arrayBuf), arrayBuf));
+        args[0] = left;
+        args[1] = right;
+        SkrFunCall funCall(StringRef::cstr(SparkRuntime::divq15FunName), args, dst);
+        emitFunCall(&funCall);
     }
 
     void emitCopy(SkrCopy* it) {
@@ -258,11 +267,7 @@ private:
                 val = FixedUtils::fromFloat(constant->floatValue());
             }
             else {
-                sparkError(
-                    "Skr2RvaPseudo",
-                    "Unknown Constant type: %d",
-                    constant->type
-                );
+                sparkError("Skr2RvaPseudo", "Unknown Constant type: %d", constant->type);
             }
             return allocator.create<RvaImm>(val);
         }
