@@ -1,9 +1,9 @@
 #src
-struct color(float r, float g, float b);
-struct grad(color from, color to);
+struct color(r: float, g: float, b: float);
+struct grad(from: color, to: color);
 
-int test() {
-    grad g;
+fun test(): int {
+    var g: grad;
     g.from.r = 1.0;
     g.from.g = 0.8;
     g.to = color(0.1, 0.2, 0.3);

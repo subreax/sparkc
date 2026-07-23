@@ -1,5 +1,21 @@
 #include "Scope.h"
 
+static const char* itemKind2string(ScopeItem::Kind kind) {
+    switch (kind) {
+    case ScopeItem::Kind::Var: return "variable";
+    case ScopeItem::Kind::Func: return "function";
+    case ScopeItem::Kind::Struct: return "struct";
+    default: return "symbol";
+    }
+}
+
+std::string firstCapitalLetter(std::string s) {
+    if (s.length() > 0) {
+        s[0] = toupper(s[0]);
+    }
+    return s;
+}
+
 void Scope::declareVar(StringRef name, StringRef id) {
     declareInScope(name, id, ScopeItem::Kind::Var);
 }
@@ -13,14 +29,16 @@ void Scope::declareStruct(StringRef tag) {
 }
 
 const ScopeItem& Scope::get(StringRef name, ScopeItem::Kind kind) const {
-    for (size_t i = 0; i < stack.getSize(); i++) {
-        const auto& it = stack.peek(i);
-        if (it.name == name && it.kind == kind) {
-            return it;
-        }
+    int idx = findItemOrNeg1(name, kind);
+    if (idx >= 0) {
+        return stack.peek(idx);
     }
-    sparkError("Scope", "Symbol was not declared: " + name.toString());
+    sparkError("Scope", firstCapitalLetter(itemKind2string(kind)) + " was not declared: " + name.toString());
     throw "";
+}
+
+bool Scope::isDeclared(StringRef name, ScopeItem::Kind kind) const {
+    return findItemOrNeg1(name, kind) >= 0;
 }
 
 void Scope::open() {
@@ -54,6 +72,16 @@ void Scope::declareInScope(StringRef name, StringRef id, ScopeItem::Kind kind) {
     }
 
     stack.push(ScopeItem(name, id, kind));
+}
+
+int Scope::findItemOrNeg1(StringRef name, ScopeItem::Kind kind) const {
+    for (size_t i = 0; i < stack.getSize(); i++) {
+        const auto& it = stack.peek(i);
+        if (it.name == name && it.kind == kind) {
+            return i;
+        }
+    }
+    return -1;
 }
 
 ScopeItem::Kind Scope::symbolKind2ScopeKind(SymbolType::Kind kind) {

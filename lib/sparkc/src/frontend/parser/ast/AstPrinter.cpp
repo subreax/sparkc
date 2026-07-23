@@ -248,7 +248,7 @@ void _print(Printer& p, const AstExp* exp) {
         p.beginObject("AstDereference");
         p.field("type", _type2string(dereference));
         p.field("exp");
-        _print(p, dereference->getExpression());
+        _print(p, dereference->getExp());
         p.endObject();
     }
     else if (kind == AstExp::Kind::AddrOf) {
@@ -256,7 +256,7 @@ void _print(Printer& p, const AstExp* exp) {
         p.beginObject("AstAddrOf");
         p.field("type", _type2string(addrOf));
         p.field("exp");
-        _print(p, addrOf->getExpression());
+        _print(p, addrOf->getExp());
         p.endObject();
     }
     else if (kind == AstExp::Kind::Dot) {

@@ -7,12 +7,14 @@ struct TokenReaderWithKind {
 };
 
 static constexpr TokenReaderWithKind Lexer_readers[] = {
+    { T_VAR_KEYWORD, TokenReaders::readVarKeyword },
     { T_INT_KEYWORD, TokenReaders::readIntKeyword },
     { T_FLOAT_KEYWORD, TokenReaders::readFloatKeyword },
     { T_RETURN_KEYWORD, TokenReaders::readReturnKeyword },
     { T_IF_KEYWORD, TokenReaders::readIfKeyword },
     { T_ELSE_KEYWORD, TokenReaders::readElseKeyword },
     { T_WHILE_KEYWORD, TokenReaders::readWhileKeyword },
+    { T_FUN_KEYWORD, TokenReaders::readFunKeyword },
     { T_STRUCT_KEYWORD, TokenReaders::readStructKeyword },
     { T_IDENTIFIER, TokenReaders::readIdentifier },
     { T_FLOAT_CONSTANT, TokenReaders::readFloatConstant },
@@ -21,12 +23,12 @@ static constexpr TokenReaderWithKind Lexer_readers[] = {
     { T_CLOSE_PAR, TokenReaders::readClosePar },
     { T_OPEN_BRACE, TokenReaders::readOpenBrace },
     { T_CLOSE_BRACE, TokenReaders::readCloseBrace },
+    { T_COLON, TokenReaders::readColon },
     { T_SEMICOLON, TokenReaders::readSemicolon },
     { T_PLUS, TokenReaders::readPlus },
     { T_HYPHEN, TokenReaders::readHyphen },
     { T_ASTERISK, TokenReaders::readAsterisk },
     { T_FWD_SLASH, TokenReaders::readFwdSlash },
-    { T_PERCENT, TokenReaders::readPercent },
     { T_PERCENT, TokenReaders::readPercent },
     { T_EQUALS_EQUALS, TokenReaders::readEqualsEquals },
     { T_NOT_EQUALS, TokenReaders::readNotEquals },

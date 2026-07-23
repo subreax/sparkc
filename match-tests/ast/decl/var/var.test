@@ -1,7 +1,7 @@
 #src
-int main() {
-    int a = 2;
-    int b = 3;
+fun main(): int {
+    var a = 2;
+    var b = 3;
     return a + b;
 }
 

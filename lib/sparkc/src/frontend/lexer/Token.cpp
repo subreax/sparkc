@@ -1,12 +1,14 @@
 #include "sparkc/frontend/lexer/Token.h"
 
 static constexpr const char* _TokenKind2String[] = {
+    "var",
     "int",
     "float",
     "return",
     "if",
     "else",
     "while",
+    "fun",
     "struct",
     "<identifier>",
     "open par",
@@ -15,6 +17,7 @@ static constexpr const char* _TokenKind2String[] = {
     "close brace",
     "<int constant>",
     "<float constant>",
+    "colon",
     "semicolon",
     "plus",
     "hyphen",

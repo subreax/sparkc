@@ -16,7 +16,7 @@ public:
         , astAlloc(astAlloc) { }
 
     void process(AstProgram* prog) {
-        IdentifierResolution(symbolTable, typeTable, idGen).resolve(prog);
+        IdentifierResolution(astAlloc, symbolTable, typeTable, idGen).resolve(prog);
         TypeChecker(symbolTable, typeTable, astAlloc).typeCheck(prog);
     }
 

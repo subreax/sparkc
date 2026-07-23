@@ -1,5 +1,6 @@
 #src
-int main(a, b) {
+fun main(a, b): int {
+    return 0;
 }
 
 #expect_failure

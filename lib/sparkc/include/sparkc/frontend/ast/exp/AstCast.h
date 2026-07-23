@@ -8,6 +8,7 @@ public:
         , exp(exp) { }
 
     AstExp* getExp() { return exp; }
+    void setExp(AstExp* exp) { this->exp = exp; }
 
 private:
     AstExp* exp;

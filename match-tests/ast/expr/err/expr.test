@@ -1,5 +1,5 @@
 #src
-int main() {
+fun main(): int {
     return 5 ++ 3;
 }
 

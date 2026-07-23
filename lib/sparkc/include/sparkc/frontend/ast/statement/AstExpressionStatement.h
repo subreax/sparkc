@@ -9,6 +9,7 @@ public:
         , exp(exp) { }
 
     AstExp* getExpression() { return exp; }
+    void setExpression(AstExp* exp) { this->exp = exp; }
 
 private:
     AstExp* exp;

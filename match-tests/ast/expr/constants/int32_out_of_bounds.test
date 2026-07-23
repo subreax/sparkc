@@ -1,5 +1,5 @@
 #src
-int main() {
+fun main(): int {
     return 2147483648;
 }
 

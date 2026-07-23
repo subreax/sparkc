@@ -12,6 +12,7 @@ public:
         : allocator(allocator) { }
 
     void declareVar(StringRef name, SymbolType* type);
+    void redeclareVar(StringRef name, SymbolType* type);
     void declareFunc(StringRef name, SymbolType* retType, const std::vector<SymbolType*>& params);
 
     SymbolType* get(StringRef name) const {

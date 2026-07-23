@@ -7,7 +7,8 @@ public:
         : AstExp(Kind::AddrOf, type)
         , exp(exp) { }
 
-    AstExp* getExpression() const { return exp; }
+    AstExp* getExp() const { return exp; }
+    void setExp(AstExp* exp) { this->exp = exp; }
 
 private:
     AstExp* exp;

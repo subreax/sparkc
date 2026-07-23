@@ -1,6 +1,6 @@
 #src
-int main() {
-    float a = .f;
+fun main(): int {
+    var a: float = .f;
     return 0;
 }
 

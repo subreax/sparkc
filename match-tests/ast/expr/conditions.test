@@ -1,8 +1,8 @@
 #src
-int main() {
-    int a = 4;
-    int b = 3;
-    int res;
+fun main(): int {
+    var a = 4;
+    var b = 3;
+    var res: int;
     res = a == b;
     res = a != b;
     res = a > b;

@@ -4,12 +4,14 @@
 #include <iostream>
 
 enum TokenKind {
+    T_VAR_KEYWORD,
     T_INT_KEYWORD,
     T_FLOAT_KEYWORD,
     T_RETURN_KEYWORD,
     T_IF_KEYWORD,
     T_ELSE_KEYWORD,
     T_WHILE_KEYWORD,
+    T_FUN_KEYWORD,
     T_STRUCT_KEYWORD,
     T_IDENTIFIER,
     T_OPEN_PAR,
@@ -18,6 +20,7 @@ enum TokenKind {
     T_CLOSE_BRACE,
     T_INT_CONSTANT,
     T_FLOAT_CONSTANT,
+    T_COLON,
     T_SEMICOLON,
     T_PLUS,
     T_HYPHEN,

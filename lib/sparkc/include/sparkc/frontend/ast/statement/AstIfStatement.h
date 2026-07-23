@@ -11,6 +11,7 @@ public:
         , ifFalse(ifFalse) { }
 
     AstExp* getCondition() { return condition; }
+    void setCondition(AstExp* cond) { this->condition = cond; }
 
     AstStatement* getTrueBranch() { return ifTrue; }
 

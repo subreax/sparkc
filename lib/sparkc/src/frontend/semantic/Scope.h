@@ -30,6 +30,7 @@ public:
     void declareStruct(StringRef tag);
 
     const ScopeItem& get(StringRef name, ScopeItem::Kind kind) const;
+    bool isDeclared(StringRef name, ScopeItem::Kind kind) const;
 
     void open();
     void close();
@@ -38,6 +39,7 @@ private:
     static ScopeItem::Kind symbolKind2ScopeKind(SymbolType::Kind kind);
 
     void declareInScope(StringRef name, StringRef id, ScopeItem::Kind kind);
+    int findItemOrNeg1(StringRef name, ScopeItem::Kind kind) const;
 
     Stack<ScopeItem> stack;
 };

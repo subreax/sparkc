@@ -13,9 +13,6 @@ public:
 
     bool hasNext() const;
 
-    void declareType(StringRef type);
-    bool isTypeDeclared(StringRef type);
-
 private:
     template <typename T, typename... Args>
     inline T* newNode(Args... args) {
@@ -23,6 +20,7 @@ private:
     }
 
     AstStruct* tryParseStruct();
+    AstStructField* parseStructField();
     AstFunction* parseFunction();
     AstFunParam* parseFunParam();
     AstBlock* parseBlock();

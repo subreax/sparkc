@@ -193,7 +193,7 @@ SkrExpRes SkrEmitter::emit(AstExp* exp, SkrVar* dst) {
     } */
     else if (kind == AstExp::Kind::AddrOf) {
         auto* it = (AstAddrOf*) exp;
-        SkrExpRes var = emit(it->getExpression());
+        SkrExpRes var = emit(it->getExp());
         auto* toType = symbolTable.getTypeAllocator().create<SymbolPointerType>(
             getType(var.get())
         );

@@ -30,15 +30,17 @@ AstStruct* Parser::tryParseStruct() {
     if (current.kind == T_STRUCT_KEYWORD) {
         takeToken();
         StringRef tag = expect(T_IDENTIFIER).value;
-        declareType(tag);
         expect(T_OPEN_PAR);
         std::vector<AstStructField*> fields;
-        while (hasNext() && current.kind != T_CLOSE_PAR) {
-            auto* type = parseType();
-            auto name = expect(T_IDENTIFIER).value;
-            fields.emplace_back(newNode<AstStructField>(type, name));
+        bool expectNextField = true;
+        while (expectNextField && current.kind != T_CLOSE_PAR) {
+            fields.emplace_back(parseStructField());
             if (current.kind == T_COMMA) {
                 takeToken();
+                expectNextField = true;
+            }
+            else {
+                expectNextField = false;
             }
         }
         expect(T_CLOSE_PAR);
@@ -49,8 +51,15 @@ AstStruct* Parser::tryParseStruct() {
     return nullptr;
 }
 
+AstStructField* Parser::parseStructField() {
+    auto name = expect(T_IDENTIFIER).value;
+    expect(T_COLON);
+    auto* type = parseType();
+    return newNode<AstStructField>(type, name);
+}
+
 AstFunction* Parser::parseFunction() {
-    auto* retType = parseType();
+    expect(T_FUN_KEYWORD);
     Token idToken = expect(T_IDENTIFIER);
     StringRef funName = idToken.value;
 
@@ -69,6 +78,9 @@ AstFunction* Parser::parseFunction() {
     }
     expect(T_CLOSE_PAR);
 
+    expect(T_COLON);
+    auto* retType = parseType();
+
     AstBlock* block = parseBlock();
 
     auto paramsBa = BoundArray<AstFunParam*>::fromVector(params, allocator);
@@ -76,8 +88,9 @@ AstFunction* Parser::parseFunction() {
 }
 
 AstFunParam* Parser::parseFunParam() {
-    auto* type = parseType();
     auto id = expect(T_IDENTIFIER).value;
+    expect(T_COLON);
+    auto* type = parseType();
     return newNode<AstFunParam>(id, type);
 }
 
@@ -102,10 +115,17 @@ AstBlockItem* Parser::parseBlockItem() {
 }
 
 AstDeclaration* Parser::tryParseDeclaration() {
-    SymbolType* type = tryParseType();
-    if (type != nullptr) {
+    if (current.kind == T_VAR_KEYWORD) {
+        takeToken();
         StringRef varName = expect(T_IDENTIFIER).value;
+        SymbolType* type = nullptr;
         AstExp* initializer = nullptr;
+
+        if (current.kind == T_COLON) {
+            expect(T_COLON);
+            type = parseType();
+        }
+
         if (current.kind == T_EQUALS) {
             takeToken();
             initializer = parseExpression();
@@ -113,9 +133,8 @@ AstDeclaration* Parser::tryParseDeclaration() {
         expect(T_SEMICOLON);
         return newNode<AstVarDeclaration>(varName, type, initializer);
     }
-    else {
-        return nullptr;
-    }
+
+    return nullptr;
 }
 
 AstStatement* Parser::parseStatement() {
@@ -225,12 +244,7 @@ AstExp* Parser::parseFactor() {
             expect(T_CLOSE_PAR);
 
             auto argsBA = BoundArray<AstExp*>::fromVector(args, allocator);
-            if (isTypeDeclared(id)) {
-                return newNode<AstStructInit>(id, argsBA);
-            }
-            else {
-                return newNode<AstFunCall>(id, argsBA);
-            }
+            return newNode<AstFunCall>(id, argsBA);
         }
         else {
             return newNode<AstVar>(id);
@@ -288,21 +302,11 @@ SymbolType* Parser::tryParseType() {
         break;
 
     case T_IDENTIFIER:
-        if (isTypeDeclared(current.value)) {
-            auto token = takeToken();
-            type = sharedAllocator.create<SymbolStructureType>(token.value);
-        }
-        break;
+        auto token = takeToken();
+        type = sharedAllocator.create<SymbolStructureType>(token.value);
     }
 
     return type;
-
-    /* if (current.kind == T_AMP) {
-        takeToken();
-        return typeAlloc.create<SymbolPointerType>(type);
-    } else {
-        return type;
-    } */
 }
 
 Token Parser::takeToken() {
@@ -318,19 +322,4 @@ Token Parser::expect(TokenKind kind) {
     else {
         throw UnexpectedTokenException(kind, current);
     }
-}
-
-void Parser::declareType(StringRef type) {
-    if (!isTypeDeclared(type)) {
-        types.emplace_back(type);
-    }
-}
-
-bool Parser::isTypeDeclared(StringRef type) {
-    for (auto t : types) {
-        if (t == type) {
-            return true;
-        }
-    }
-    return false;
 }

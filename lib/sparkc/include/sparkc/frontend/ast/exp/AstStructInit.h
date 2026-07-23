@@ -9,6 +9,7 @@ public:
         , args(args) { }
 
     StringRef getTag() const { return tag; }
+    BoundArray<AstExp*>& getArgs() { return args; }
     const BoundArray<AstExp*>& getArgs() const { return args; }
 
 private:

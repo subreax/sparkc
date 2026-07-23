@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.16)
 project(spark-compiler)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 add_subdirectory(lib/sparkc)
 
 add_executable(spark-compiler

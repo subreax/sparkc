@@ -1,8 +1,8 @@
 #src
-struct color(float r, float g, float b, float a);
+struct color(r: float, g: float, b: float, a: float);
 
-color pixel() {
-    color c;
+fun pixel(): color {
+    var c: color;
     c.r = 1.0;
     c.g = 0.5;
     c.b = 0.0;

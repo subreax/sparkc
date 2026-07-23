@@ -1,10 +1,10 @@
 #src
-int main() {
-    int a = 5;
-    int b = 10;
+fun main(): int {
+    var a = 5;
+    var b = 10;
     b = b * 3;
-    int c = a + b;
-    int d = a * (b + c);
+    var c = a + b;
+    var d = a * (b + c);
     return d * 6;
 }
 

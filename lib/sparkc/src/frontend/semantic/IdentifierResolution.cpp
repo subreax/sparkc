@@ -1,11 +1,13 @@
 #include "IdentifierResolution.h"
 
 IdentifierResolution::IdentifierResolution(
+    Allocator& astAllocator,
     SymbolTable& symbolTable,
     TypeTable& typeTable,
     IdentifierGen& idGen
 )
-    : idGen(idGen)
+    : astAllocator(astAllocator)
+    , idGen(idGen)
     , symbolTable(symbolTable)
     , typeTable(typeTable) {
     addExistingDeclarationsToScope();
@@ -114,7 +116,9 @@ void IdentifierResolution::resolve(AstDeclaration* decl) {
     if (decl->kind == AstDeclaration::Kind::Var) {
         auto* varDecl = (AstVarDeclaration*) decl;
         if (varDecl->getInitializer() != nullptr) {
-            resolve(varDecl->getInitializer());
+            varDecl->setInitializer(
+                resolveExp(varDecl->getInitializer())
+            );
         }
         varDecl->setId(declareVar(varDecl->getId(), varDecl->getType()));
     }
@@ -127,19 +131,19 @@ void IdentifierResolution::resolve(AstStatement* st) {
     switch (st->kind) {
     case AstStatement::Kind::Return: {
         auto* it = (AstReturnStatement*) st;
-        resolve(it->getExpression());
+        it->setExpression(resolveExp(it->getExpression()));
         break;
     }
 
     case AstStatement::Kind::Expression: {
         auto* it = (AstExpressionStatement*) st;
-        resolve(it->getExpression());
+        it->setExpression(resolveExp(it->getExpression()));
         break;
     }
 
     case AstStatement::Kind::If: {
         auto* it = (AstIfStatement*) st;
-        resolve(it->getCondition());
+        it->setCondition(resolveExp(it->getCondition()));
         resolve(it->getTrueBranch());
 
         if (auto* falseBranch = it->getFalseBranch()) {
@@ -150,7 +154,7 @@ void IdentifierResolution::resolve(AstStatement* st) {
 
     case AstStatement::Kind::While: {
         auto* it = (AstWhileStatement*) st;
-        resolve(it->getCondition());
+        it->setCondition(resolveExp(it->getCondition()));
         resolve(it->getStatement());
         break;
     }
@@ -168,15 +172,15 @@ void IdentifierResolution::resolve(AstStatement* st) {
     }
 }
 
-void IdentifierResolution::resolve(AstExp* exp) {
+AstExp* IdentifierResolution::resolveExp(AstExp* exp) {
     switch (exp->kind) {
     case AstExp::Kind::Constant:
-        break;
+        return exp;
 
     case AstExp::Kind::Binary: {
         auto* it = (AstBinaryExp*) exp;
-        resolve(it->getLeft());
-        resolve(it->getRight());
+        it->setLeft(resolveExp(it->getLeft()));
+        it->setRight(resolveExp(it->getRight()));
         break;
     }
 
@@ -188,59 +192,73 @@ void IdentifierResolution::resolve(AstExp* exp) {
 
     case AstExp::Kind::Assignment: {
         auto* it = (AstAssignment*) exp;
-        resolve(it->getVar());
-        resolve(it->getExp());
+        it->setVar(resolveExp(it->getVar()));
+        it->setExp(resolveExp(it->getExp()));
         break;
     }
 
     case AstExp::Kind::FunCall: {
         auto* it = (AstFunCall*) exp;
-        checkDeclaration(it->getFunName(), ScopeItem::Kind::Func);
-        for (auto* arg : it->getArgs()) {
-            resolve(arg);
+        if (scope.isDeclared(it->getFunName(), ScopeItem::Kind::Struct)) {
+            auto* structInit = funCallToStructInit(it);
+            resolve(structInit->getArgs());
+            return structInit;
         }
+
+        checkDeclaration(it->getFunName(), ScopeItem::Kind::Func);
+        resolve(it->getArgs());
         break;
     }
 
     case AstExp::Kind::Cast: {
         auto* it = (AstCast*) exp;
-        resolve(it->getExp());
+        it->setExp(resolveExp(it->getExp()));
         break;
     }
 
     case AstExp::Kind::Dereference: {
         auto* it = (AstDereference*) exp;
-        resolve(it->getExpression());
+        it->setExp(resolveExp(it->getExp()));
         break;
     }
 
     case AstExp::Kind::AddrOf: {
         auto* it = (AstAddrOf*) exp;
-        resolve(it->getExpression());
+        it->setExp(resolveExp(it->getExp()));
         break;
     }
 
     case AstExp::Kind::Dot: {
         auto* it = (AstDot*) exp;
-        resolve(it->getFrom());
+        it->setFrom(resolveExp(it->getFrom()));
         break;
     }
 
     case AstExp::Kind::StructInit: {
-        auto* it = (AstStructInit*) exp;
-        checkDeclaration(it->getTag(), ScopeItem::Kind::Struct);
-        for (auto* arg : it->getArgs()) {
-            resolve(arg);
-        }
+        sparkError("IdentifierResolution", "Unreachable branch");
         break;
     }
 
     default:
         sparkError("IdentifierResolution", "Unknown AstExp: %d", exp->kind);
-        break;
+        throw "";
+    }
+
+    return exp;
+}
+
+void IdentifierResolution::resolve(BoundArray<AstExp*>& array) {
+    size_t sz = array.size();
+    for (size_t i = 0; i < sz; i++) {
+        auto* exp = array[i];
+        array[i] = resolveExp(exp);
     }
 }
 
 void IdentifierResolution::checkDeclaration(StringRef name, ScopeItem::Kind kind) {
     scope.get(name, kind);
+}
+
+AstStructInit* IdentifierResolution::funCallToStructInit(AstFunCall* call) {
+    return astAllocator.create<AstStructInit>(call->getFunName(), call->getArgs());
 }

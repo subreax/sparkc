@@ -13,7 +13,7 @@ private:
         Node(
             AstMermaidPrinter& printer,
             const std::string& kind,
-            std::initializer_list<std::string> fields = {}
+            std::initializer_list<std::string> fields = { }
         )
             : id(genId())
             , kind(kind)
@@ -256,13 +256,13 @@ private:
         else if (kind == AstExp::Kind::Dereference) {
             auto* dereference = (AstDereference*) exp;
             Node node(*this, kindStr, { "type", type2string(dereference) });
-            connect(node, toMermaid(dereference->getExpression()));
+            connect(node, toMermaid(dereference->getExp()));
             return node.id;
         }
         else if (kind == AstExp::Kind::AddrOf) {
             auto* addrOf = (AstAddrOf*) exp;
             Node node(*this, kindStr, { "type", type2string(addrOf) });
-            connect(node, toMermaid(addrOf->getExpression()));
+            connect(node, toMermaid(addrOf->getExp()));
             return node.id;
         }
         else if (kind == AstExp::Kind::Dot) {

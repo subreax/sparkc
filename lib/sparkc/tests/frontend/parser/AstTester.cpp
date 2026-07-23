@@ -26,9 +26,14 @@ std::string buildAst(const char* src) {
 
 void testAst(const ParserTest& test) {
     INFO("Test: " << test.path);
-    if (!test.expectFailure) {
-        auto actualTree = buildAst(test.src.c_str());
-        REQUIRE(actualTree == test.expectedTree);
+    bool expectAst = !test.expectFailure;
+    if (expectAst) {
+        try {
+            auto actualTree = buildAst(test.src.c_str());
+            REQUIRE(actualTree == test.expectedTree);
+        } catch (std::exception& ex) {
+            FAIL("Failed with exception:\n  " << ex.what());
+        }
     }
     else {
         REQUIRE_THROWS(buildAst(test.src.c_str()));

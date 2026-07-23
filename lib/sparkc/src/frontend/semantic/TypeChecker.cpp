@@ -49,16 +49,24 @@ void TypeChecker::typeCheck(AstBlockItem* item, SymbolType* retType) {
 
 void TypeChecker::typeCheck(AstDeclaration* decl) {
     if (decl->kind == AstDeclaration::Kind::Var) {
-        auto* varDecl = (AstVarDeclaration*) decl;
-        auto* initExp = varDecl->getInitializer();
-        if (varDecl->getType()->kind == SymbolType::Kind::Pointer && initExp == nullptr) {
-            throw TypeException("Reference is not initialized");
+        typeCheck((AstVarDeclaration*) decl);
+    }
+}
+
+void TypeChecker::typeCheck(AstVarDeclaration* var) {
+    auto* initExp = var->getInitializer();
+    if (var->getType() == nullptr) {
+        if (initExp == nullptr) {
+            throw TypeException("Can't figure out variable type");
         }
 
-        if (initExp != nullptr) {
-            typeCheck(initExp);
-            varDecl->setInitializer(cast(initExp, varDecl->getType()));
-        }
+        typeCheck(initExp);
+        var->setType(initExp->type);
+        symbolTable.redeclareVar(var->getId(), var->getType());
+    }
+    else if (initExp != nullptr) {
+        typeCheck(initExp);
+        var->setInitializer(cast(initExp, var->getType()));
     }
 }
 

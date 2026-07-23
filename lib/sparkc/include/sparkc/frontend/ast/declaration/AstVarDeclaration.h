@@ -17,6 +17,7 @@ public:
     void setInitializer(AstExp* init) { this->init = init; }
 
     SymbolType* getType() { return type; }
+    void setType(SymbolType* type) { this->type = type; }
 
 private:
     StringRef id;

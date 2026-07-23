@@ -7,6 +7,7 @@
 class IdentifierResolution {
 public:
     IdentifierResolution(
+        Allocator& astAllocator,
         SymbolTable& symbolTable,
         TypeTable& typeTable,
         IdentifierGen& idGen
@@ -28,11 +29,15 @@ private:
     void resolve(AstBlockItem* item);
     void resolve(AstDeclaration* decl);
     void resolve(AstStatement* st);
-    void resolve(AstExp* exp);
+    AstExp* resolveExp(AstExp* exp);
+    void resolve(BoundArray<AstExp*>& array);
 
     void checkDeclaration(StringRef name, ScopeItem::Kind kind);
 
+    AstStructInit* funCallToStructInit(AstFunCall* call);
+
     Scope scope;
+    Allocator& astAllocator;
     IdentifierGen& idGen;
     SymbolTable& symbolTable;
     TypeTable& typeTable;

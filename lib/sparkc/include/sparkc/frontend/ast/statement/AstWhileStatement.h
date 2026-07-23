@@ -10,6 +10,8 @@ public:
         , statement(statement) { }
 
     AstExp* getCondition() { return cond; }
+    void setCondition(AstExp* cond) { this->cond = cond; }
+
     AstStatement* getStatement() { return statement; }
 
 private:

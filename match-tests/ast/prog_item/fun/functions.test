@@ -1,9 +1,9 @@
 #src
-int fun1(int a, int b) {
+fun fun1(a: int, b: int): int {
     return a + b;
 }
 
-int fun2(int a, int b) {
+fun fun2(a: int, b: int): int {
     return a * b;
 }
 

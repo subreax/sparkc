@@ -52,7 +52,6 @@ target_sources(tests
     tests/frontend/parser/AstTester.cpp
     tests/frontend/parser/ParserTest.cpp
     tests/frontend/parser/ParserTestLoader.cpp
-    tests/frontend/parser/ExternalStructDeclarationTest.cpp
     tests/alloc/test_linearalloc.cpp
     tests/asm/test_rv32base.cpp
     tests/rva/RvaMovTest.cpp

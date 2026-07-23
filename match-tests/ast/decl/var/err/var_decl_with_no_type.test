@@ -1,7 +1,7 @@
 #src
 fun main(): int {
-    var a: float = .;
-    return 0;
+    var a;
+    return a;
 }
 
 #expect_failure

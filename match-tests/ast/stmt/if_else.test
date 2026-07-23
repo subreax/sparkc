@@ -1,9 +1,9 @@
 #src
-int min(int a, int b) {
+fun min(a: int, b: int): int {
     if (a > b) {
         return b;
     } else {
-       return a;
+        return a;
     }
 }
 

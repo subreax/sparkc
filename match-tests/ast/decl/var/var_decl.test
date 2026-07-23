@@ -1,6 +1,6 @@
 #src
-int main() {
-    int a;
+fun main(): int {
+    var a: int;
     a = 5;
     return a;
 }

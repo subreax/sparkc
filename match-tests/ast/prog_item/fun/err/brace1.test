@@ -1,4 +1,4 @@
 #src
-int main() {
+fun main(): int {
 
 #expect_failure

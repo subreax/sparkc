@@ -18,7 +18,10 @@ public:
 private:
     void typeCheck(const AstBlock* block, SymbolType* retType);
     void typeCheck(AstBlockItem* item, SymbolType* retType);
+
     void typeCheck(AstDeclaration* decl);
+    void typeCheck(AstVarDeclaration* var);
+
     void typeCheck(AstStatement* st, SymbolType* retType);
 
     void typeCheck(AstExp* exp);

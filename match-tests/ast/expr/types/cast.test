@@ -1,5 +1,5 @@
 #src
-int main(int a, float b) {
+fun main(a: int, b: float): int {
     return a + b;
 }
 

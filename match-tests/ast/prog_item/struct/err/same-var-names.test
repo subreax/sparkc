@@ -1,4 +1,4 @@
 #src
-struct wrong(int a, int a);
+struct wrong(a: int, a: int);
 
 #expect_failure

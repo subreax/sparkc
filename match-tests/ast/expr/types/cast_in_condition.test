@@ -1,5 +1,5 @@
 #src
-int min(int a, float b) {
+fun min(a: int, b: float): int {
     if (a > b) {
       return b;
     }

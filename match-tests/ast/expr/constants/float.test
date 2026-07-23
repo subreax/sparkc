@@ -1,8 +1,8 @@
 #src
-int main() {
-    float a = 12.34;
-    float b = 12.34f;
-    float c = 12.34F;
+fun main(): int {
+    var a = 12.34;
+    var b = 12.34f;
+    var c = 12.34F;
     return 0;
 }
 

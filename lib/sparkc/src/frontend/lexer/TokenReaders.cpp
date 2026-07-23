@@ -49,12 +49,14 @@ static StringRef readString(const char* src, const char* what) {
     return StringRef(src, len);
 }
 
+StringRef TokenReaders::readVarKeyword(const char* src) { return readKeyword(src, "var"); }
 StringRef TokenReaders::readIntKeyword(const char* src) { return readKeyword(src, "int"); }
 StringRef TokenReaders::readFloatKeyword(const char* src) { return readKeyword(src, "float"); }
 StringRef TokenReaders::readReturnKeyword(const char* src) { return readKeyword(src, "return"); }
 StringRef TokenReaders::readIfKeyword(const char* src) { return readKeyword(src, "if"); }
 StringRef TokenReaders::readElseKeyword(const char* src) { return readKeyword(src, "else"); }
 StringRef TokenReaders::readWhileKeyword(const char* src) { return readKeyword(src, "while"); }
+StringRef TokenReaders::readFunKeyword(const char* src) { return readKeyword(src, "fun"); }
 StringRef TokenReaders::readStructKeyword(const char* src) { return readKeyword(src, "struct"); }
 
 StringRef TokenReaders::readIdentifier(const char* src) {
@@ -121,6 +123,7 @@ StringRef TokenReaders::readOpenPar(const char* src) { return readChar(src, '(')
 StringRef TokenReaders::readClosePar(const char* src) { return readChar(src, ')'); }
 StringRef TokenReaders::readOpenBrace(const char* src) { return readChar(src, '{'); }
 StringRef TokenReaders::readCloseBrace(const char* src) { return readChar(src, '}'); }
+StringRef TokenReaders::readColon(const char* src) { return readChar(src, ':'); }
 StringRef TokenReaders::readSemicolon(const char* src) { return readChar(src, ';'); }
 StringRef TokenReaders::readPlus(const char* src) { return readChar(src, '+'); }
 StringRef TokenReaders::readHyphen(const char* src) { return readChar(src, '-'); }
