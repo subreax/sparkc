@@ -1,12 +1,12 @@
-#include "Lexer.h"
-#include "TokenReaders.h"
+#include "sparkc/frontend/lexer/Lexer.h"
+#include "sparkc/frontend/lexer/TokenReaders.h"
 
 struct TokenReaderWithKind {
     TokenKind kind;
     TokenReaders::Reader read;
 };
 
-static constexpr TokenReaderWithKind Lexer_readers[] = {
+static constexpr TokenReaderWithKind TOKEN_READERS[] = {
     { T_VAR_KEYWORD, TokenReaders::readVarKeyword },
     { T_INT_KEYWORD, TokenReaders::readIntKeyword },
     { T_FLOAT_KEYWORD, TokenReaders::readFloatKeyword },
@@ -45,7 +45,7 @@ static constexpr TokenReaderWithKind Lexer_readers[] = {
     { T_EOF, TokenReaders::readEOF }
 };
 
-static constexpr int Lexer_readersCount = sizeof(Lexer_readers) / sizeof(TokenReaderWithKind);
+static constexpr int TOKEN_READERS_COUNT = sizeof(TOKEN_READERS) / sizeof(TokenReaderWithKind);
 
 Lexer::Lexer(const char* src)
     : src(src) { }
@@ -54,8 +54,8 @@ Token Lexer::next() {
     skipWhitespaces();
     StringRef value = StringRef::nullInstance();
     TokenKind kind = T_BAD;
-    for (int i = 0; i < Lexer_readersCount; i++) {
-        const auto& reader = Lexer_readers[i];
+    for (int i = 0; i < TOKEN_READERS_COUNT; i++) {
+        const auto& reader = TOKEN_READERS[i];
         value = reader.read(src + pos);
         if (value.isNotNull()) {
             kind = reader.kind;

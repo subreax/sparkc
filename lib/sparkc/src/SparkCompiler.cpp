@@ -1,9 +1,9 @@
 #include "sparkc/SparkCompiler.h"
 #include "SparkPools.h"
 
-#include "frontend/lexer/Lexer.h"
-#include "frontend/parser/Parser.h"
-#include "frontend/semantic/Semantic.h"
+#include "sparkc/frontend/lexer/Lexer.h"
+#include "sparkc/frontend/parser/Parser.h"
+#include "sparkc/frontend/semantic/Semantic.h"
 #include "skr/SkrEmitter.h"
 #include "skr/optimizer/SkrOptimizer.h"
 #include "backend/rv/RvaFixer.h"
@@ -61,7 +61,8 @@ BuildResult SparkCompiler::build(const char* src) {
     assembler.addExternalLabel(StringRef::cstr(SparkRuntime::divq15FunName), (void*) runtime.divq15);
 
     Lexer lexer(src);
-    Parser parser(lexer, pools->pool1, pools->shared);
+    AstFactory astFactory(pools->pool1);
+    Parser parser(lexer, astFactory, pools->shared);
     AstProgram* ast = parser.parseProgram();
 
     Semantic(*symTable, *typeTable, idGen, pools->pool1).process(ast);

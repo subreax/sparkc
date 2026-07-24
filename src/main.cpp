@@ -2,7 +2,7 @@
 #include <fstream>
 #include <iostream>
 #include <sparkc/SparkCompiler.h>
-#include <sparkc/frontend/ast/printer/AstPrinter.h>
+#include <sparkc/frontend/utils/AstPrinter.h>
 #include <sparkc/frontend/parser/except/ParseException.h>
 #include <sstream>
 

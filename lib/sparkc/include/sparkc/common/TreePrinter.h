@@ -3,9 +3,9 @@
 #include <iostream>
 #include <stack>
 
-class Printer {
+class TreePrinter {
 public:
-    Printer(std::ostream& out)
+    TreePrinter(std::ostream& out)
         : out(out) { }
 
     void beginObject(const char* name) {

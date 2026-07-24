@@ -1,6 +1,6 @@
 #pragma once
 #include <iostream>
-#include <sparkc/frontend/ast/everything.h>
+#include "sparkc/frontend/ast/everything.h"
 
 class AstPrinter {
 public:

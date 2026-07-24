@@ -1,4 +1,4 @@
-#include "IdentifierResolution.h"
+#include "sparkc/frontend/semantic/IdentifierResolution.h"
 
 IdentifierResolution::IdentifierResolution(
     Allocator& astAllocator,

@@ -1,4 +1,4 @@
-#include "Scope.h"
+#include "sparkc/frontend/semantic/Scope.h"
 
 static const char* itemKind2string(ScopeItem::Kind kind) {
     switch (kind) {

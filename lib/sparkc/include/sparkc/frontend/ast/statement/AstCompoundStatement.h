@@ -1,6 +1,6 @@
 #pragma once
-#include "../AstBlock.h"
 #include "AstStatement.h"
+#include "../AstBlock.h"
 #include "sparkc/common/BoundArray.h"
 
 class AstCompoundStatement : public AstStatement {

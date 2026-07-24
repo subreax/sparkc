@@ -1,4 +1,4 @@
-#include "TokenReaders.h"
+#include "sparkc/frontend/lexer/TokenReaders.h"
 #include <cstring>
 
 static bool startsWith(const char* str, const char* beginning) {

@@ -1,49 +1,35 @@
 #pragma once
-#include "../../../symbol/SymbolType.h"
-#include "../../lexer/Token.h"
+#include "sparkc/symbol/SymbolType.h"
+#include "sparkc/frontend/lexer/Token.h"
 #include "sparkc/common/Error.h"
 #include <cstdint>
+
+#define SPARK_AST_EXP_KINDS_LIST(X) \
+    X(Constant, "constant")         \
+    X(Binary, "binary")             \
+    X(Var, "var")                   \
+    X(Assignment, "assignment")     \
+    X(FunCall, "fun call")          \
+    X(Cast, "cast")                 \
+    X(Dereference, "dereference")   \
+    X(AddrOf, "addr of")            \
+    X(Dot, "dot")                   \
+    X(StructInit, "struct init")
 
 class AstExp {
 public:
     enum class Kind {
-        Constant,
-        Binary,
-        Var,
-        Assignment,
-        FunCall,
-        Cast,
-        Dereference,
-        AddrOf,
-        Dot,
-        StructInit,
-        _Count
+#define X(kind, name) kind,
+        SPARK_AST_EXP_KINDS_LIST(X)
+#undef X
+            _Count
     };
 
     AstExp(Kind kind, SymbolType* type = nullptr)
         : kind(kind)
         , type(type) { }
 
-    static const char* kindToString(Kind kind) {
-        static const char* names[] = {
-            "const",
-            "binary",
-            "var",
-            "assignment",
-            "fun call",
-            "cast",
-            "dereference",
-            "get addr",
-            "dot",
-            "struct_init"
-        };
-        static const int namesCount = sizeof(names) / sizeof(const char*);
-        if ((int) kind < namesCount) {
-            return names[(int) kind];
-        }
-        sparkError("AstExp", "Failed to convert AstExp::Kind to string");
-        return "";
-    }
+    static const char* kindToString(Kind kind);
 
     bool hasType(const SymbolType* other) const {
         if (type == nullptr) {

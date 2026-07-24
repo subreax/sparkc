@@ -5,16 +5,16 @@
 
 class AstStructField {
 public:
-    AstStructField(SymbolType* type, StringRef name)
-        : type(type)
-        , name(name) { }
+    AstStructField(StringRef name, SymbolType* type)
+        : name(name)
+        , type(type) { }
 
-    SymbolType* getType() const { return type; }
     StringRef getName() const { return name; }
+    SymbolType* getType() const { return type; }
 
 private:
-    SymbolType* type;
     StringRef name;
+    SymbolType* type;
 };
 
 class AstStruct : public AstProgItem {

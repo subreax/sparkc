@@ -1,10 +1,25 @@
 #pragma once
-#include "AstBlock.h"
-#include "AstBlockItem.h"
-#include "AstFunParam.h"
 #include "AstProgItem.h"
+#include "AstBlock.h"
 #include "sparkc/common/BoundArray.h"
+#include "sparkc/symbol/SymbolType.h"
 #include <vector>
+
+class AstFunParam {
+public:
+    AstFunParam(StringRef id, SymbolType* type)
+        : id(id)
+        , type(type) { }
+
+    StringRef getId() const { return id; }
+    void setId(StringRef id) { this->id = id; }
+
+    SymbolType* getType() const { return type; }
+
+private:
+    StringRef id;
+    SymbolType* type;
+};
 
 class AstFunction : public AstProgItem {
 public:

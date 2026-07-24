@@ -3,44 +3,51 @@
 #include <cstdint>
 #include <iostream>
 
+#define TOKEN_KIND_LIST(X)                  \
+    X(T_VAR_KEYWORD, "var")                 \
+    X(T_INT_KEYWORD, "int")                 \
+    X(T_FLOAT_KEYWORD, "float")             \
+    X(T_RETURN_KEYWORD, "return")           \
+    X(T_IF_KEYWORD, "if")                   \
+    X(T_ELSE_KEYWORD, "else")               \
+    X(T_WHILE_KEYWORD, "while")             \
+    X(T_FUN_KEYWORD, "fun")                 \
+    X(T_STRUCT_KEYWORD, "struct")           \
+    X(T_IDENTIFIER, "<identifier>")         \
+    X(T_OPEN_PAR, "(")                      \
+    X(T_CLOSE_PAR, ")")                     \
+    X(T_OPEN_BRACE, "{")                    \
+    X(T_CLOSE_BRACE, "}")                   \
+    X(T_INT_CONSTANT, "<int constant>")     \
+    X(T_FLOAT_CONSTANT, "<float constant>") \
+    X(T_COLON, ":")                         \
+    X(T_SEMICOLON, ";")                     \
+    X(T_PLUS, "+")                          \
+    X(T_HYPHEN, "-")                        \
+    X(T_ASTERISK, "*")                      \
+    X(T_FWD_SLASH, "/")                     \
+    X(T_PERCENT, "%")                       \
+    X(T_EQUALS, "=")                        \
+    X(T_AMP, "&")                           \
+    X(T_AMP_AMP, "&&")                      \
+    X(T_VBAR_VBAR, "||")                    \
+    X(T_EQUALS_EQUALS, "==")                \
+    X(T_NOT_EQUALS, "!=")                   \
+    X(T_LESS_THAN, "<")                     \
+    X(T_LESS_OR_EQ, "<=")                   \
+    X(T_GREATER_THAN, ">")                  \
+    X(T_GREATER_OR_EQ, ">=")                \
+    X(T_PERIOD, ".")                        \
+    X(T_COMMA, ",")                         \
+    X(T_EOF, "<eof>")                       \
+    X(T_BAD, "<bad>")
+
 enum TokenKind {
-    T_VAR_KEYWORD,
-    T_INT_KEYWORD,
-    T_FLOAT_KEYWORD,
-    T_RETURN_KEYWORD,
-    T_IF_KEYWORD,
-    T_ELSE_KEYWORD,
-    T_WHILE_KEYWORD,
-    T_FUN_KEYWORD,
-    T_STRUCT_KEYWORD,
-    T_IDENTIFIER,
-    T_OPEN_PAR,
-    T_CLOSE_PAR,
-    T_OPEN_BRACE,
-    T_CLOSE_BRACE,
-    T_INT_CONSTANT,
-    T_FLOAT_CONSTANT,
-    T_COLON,
-    T_SEMICOLON,
-    T_PLUS,
-    T_HYPHEN,
-    T_ASTERISK,
-    T_FWD_SLASH,
-    T_PERCENT,
-    T_EQUALS,
-    T_AMP,
-    T_AMP_AMP,
-    T_VBAR_VBAR,
-    T_EQUALS_EQUALS,
-    T_NOT_EQUALS,
-    T_LESS_THAN,
-    T_LESS_OR_EQ,
-    T_GREATER_THAN,
-    T_GREATER_OR_EQ,
-    T_PERIOD,
-    T_COMMA,
-    T_EOF,
-    T_BAD
+#define X(kind, name) kind,
+    TOKEN_KIND_LIST(X)
+#undef X
+
+        T_TOKENS_COUNT
 };
 
 struct TokenPos {

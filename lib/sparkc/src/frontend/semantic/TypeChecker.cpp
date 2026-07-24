@@ -1,4 +1,4 @@
-#include "TypeChecker.h"
+#include "sparkc/frontend/semantic/TypeChecker.h"
 #include "sparkc/common/Error.h"
 #include "sparkc/frontend/ast/everything.h"
 #include "sparkc/symbol/SymbolTable.h"

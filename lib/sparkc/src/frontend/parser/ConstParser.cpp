@@ -1,4 +1,4 @@
-#include "ConstParser.h"
+#include "sparkc/frontend/parser/ConstParser.h"
 #include <cstring>
 
 static int compareInts(StringRef a, StringRef b) {

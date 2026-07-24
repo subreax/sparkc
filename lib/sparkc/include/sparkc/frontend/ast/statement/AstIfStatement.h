@@ -1,6 +1,6 @@
 #pragma once
-#include "../exp/AstExp.h"
 #include "AstStatement.h"
+#include "../exp/AstExp.h"
 
 class AstIfStatement : public AstStatement {
 public:

@@ -23,15 +23,17 @@ set(SPARKC_SRC
   src/common/Constant.cpp
   src/common/Error.cpp
   src/common/StringRef.cpp
+  src/frontend/ast/exp/AstExp.cpp
+  src/frontend/ast/exp/AstBinaryExp.cpp
   src/frontend/lexer/Lexer.cpp
   src/frontend/lexer/Token.cpp
   src/frontend/lexer/TokenReaders.cpp
   src/frontend/parser/ConstParser.cpp
   src/frontend/parser/Parser.cpp
-  src/frontend/parser/ast/AstPrinter.cpp
   src/frontend/semantic/IdentifierResolution.cpp
   src/frontend/semantic/Scope.cpp
   src/frontend/semantic/TypeChecker.cpp
+  src/frontend/utils/AstPrinter.cpp
   src/skr/SkrEmitter.cpp
   src/skr/value/SkrValue.cpp
   src/skr/optimizer/SkrCfgOverloadings.cpp

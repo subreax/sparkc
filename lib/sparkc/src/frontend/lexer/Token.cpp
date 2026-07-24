@@ -1,54 +1,17 @@
 #include "sparkc/frontend/lexer/Token.h"
 
-static constexpr const char* _TokenKind2String[] = {
-    "var",
-    "int",
-    "float",
-    "return",
-    "if",
-    "else",
-    "while",
-    "fun",
-    "struct",
-    "<identifier>",
-    "open par",
-    "close par",
-    "open brace",
-    "close brace",
-    "<int constant>",
-    "<float constant>",
-    "colon",
-    "semicolon",
-    "plus",
-    "hyphen",
-    "asterisk",
-    "fwd slash",
-    "percent",
-    "equals",
-    "&",
-    "&&",
-    "||",
-    "==",
-    "!=",
-    "<",
-    "<=",
-    ">",
-    ">=",
-    ".",
-    ",",
-    "<eof>",
-    "<bad>"
+static constexpr const char* TOKEN_KIND_STRINGS[] = {
+#define X(kind, name) name,
+    TOKEN_KIND_LIST(X)
+#undef X
 };
 
-static constexpr int _TokenKinds2StringCount = sizeof(_TokenKind2String) / sizeof(const char*);
-
 const char* TokenKind_toString(TokenKind kind) {
-    if (kind < _TokenKinds2StringCount) {
-        return _TokenKind2String[kind];
+    auto idx = (size_t) kind;
+    if (idx >= T_TOKENS_COUNT) {
+        return "<wrong_token>";
     }
-    else {
-        return "<unknown>";
-    }
+    return TOKEN_KIND_STRINGS[idx];
 }
 
 std::string TokenKind_toStdString(TokenKind kind) {

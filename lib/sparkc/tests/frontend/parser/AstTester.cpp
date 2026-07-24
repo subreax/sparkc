@@ -1,20 +1,21 @@
 #include "AstTester.h"
-#include "frontend/parser/Parser.h"
-#include "frontend/semantic/Semantic.h"
-#include "sparkc/common/alloc/LinearAllocator.h"
-#include "sparkc/frontend/ast/printer/AstPrinter.h"
-#include "sparkc/type/TypeTable.h"
 #include <catch2/catch_test_macros.hpp>
+#include "sparkc/frontend/parser/Parser.h"
+#include "sparkc/frontend/semantic/Semantic.h"
+#include "sparkc/common/alloc/LinearAllocator.h"
+#include "sparkc/frontend/utils/AstPrinter.h"
+#include "sparkc/type/TypeTable.h"
 
 std::string buildAst(const char* src) {
-    LinearAllocator allocator("parser", 2048, true);
+    LinearAllocator allocator("parser", 4096, true);
     LinearAllocator commonAllocator("common", 2048, true);
     SymbolTable symbolTable(commonAllocator);
     TypeTable typeTable(commonAllocator);
     IdentifierGen idGen(commonAllocator);
 
     Lexer lexer(src);
-    Parser parser(lexer, allocator, commonAllocator);
+    AstFactory astFactory(allocator);
+    Parser parser(lexer, astFactory, commonAllocator);
 
     AstProgram* program = parser.parseProgram();
     Semantic(symbolTable, typeTable, idGen, allocator).process(program);

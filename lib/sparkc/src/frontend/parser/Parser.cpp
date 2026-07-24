@@ -1,10 +1,10 @@
-#include "Parser.h"
-#include "Precedence.h"
-#include "ConstParser.h"
+#include "sparkc/frontend/parser/Parser.h"
+#include "sparkc/frontend/parser/Precedence.h"
+#include "sparkc/frontend/parser/ConstParser.h"
 
-Parser::Parser(Lexer& lexer, Allocator& allocator, Allocator& sharedAllocator)
+Parser::Parser(Lexer& lexer, AstFactory& astFactory, Allocator& sharedAllocator)
     : lexer(lexer)
-    , allocator(allocator)
+    , astf(astFactory)
     , sharedAllocator(sharedAllocator) {
     takeToken();
 }
@@ -20,8 +20,8 @@ AstProgram* Parser::parseProgram() {
 
         items.emplace_back(parseFunction());
     }
-    auto arrFunctions = BoundArray<AstProgItem*>::fromVector(items, allocator);
-    return newNode<AstProgram>(arrFunctions);
+
+    return astf.program(items);
 }
 
 bool Parser::hasNext() const { return current.kind != T_EOF; }
@@ -45,8 +45,7 @@ AstStruct* Parser::tryParseStruct() {
         }
         expect(T_CLOSE_PAR);
         expect(T_SEMICOLON);
-
-        return newNode<AstStruct>(tag, BoundArray<AstStructField*>::fromVector(fields, allocator));
+        return astf.struct_(tag, fields);
     }
     return nullptr;
 }
@@ -55,7 +54,7 @@ AstStructField* Parser::parseStructField() {
     auto name = expect(T_IDENTIFIER).value;
     expect(T_COLON);
     auto* type = parseType();
-    return newNode<AstStructField>(type, name);
+    return astf.structField(name, type);
 }
 
 AstFunction* Parser::parseFunction() {
@@ -83,15 +82,14 @@ AstFunction* Parser::parseFunction() {
 
     AstBlock* block = parseBlock();
 
-    auto paramsBa = BoundArray<AstFunParam*>::fromVector(params, allocator);
-    return newNode<AstFunction>(funName, retType, paramsBa, block);
+    return astf.function(funName, retType, params, block);
 }
 
 AstFunParam* Parser::parseFunParam() {
     auto id = expect(T_IDENTIFIER).value;
     expect(T_COLON);
     auto* type = parseType();
-    return newNode<AstFunParam>(id, type);
+    return astf.functionParam(id, type);
 }
 
 AstBlock* Parser::parseBlock() {
@@ -101,17 +99,15 @@ AstBlock* Parser::parseBlock() {
         items.emplace_back(parseBlockItem());
     }
     expect(T_CLOSE_BRACE);
-
-    auto itemsBa = BoundArray<AstBlockItem*>::fromVector(items, allocator);
-    return newNode<AstBlock>(itemsBa);
+    return astf.block(items);
 }
 
 AstBlockItem* Parser::parseBlockItem() {
     auto* decl = tryParseDeclaration();
     if (decl != nullptr) {
-        return newNode<AstDeclBlockItem>(decl);
+        return astf.declBlockItem(decl);
     }
-    return newNode<AstStatementBlockItem>(parseStatement());
+    return astf.statementBlockItem(parseStatement());
 }
 
 AstDeclaration* Parser::tryParseDeclaration() {
@@ -131,7 +127,7 @@ AstDeclaration* Parser::tryParseDeclaration() {
             initializer = parseExpression();
         }
         expect(T_SEMICOLON);
-        return newNode<AstVarDeclaration>(varName, type, initializer);
+        return astf.varDeclaration(varName, type, initializer);
     }
 
     return nullptr;
@@ -143,7 +139,7 @@ AstStatement* Parser::parseStatement() {
         takeToken();
         AstExp* exp = parseExpression();
         expect(T_SEMICOLON);
-        return newNode<AstReturnStatement>(exp);
+        return astf.returnStatement(exp);
     }
 
     case T_IF_KEYWORD:
@@ -153,12 +149,12 @@ AstStatement* Parser::parseStatement() {
         return parseWhileStatement();
 
     case T_OPEN_BRACE:
-        return newNode<AstCompoundStatement>(parseBlock());
+        return astf.compoundStatement(parseBlock());
 
     default: {
         AstExp* exp = parseExpression();
         expect(T_SEMICOLON);
-        return newNode<AstExpressionStatement>(exp);
+        return astf.expressionStatement(exp);
     }
     }
 }
@@ -177,7 +173,7 @@ AstIfStatement* Parser::parseIfStatement() {
         ifFalse = parseStatement();
     }
 
-    return newNode<AstIfStatement>(cond, ifTrue, ifFalse);
+    return astf.ifStatement(cond, ifTrue, ifFalse);
 }
 
 AstStatement* Parser::parseWhileStatement() {
@@ -187,7 +183,7 @@ AstStatement* Parser::parseWhileStatement() {
     expect(T_CLOSE_PAR);
 
     AstStatement* body = parseStatement();
-    return newNode<AstWhileStatement>(cond, body);
+    return astf.whileStatement(cond, body);
 }
 
 AstExp* Parser::parseExpression(int prevPrecedence) {
@@ -197,15 +193,15 @@ AstExp* Parser::parseExpression(int prevPrecedence) {
         auto op = takeToken();
         if (op.kind == T_EQUALS) {
             AstExp* right = parseExpression(precedence);
-            left = newNode<AstAssignment>(left, right);
+            left = astf.assignment(left, right);
         }
         else if (op.kind == T_PERIOD) {
             AstExp* right = parseExpression(precedence + 1);
-            left = newNode<AstDot>(left, right);
+            left = astf.dot(left, right);
         }
         else {
             AstExp* right = parseExpression(precedence + 1);
-            left = newNode<AstBinaryExp>(left, AstBinaryExp::toBinaryOperator(op.kind), right);
+            left = astf.binaryExp(left, op.kind, right);
         }
         precedence = Precedence::get(current.kind);
     }
@@ -217,14 +213,12 @@ AstExp* Parser::parseFactor() {
     case T_INT_CONSTANT: {
         auto token = takeToken();
         int32_t value = parseInt(token);
-        auto* c = newNode<IntConstant>(value);
-        return newNode<AstConstantExp>(c);
+        return astf.intConstantExp(value);
     }
 
     case T_FLOAT_CONSTANT: {
         auto token = takeToken();
-        auto* c = newNode<FloatConstant>(parseFloat(token));
-        return newNode<AstConstantExp>(c);
+        return astf.floatConstantExp(parseFloat(token));
     }
 
     case T_OPEN_PAR: {
@@ -243,11 +237,10 @@ AstExp* Parser::parseFactor() {
             parseFunArgs(args);
             expect(T_CLOSE_PAR);
 
-            auto argsBA = BoundArray<AstExp*>::fromVector(args, allocator);
-            return newNode<AstFunCall>(id, argsBA);
+            return astf.funCall(id, args);
         }
         else {
-            return newNode<AstVar>(id);
+            return astf.var(id);
         }
     }
 

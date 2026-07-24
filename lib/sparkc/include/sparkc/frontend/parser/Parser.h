@@ -1,24 +1,19 @@
 #pragma once
-#include "../lexer/Lexer.h"
-#include "sparkc/common/alloc/Allocator.h"
-#include "sparkc/frontend/ast/everything.h"
-#include "sparkc/frontend/parser/except/everything.h"
 #include <vector>
+#include "sparkc/common/alloc/Allocator.h"
+#include "sparkc/frontend/lexer/Lexer.h"
+#include "sparkc/frontend/ast/AstFactory.h"
+#include "sparkc/frontend/parser/except/everything.h"
 
 class Parser {
 public:
-    Parser(Lexer& lexer, Allocator& allocator, Allocator& sharedAlloc);
+    Parser(Lexer& lexer, AstFactory& astFactory, Allocator& sharedAlloc);
 
     AstProgram* parseProgram();
 
     bool hasNext() const;
 
 private:
-    template <typename T, typename... Args>
-    inline T* newNode(Args... args) {
-        return allocator.create<T>(args...);
-    }
-
     AstStruct* tryParseStruct();
     AstStructField* parseStructField();
     AstFunction* parseFunction();
@@ -45,7 +40,7 @@ private:
 
     Token current;
     Lexer& lexer;
-    Allocator& allocator;
+    AstFactory& astf;
     Allocator& sharedAllocator;
     std::vector<StringRef> types;
 };
