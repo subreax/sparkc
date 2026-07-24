@@ -5,24 +5,24 @@
 class Semantic {
 public:
     Semantic(
+        AstFactory& astFactory,
         SymbolTable& symbolTable,
         TypeTable& typeTable,
-        IdentifierGen& idGen,
-        Allocator& astAlloc
+        IdentifierGen& idGen
     )
         : symbolTable(symbolTable)
         , typeTable(typeTable)
         , idGen(idGen)
-        , astAlloc(astAlloc) { }
+        , astFactory(astFactory) { }
 
     void process(AstProgram* prog) {
-        IdentifierResolution(astAlloc, symbolTable, typeTable, idGen).resolve(prog);
-        TypeChecker(symbolTable, typeTable, astAlloc).typeCheck(prog);
+        IdentifierResolution(astFactory, symbolTable, typeTable, idGen).resolve(prog);
+        TypeChecker(astFactory, symbolTable, typeTable).typeCheck(prog);
     }
 
 private:
+    AstFactory& astFactory;
     SymbolTable& symbolTable;
     TypeTable& typeTable;
     IdentifierGen& idGen;
-    Allocator& astAlloc;
 };

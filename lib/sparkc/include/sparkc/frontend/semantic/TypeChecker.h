@@ -1,16 +1,16 @@
 #pragma once
 #include "TypeException.h"
 #include "sparkc/common/Error.h"
-#include "sparkc/frontend/ast/everything.h"
+#include "sparkc/frontend/ast/AstFactory.h"
 #include "sparkc/symbol/SymbolTable.h"
 #include "sparkc/type/TypeTable.h"
 
 class TypeChecker {
 public:
     TypeChecker(
+        AstFactory& astFactory,
         SymbolTable& symbolTable,
-        TypeTable& typeTable,
-        Allocator& astAllocator
+        TypeTable& typeTable
     );
 
     void typeCheck(AstProgram* prog);
@@ -40,7 +40,7 @@ private:
 
     AstExp* cast(AstExp* exp, SymbolType* targetType);
 
+    AstFactory& astf;
     SymbolTable& symbolTable;
     TypeTable& typeTable;
-    Allocator& allocator;
 };

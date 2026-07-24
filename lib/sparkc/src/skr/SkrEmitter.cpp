@@ -194,9 +194,7 @@ SkrExpRes SkrEmitter::emit(AstExp* exp, SkrVar* dst) {
     else if (kind == AstExp::Kind::AddrOf) {
         auto* it = (AstAddrOf*) exp;
         SkrExpRes var = emit(it->getExp());
-        auto* toType = symbolTable.getTypeAllocator().create<SymbolPointerType>(
-            getType(var.get())
-        );
+        auto* toType = symbolTable.getTypeFactory().pointer(getType(var.get()));
         if (dst == nullptr) {
             dst = createVar("addr", toType);
         }
@@ -300,7 +298,7 @@ SkrValue* SkrEmitter::emitBinary(AstBinaryExp* exp, SkrVar* dst) {
         auto falseLabel = labelGen.uniquePrivate("and_false");
         auto endLabel = labelGen.uniquePrivate("and_end");
 
-        SkrVar* result = createVar("and", SymbolIntType::getInstance());
+        SkrVar* result = createVar("and", symbolTable.getTypeFactory().int_());
         emitInvertBranch(exp->getLeft(), falseLabel);
         emitInvertBranch(exp->getRight(), falseLabel);
         // true
@@ -318,7 +316,7 @@ SkrValue* SkrEmitter::emitBinary(AstBinaryExp* exp, SkrVar* dst) {
         auto trueLabel = labelGen.uniquePrivate("or_true");
         auto endLabel = labelGen.uniquePrivate("or_end");
 
-        SkrVar* result = createVar("or", SymbolIntType::getInstance());
+        SkrVar* result = createVar("or", symbolTable.getTypeFactory().int_());
         emitBranch(exp->getLeft(), trueLabel);
         emitBranch(exp->getRight(), trueLabel);
         // false

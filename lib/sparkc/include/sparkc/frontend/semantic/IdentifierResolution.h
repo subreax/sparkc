@@ -1,13 +1,13 @@
 #pragma once
 #include "Scope.h"
+#include "sparkc/frontend/ast/AstFactory.h"
 #include "sparkc/common/IdentifierGen.h"
-#include "sparkc/frontend/ast/everything.h"
 #include "sparkc/symbol/SymbolTable.h"
 
 class IdentifierResolution {
 public:
     IdentifierResolution(
-        Allocator& astAllocator,
+        AstFactory& astFactory,
         SymbolTable& symbolTable,
         TypeTable& typeTable,
         IdentifierGen& idGen
@@ -37,7 +37,7 @@ private:
     AstStructInit* funCallToStructInit(AstFunCall* call);
 
     Scope scope;
-    Allocator& astAllocator;
+    AstFactory& astf;
     IdentifierGen& idGen;
     SymbolTable& symbolTable;
     TypeTable& typeTable;

@@ -16,8 +16,7 @@ void SymbolTable::redeclareVar(StringRef name, SymbolType* type) {
 }
 
 void SymbolTable::declareFunc(StringRef name, SymbolType* retType, const std::vector<SymbolType*>& params) {
-    BoundArray<SymbolType*> paramTypes = BoundArray<SymbolType*>::fromVector(params, allocator);
-    auto* type = allocator.create<SymbolFunctionType>(retType, paramTypes);
+    auto* type = typeFactory.function(retType, params);
 
     auto it = table.find(name);
     if (it != table.end()) {

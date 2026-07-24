@@ -1,12 +1,12 @@
 #include "sparkc/frontend/semantic/IdentifierResolution.h"
 
 IdentifierResolution::IdentifierResolution(
-    Allocator& astAllocator,
+    AstFactory& astFactory,
     SymbolTable& symbolTable,
     TypeTable& typeTable,
     IdentifierGen& idGen
 )
-    : astAllocator(astAllocator)
+    : astf(astFactory)
     , idGen(idGen)
     , symbolTable(symbolTable)
     , typeTable(typeTable) {
@@ -260,5 +260,5 @@ void IdentifierResolution::checkDeclaration(StringRef name, ScopeItem::Kind kind
 }
 
 AstStructInit* IdentifierResolution::funCallToStructInit(AstFunCall* call) {
-    return astAllocator.create<AstStructInit>(call->getFunName(), call->getArgs());
+    return astf.structInit(call->getFunName(), call->getArgs());
 }

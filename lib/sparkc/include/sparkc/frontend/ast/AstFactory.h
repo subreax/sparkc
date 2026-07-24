@@ -115,6 +115,22 @@ public:
         return allocator.create<AstVar>(id);
     }
 
+    AstStructInit* structInit(StringRef tag, const std::vector<AstExp*>& args) {
+        return structInit(tag, BoundArray<AstExp*>::fromVector(args, allocator));
+    }
+
+    AstStructInit* structInit(StringRef tag, const BoundArray<AstExp*>& args) {
+        return allocator.create<AstStructInit>(tag, args);
+    }
+
+    AstCast* cast(AstExp* exp, SymbolType* targetType) {
+        return allocator.create<AstCast>(exp, targetType);
+    }
+
+    AstDereference* dereference(AstExp* exp, SymbolType* type) {
+        return allocator.create<AstDereference>(exp, type);
+    }
+
 private:
     Allocator& allocator;
 };

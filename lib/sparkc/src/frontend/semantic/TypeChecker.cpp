@@ -5,13 +5,13 @@
 #include "sparkc/type/TypeTable.h"
 
 TypeChecker::TypeChecker(
+    AstFactory& astFactory,
     SymbolTable& symbolTable,
-    TypeTable& typeTable,
-    Allocator& astAllocator
+    TypeTable& typeTable
 )
-    : symbolTable(symbolTable)
-    , typeTable(typeTable)
-    , allocator(astAllocator) { }
+    : astf(astFactory)
+    , symbolTable(symbolTable)
+    , typeTable(typeTable) { }
 
 void TypeChecker::typeCheck(AstProgram* prog) {
     for (auto* item : prog->items) {
@@ -224,7 +224,7 @@ void TypeChecker::typeCheck(AstStructInit* it) {
         args[i] = cast(arg, fieldType);
     }
 
-    it->type = symbolTable.getTypeAllocator().create<SymbolStructureType>(tag);
+    it->type = symbolTable.getTypeFactory().structure(tag);
 }
 
 SymbolType* TypeChecker::getCommonType(AstExp* e1, AstExp* e2) {
@@ -267,7 +267,7 @@ SymbolType* TypeChecker::dereference(SymbolType* t) {
 AstExp* TypeChecker::dereference(AstExp* exp) {
     auto* type = exp->type;
     if (type->kind == SymbolType::Kind::Pointer) {
-        return allocator.create<AstDereference>(exp, dereference(type));
+        return astf.dereference(exp, dereference(type));
     }
     return exp;
 }
@@ -294,7 +294,7 @@ AstExp* TypeChecker::cast(AstExp* exp, SymbolType* targetType) {
     type");
         }
     } */
-    return allocator.create<AstCast>(exp, targetType);
+    return astf.cast(exp, targetType);
 }
 
 /* bool arePointersCompatible(SymbolType* t1, SymbolType* t2) {

@@ -2,10 +2,10 @@
 #include "sparkc/frontend/parser/Precedence.h"
 #include "sparkc/frontend/parser/ConstParser.h"
 
-Parser::Parser(Lexer& lexer, AstFactory& astFactory, Allocator& sharedAllocator)
+Parser::Parser(Lexer& lexer, AstFactory& astFactory, SymbolTypeFactory& symbolTypeFactory)
     : lexer(lexer)
     , astf(astFactory)
-    , sharedAllocator(sharedAllocator) {
+    , typesf(symbolTypeFactory) {
     takeToken();
 }
 
@@ -274,29 +274,24 @@ float Parser::parseFloat(const Token& token) {
 }
 
 SymbolType* Parser::parseType() {
-    auto* type = tryParseType();
-    if (type == nullptr) {
-        throw UnknownTypeException(current);
-    }
-    return type;
-}
-
-SymbolType* Parser::tryParseType() {
     SymbolType* type = nullptr;
     switch (current.kind) {
     case T_INT_KEYWORD:
         takeToken();
-        type = SymbolIntType::getInstance();
+        type = typesf.int_();
         break;
 
     case T_FLOAT_KEYWORD:
         takeToken();
-        type = SymbolFloatType::getInstance();
+        type = typesf.float_();
         break;
 
     case T_IDENTIFIER:
-        auto token = takeToken();
-        type = sharedAllocator.create<SymbolStructureType>(token.value);
+        type = typesf.structure(takeToken().value);
+        break;
+
+    default:
+        throw UnknownTypeException(current);
     }
 
     return type;

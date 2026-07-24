@@ -1,13 +1,13 @@
 #pragma once
 #include <vector>
-#include "sparkc/common/alloc/Allocator.h"
 #include "sparkc/frontend/lexer/Lexer.h"
 #include "sparkc/frontend/ast/AstFactory.h"
 #include "sparkc/frontend/parser/except/everything.h"
+#include "sparkc/symbol/SymbolTypeFactory.h"
 
 class Parser {
 public:
-    Parser(Lexer& lexer, AstFactory& astFactory, Allocator& sharedAlloc);
+    Parser(Lexer& lexer, AstFactory& astFactory, SymbolTypeFactory& symbolTypeFactory);
 
     AstProgram* parseProgram();
 
@@ -30,7 +30,6 @@ private:
     AstExp* parseFactor();
     void parseFunArgs(std::vector<AstExp*>& outArgs);
     SymbolType* parseType();
-    SymbolType* tryParseType();
 
     static int32_t parseInt(const Token& token);
     static float parseFloat(const Token& token);
@@ -41,6 +40,5 @@ private:
     Token current;
     Lexer& lexer;
     AstFactory& astf;
-    Allocator& sharedAllocator;
-    std::vector<StringRef> types;
+    SymbolTypeFactory& typesf;
 };

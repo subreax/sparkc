@@ -4,12 +4,13 @@
 #include "sparkc/symbol/except/UndeclaredSymbolException.h"
 #include "sparkc/symbol/except/UndeclaredSymbolException.h"
 #include "SymbolType.h"
+#include "SymbolTypeFactory.h"
 #include <unordered_map>
 
 class SymbolTable {
 public:
     SymbolTable(Allocator& allocator)
-        : allocator(allocator) { }
+        : typeFactory(allocator) { }
 
     void declareVar(StringRef name, SymbolType* type);
     void redeclareVar(StringRef name, SymbolType* type);
@@ -23,7 +24,7 @@ public:
         return it->second;
     }
 
-    Allocator& getTypeAllocator() const { return allocator; }
+    SymbolTypeFactory& getTypeFactory() { return typeFactory; }
 
     std::unordered_map<StringRef, SymbolType*>::const_iterator begin() const {
         return table.begin();
@@ -35,5 +36,5 @@ public:
 
 private:
     std::unordered_map<StringRef, SymbolType*> table;
-    Allocator& allocator;
+    SymbolTypeFactory typeFactory;
 };

@@ -62,10 +62,11 @@ BuildResult SparkCompiler::build(const char* src) {
 
     Lexer lexer(src);
     AstFactory astFactory(pools->pool1);
-    Parser parser(lexer, astFactory, pools->shared);
+
+    Parser parser(lexer, astFactory, symTable->getTypeFactory());
     AstProgram* ast = parser.parseProgram();
 
-    Semantic(*symTable, *typeTable, idGen, pools->pool1).process(ast);
+    Semantic(astFactory, *symTable, *typeTable, idGen).process(ast);
     debugCallback->onAstBuild(ast);
 
     std::vector<SkrInstruction*> skrsBuf;
@@ -113,6 +114,8 @@ BuildResult SparkCompiler::build(const char* src) {
 
         pools->pool2.reset();
         pools->pool3.reset();
+        tempRvas.clear();
+        rvas.clear();
     }
 
     assembler.link();

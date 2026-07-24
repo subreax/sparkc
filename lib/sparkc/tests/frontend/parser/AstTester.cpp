@@ -15,10 +15,10 @@ std::string buildAst(const char* src) {
 
     Lexer lexer(src);
     AstFactory astFactory(allocator);
-    Parser parser(lexer, astFactory, commonAllocator);
+    Parser parser(lexer, astFactory, symbolTable.getTypeFactory());
 
     AstProgram* program = parser.parseProgram();
-    Semantic(symbolTable, typeTable, idGen, allocator).process(program);
+    Semantic(astFactory, symbolTable, typeTable, idGen).process(program);
 
     std::ostringstream actualTree;
     AstPrinter(actualTree).print(program);
