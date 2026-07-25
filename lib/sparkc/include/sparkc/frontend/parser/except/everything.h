@@ -6,3 +6,4 @@
 #include "WrongExprException.h"
 #include "WrongStatementException.h"
 #include "UnknownTypeException.h"
+#include "UnexpectedTopLevelDeclaration.h"

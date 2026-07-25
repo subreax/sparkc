@@ -10,19 +10,15 @@ public:
         TypeTable& typeTable,
         IdentifierGen& idGen
     )
-        : symbolTable(symbolTable)
-        , typeTable(typeTable)
-        , idGen(idGen)
-        , astFactory(astFactory) { }
+        : identifierResolution(astFactory, symbolTable, typeTable, idGen)
+        , typeChecker(astFactory, symbolTable, typeTable) { }
 
-    void process(AstProgram* prog) {
-        IdentifierResolution(astFactory, symbolTable, typeTable, idGen).resolve(prog);
-        TypeChecker(astFactory, symbolTable, typeTable).typeCheck(prog);
+    void process(AstProgItem* item) {
+        identifierResolution.resolve(item);
+        typeChecker.typeCheck(item);
     }
 
 private:
-    AstFactory& astFactory;
-    SymbolTable& symbolTable;
-    TypeTable& typeTable;
-    IdentifierGen& idGen;
+    IdentifierResolution identifierResolution;
+    TypeChecker typeChecker;
 };

@@ -1,9 +1,7 @@
 #include "sparkc/SparkCompiler.h"
 #include "SparkPools.h"
 
-#include "sparkc/frontend/lexer/Lexer.h"
-#include "sparkc/frontend/parser/Parser.h"
-#include "sparkc/frontend/semantic/Semantic.h"
+#include "sparkc/frontend/Frontend.h"
 #include "skr/SkrEmitter.h"
 #include "skr/optimizer/SkrOptimizer.h"
 #include "backend/rv/RvaFixer.h"
@@ -29,7 +27,7 @@ static BuildResult buildResult(RvAssembler& assembler);
 
 void SparkCompiler::init(const SparkCompilerConfig& config) {
     if (pools != nullptr) {
-        sparkError("SparkCompiler2", "SparkCompiler already initialized");
+        sparkError("SparkCompiler", "SparkCompiler already initialized");
     }
 
     pools = new SparkPools(config.poolSize);
@@ -60,26 +58,29 @@ BuildResult SparkCompiler::build(const char* src) {
 
     assembler.addExternalLabel(StringRef::cstr(SparkRuntime::divq15FunName), (void*) runtime.divq15);
 
-    Lexer lexer(src);
     AstFactory astFactory(pools->pool1);
-
-    Parser parser(lexer, astFactory, symTable->getTypeFactory());
-    AstProgram* ast = parser.parseProgram();
-
-    Semantic(astFactory, *symTable, *typeTable, idGen).process(ast);
-    debugCallback->onAstBuild(ast);
+    Frontend frontend(src, astFactory, *symTable, *typeTable, idGen);
 
     std::vector<SkrInstruction*> skrsBuf;
     std::vector<RvaInstruction*> tempRvas;
     std::vector<RvaInstruction*> rvas;
 
-    for (auto* astItem : ast->items) {
-        if (astItem->kind != AstProgItem::Kind::Function) {
+    while (frontend.hasNext()) {
+        pools->pool1.reset();
+        pools->pool2.reset();
+        skrsBuf.clear();
+        tempRvas.clear();
+        rvas.clear();
+
+        AstProgItem* astProgItem = frontend.processNextItem();
+        debugCallback->onAstBuild(astProgItem);
+
+        if (astProgItem->kind != AstProgItem::Kind::Function) {
             continue;
         }
 
         auto* skrFunc = SkrEmitter::emit(
-            (AstFunction*) astItem,
+            (AstFunction*) astProgItem,
             pools->pool2,
             *symTable,
             *typeTable,
@@ -98,24 +99,19 @@ BuildResult SparkCompiler::build(const char* src) {
         ).optimize(skrOptimizerConfig);
         debugCallback->onOptimizeSkrFunc(skrFunc);
 
-        StackFrame stackFrame(pools->pool3);
-        Skr2RvaPseudo::emit(skrFunc, pools->pool3, idGen, *symTable, symSize, stackFrame, tempRvas);
+        pools->pool1.reset();
+        StackFrame stackFrame(pools->pool1);
+        Skr2RvaPseudo::emit(skrFunc, pools->pool1, idGen, *symTable, symSize, stackFrame, tempRvas);
         debugCallback->onEmitRva(tempRvas);
 
         RvaPseudoReplacer::replace(tempRvas, stackFrame, symSize);
         debugCallback->onReplaceRvaPseudo(tempRvas);
 
         pools->pool2.reset();
-        skrsBuf.clear();
         RvaFixer::fix(tempRvas, rvas, pools->pool2);
         debugCallback->onFixRva(rvas);
 
         assembler.compile(rvas);
-
-        pools->pool2.reset();
-        pools->pool3.reset();
-        tempRvas.clear();
-        rvas.clear();
     }
 
     assembler.link();

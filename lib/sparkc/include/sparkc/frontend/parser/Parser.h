@@ -9,15 +9,16 @@ class Parser {
 public:
     Parser(Lexer& lexer, AstFactory& astFactory, SymbolTypeFactory& symbolTypeFactory);
 
-    AstProgram* parseProgram();
-
     bool hasNext() const;
+    AstProgItem* parseNextProgItem();
 
 private:
-    AstStruct* tryParseStruct();
+    AstStruct* parseStruct();
     AstStructField* parseStructField();
+
     AstFunction* parseFunction();
     AstFunParam* parseFunParam();
+
     AstBlock* parseBlock();
     AstBlockItem* parseBlockItem();
     AstDeclaration* tryParseDeclaration();
@@ -30,9 +31,6 @@ private:
     AstExp* parseFactor();
     void parseFunArgs(std::vector<AstExp*>& outArgs);
     SymbolType* parseType();
-
-    static int32_t parseInt(const Token& token);
-    static float parseFloat(const Token& token);
 
     Token takeToken();
     Token expect(TokenKind kind);

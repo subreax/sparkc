@@ -7,6 +7,7 @@ public:
     AstPrinter(std::ostream& out);
 
     void print(const AstProgram* program);
+    void print(const AstProgItem* progItem);
 
 private:
     std::ostream& out;

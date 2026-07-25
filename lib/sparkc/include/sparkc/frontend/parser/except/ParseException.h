@@ -1,6 +1,6 @@
 #pragma once
-#include "../../../common/SparkRuntimeException.h"
-#include "../../lexer/Token.h"
+#include "sparkc/common/SparkRuntimeException.h"
+#include "sparkc/frontend/lexer/Token.h"
 
 class ParseException : public SparkRuntimeException {
 public:
@@ -11,7 +11,8 @@ public:
         WrongStatement,
         DuplicateDeclaration,
         UndeclaredVariable,
-        UnknownType
+        UnknownType,
+        UnexpectedTopLevelDeclaration
     };
 
     ParseException(Kind kind, const Token& token, const std::string& msg)

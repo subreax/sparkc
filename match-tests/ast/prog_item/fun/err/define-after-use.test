@@ -1,0 +1,10 @@
+#src
+fun main(): int {
+    return fomefn();
+}
+
+fun somefn(): int {
+    return 5;
+}
+
+#expect_failure

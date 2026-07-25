@@ -23,6 +23,7 @@ set(SPARKC_SRC
   src/common/Constant.cpp
   src/common/Error.cpp
   src/common/StringRef.cpp
+  src/frontend/Frontend.cpp
   src/frontend/ast/exp/AstExp.cpp
   src/frontend/ast/exp/AstBinaryExp.cpp
   src/frontend/lexer/Lexer.cpp

@@ -2,6 +2,22 @@
 #include "sparkc/frontend/parser/Precedence.h"
 #include "sparkc/frontend/parser/ConstParser.h"
 
+static int32_t parseInt(const Token& token) {
+    int32_t parsed;
+    if (!ConstParser::parseInt(token.value, parsed)) {
+        throw ParseConstException(token);
+    }
+    return parsed;
+}
+
+static float parseFloat(const Token& token) {
+    float parsed;
+    if (!ConstParser::parseFloat(token.value, parsed)) {
+        throw ParseConstException(token);
+    }
+    return parsed;
+}
+
 Parser::Parser(Lexer& lexer, AstFactory& astFactory, SymbolTypeFactory& symbolTypeFactory)
     : lexer(lexer)
     , astf(astFactory)
@@ -9,45 +25,39 @@ Parser::Parser(Lexer& lexer, AstFactory& astFactory, SymbolTypeFactory& symbolTy
     takeToken();
 }
 
-AstProgram* Parser::parseProgram() {
-    std::vector<AstProgItem*> items;
-    while (hasNext()) {
-        auto* st = tryParseStruct();
-        if (st != nullptr) {
-            items.emplace_back(st);
-            continue;
-        }
-
-        items.emplace_back(parseFunction());
-    }
-
-    return astf.program(items);
-}
-
 bool Parser::hasNext() const { return current.kind != T_EOF; }
 
-AstStruct* Parser::tryParseStruct() {
-    if (current.kind == T_STRUCT_KEYWORD) {
-        takeToken();
-        StringRef tag = expect(T_IDENTIFIER).value;
-        expect(T_OPEN_PAR);
-        std::vector<AstStructField*> fields;
-        bool expectNextField = true;
-        while (expectNextField && current.kind != T_CLOSE_PAR) {
-            fields.emplace_back(parseStructField());
-            if (current.kind == T_COMMA) {
-                takeToken();
-                expectNextField = true;
-            }
-            else {
-                expectNextField = false;
-            }
-        }
-        expect(T_CLOSE_PAR);
-        expect(T_SEMICOLON);
-        return astf.struct_(tag, fields);
+AstProgItem* Parser::parseNextProgItem() {
+    switch (current.kind) {
+    case T_STRUCT_KEYWORD: return parseStruct();
+    case T_FUN_KEYWORD: return parseFunction();
+    default:
+        throw UnexpectedTopLevelDeclaration(current);
     }
+
     return nullptr;
+}
+
+AstStruct* Parser::parseStruct() {
+    std::vector<AstStructField*> fields;
+
+    expect(T_STRUCT_KEYWORD);
+    StringRef tag = expect(T_IDENTIFIER).value;
+    expect(T_OPEN_PAR);
+    bool expectNextField = true;
+    while (expectNextField && current.kind != T_CLOSE_PAR) {
+        fields.emplace_back(parseStructField());
+        if (current.kind == T_COMMA) {
+            takeToken();
+            expectNextField = true;
+        }
+        else {
+            expectNextField = false;
+        }
+    }
+    expect(T_CLOSE_PAR);
+    expect(T_SEMICOLON);
+    return astf.struct_(tag, fields);
 }
 
 AstStructField* Parser::parseStructField() {
@@ -255,22 +265,6 @@ void Parser::parseFunArgs(std::vector<AstExp*>& outArgs) {
             takeToken();
         }
     }
-}
-
-int32_t Parser::parseInt(const Token& token) {
-    int32_t parsed;
-    if (!ConstParser::parseInt(token.value, parsed)) {
-        throw ParseConstException(token);
-    }
-    return parsed;
-}
-
-float Parser::parseFloat(const Token& token) {
-    float parsed;
-    if (!ConstParser::parseFloat(token.value, parsed)) {
-        throw ParseConstException(token);
-    }
-    return parsed;
 }
 
 SymbolType* Parser::parseType() {

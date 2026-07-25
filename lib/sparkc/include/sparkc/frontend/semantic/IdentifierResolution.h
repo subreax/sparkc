@@ -14,6 +14,7 @@ public:
     );
 
     void resolve(AstProgram* program);
+    void resolve(AstProgItem* progItem);
 
 private:
     void addExistingDeclarationsToScope();
@@ -22,7 +23,6 @@ private:
     void declareFunction(AstFunction* func);
     void declareStruct(AstStruct* it);
 
-    void resolve(AstProgItem* progItem);
     void resolve(AstFunction* it);
     void resolve(AstStruct* it);
     void resolve(AstBlock* block);

@@ -1,6 +1,6 @@
 #pragma once
 #include <vector>
-#include "sparkc/frontend/ast/AstProgram.h"
+#include "sparkc/frontend/ast/AstProgItem.h"
 #include "sparkc/skr/SkrFunction.h"
 #include "sparkc/common/cfg/CfGraph.h"
 #include "sparkc/backend/rv/instr/RvaInstruction.h"
@@ -9,7 +9,7 @@ class SparkDebugCallback {
 public:
     virtual ~SparkDebugCallback() = default;
 
-    virtual void onAstBuild(AstProgram* ast) { }
+    virtual void onAstBuild(AstProgItem* item) { }
     virtual void onEmitSkrFunc(SkrFunction* skrFunc) { }
     virtual void onCfgCreated(StringRef funName, int iteration, CfGraph<SkrInstruction*>* graph) { }
     virtual void onOptimizeSkrFunc(SkrFunction* skrFunc) { }

@@ -7,6 +7,35 @@
 #include <vector>
 
 class AstMermaidPrinter {
+public:
+    static void print(std::ostream& os, AstProgram* prog) {
+        os << "```mermaid\n";
+        os << "---\n"
+              "config:\n"
+              "  look: neo\n"
+              "  theme: redux-dark\n"
+              "---\n"
+              "flowchart LR\n";
+
+        AstMermaidPrinter printer(os);
+        printer.toMermaid(prog);
+        os << "```";
+    }
+
+    static void print(std::ostream& os, AstProgItem* item) {
+        os << "```mermaid\n";
+        os << "---\n"
+              "config:\n"
+              "  look: neo\n"
+              "  theme: redux-dark\n"
+              "---\n"
+              "flowchart LR\n";
+
+        AstMermaidPrinter printer(os);
+        os << printer.toMermaid(item);
+        os << "\n```";
+    }
+
 private:
     struct Node {
         // fields: key value key value ...
@@ -39,26 +68,8 @@ private:
         }
     };
 
-public:
     AstMermaidPrinter(std::ostream& os)
         : os(os) { }
-
-    static void saveToFile(AstProgram* prog, const std::string& outFile) {
-        std::ofstream astOut(outFile);
-        astOut << "```mermaid\n";
-        astOut << "---\n"
-                  "config:\n"
-                  "  look: neo\n"
-                  "  theme: redux-dark\n"
-                  "---\n"
-                  "flowchart LR\n";
-
-        AstMermaidPrinter printer(astOut);
-        printer.toMermaid(prog);
-
-        astOut << "```";
-        astOut.close();
-    }
 
     void toMermaid(AstProgram* prog) {
         auto node = Node(*this, "program");
@@ -67,7 +78,6 @@ public:
         }
     }
 
-private:
     std::string toMermaid(AstProgItem* item) {
         if (item->kind == AstProgItem::Kind::Function) {
             return toMermaid((AstFunction*) item);

@@ -14,6 +14,7 @@ public:
     );
 
     void typeCheck(AstProgram* prog);
+    void typeCheck(AstProgItem* item);
 
 private:
     void typeCheck(const AstBlock* block, SymbolType* retType);

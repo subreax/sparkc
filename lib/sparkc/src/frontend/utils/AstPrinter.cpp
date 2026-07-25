@@ -31,6 +31,11 @@ void AstPrinter::print(const AstProgram* program) {
     p.endObject();
 }
 
+void AstPrinter::print(const AstProgItem* item) {
+    TreePrinter p(out);
+    ::print(p, item);
+}
+
 void print(TreePrinter& p, const AstProgItem* item) {
     if (item->kind == AstProgItem::Kind::Function) {
         print(p, (const AstFunction*) item);
@@ -43,7 +48,7 @@ void print(TreePrinter& p, const AstProgItem* item) {
     }
 }
 
-void print(TreePrinter& p, const AstStruct* st) {
+static void print(TreePrinter& p, const AstStruct* st) {
     p.beginObject("AstStruct");
     p.field("tag", st->getTag());
     p.field("fields");
@@ -59,7 +64,7 @@ void print(TreePrinter& p, const AstStruct* st) {
     p.endObject();
 }
 
-void print(TreePrinter& p, const AstFunction* func) {
+static void print(TreePrinter& p, const AstFunction* func) {
     p.beginObject("AstFunction");
     p.field("name", func->getName().toString());
     p.field("returnType", type2string(func->getReturnType()));
@@ -79,7 +84,7 @@ void print(TreePrinter& p, const AstFunction* func) {
     p.endObject();
 }
 
-void print(TreePrinter& p, const AstBlock* block) {
+static void print(TreePrinter& p, const AstBlock* block) {
     p.beginObject("AstBlock");
     p.field("items");
     p.beginArray();
@@ -91,7 +96,7 @@ void print(TreePrinter& p, const AstBlock* block) {
     p.endObject();
 }
 
-void print(TreePrinter& p, const AstBlockItem* blockItem) {
+static void print(TreePrinter& p, const AstBlockItem* blockItem) {
     if (blockItem->kind == AstBlockItem::Kind::Declaration) {
         print(p, ((const AstDeclBlockItem*) blockItem)->getDeclaration());
     }
@@ -103,7 +108,7 @@ void print(TreePrinter& p, const AstBlockItem* blockItem) {
     }
 }
 
-void print(TreePrinter& p, const AstDeclaration* decl) {
+static void print(TreePrinter& p, const AstDeclaration* decl) {
     if (decl->kind == AstDeclaration::Kind::Var) {
         auto* it = (AstVarDeclaration*) decl; // todo: const
         p.beginObject("AstVarDeclaration");
@@ -120,7 +125,7 @@ void print(TreePrinter& p, const AstDeclaration* decl) {
     }
 }
 
-void print(TreePrinter& p, const AstStatement* st) {
+static void print(TreePrinter& p, const AstStatement* st) {
     auto kind = st->kind;
     if (kind == AstStatement::Kind::Return) {
         auto* it = (AstReturnStatement*) st;
@@ -173,7 +178,7 @@ void print(TreePrinter& p, const AstStatement* st) {
     }
 }
 
-void print(TreePrinter& p, const AstExp* exp) {
+static void print(TreePrinter& p, const AstExp* exp) {
     auto kind = exp->kind;
     if (kind == AstExp::Kind::Binary) {
         auto* bin = (AstBinaryExp*) exp;
@@ -287,7 +292,7 @@ void print(TreePrinter& p, const AstExp* exp) {
     }
 }
 
-std::string toString(Constant* constant) {
+static std::string toString(Constant* constant) {
     if (constant->isInt()) {
         auto* it = (IntConstant*) constant;
         return std::to_string(it->val);
@@ -304,9 +309,9 @@ std::string toString(Constant* constant) {
     }
 }
 
-std::string type2string(const AstExp* exp) { return type2string(exp->type); }
+static std::string type2string(const AstExp* exp) { return type2string(exp->type); }
 
-std::string type2string(const SymbolType* type) {
+static std::string type2string(const SymbolType* type) {
     if (type) {
         return type->toString();
     }

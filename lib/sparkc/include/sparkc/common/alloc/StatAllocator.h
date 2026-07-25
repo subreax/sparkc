@@ -27,7 +27,7 @@ public:
     }
 
     void reset() override {
-        peak = calcPeak();
+        updatePeak();
         allocator.reset();
     }
 
@@ -35,15 +35,16 @@ public:
         peak = 0;
     }
 
-    MemoryUsage getPeakMemoryUsage() const {
+    MemoryUsage getPeakMemoryUsage() {
+        updatePeak();
         return MemoryUsage(peak, getCapacity());
     }
 
     T& getAllocator() { return allocator; }
 
 private:
-    size_t calcPeak() const {
-        return std::max(getUsedSize(), peak);
+    void updatePeak() {
+        peak = std::max(getUsedSize(), peak);
     }
 
     T allocator;

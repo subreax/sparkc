@@ -15,15 +15,19 @@ TypeChecker::TypeChecker(
 
 void TypeChecker::typeCheck(AstProgram* prog) {
     for (auto* item : prog->items) {
-        if (item->kind == AstProgItem::Kind::Function) {
-            auto* func = (AstFunction*) item;
-            typeCheck(func->getBlock(), func->getReturnType());
-        }
-        else if (item->kind == AstProgItem::Kind::Struct) {
-        }
-        else {
-            sparkError("TypeChecker", "Unknown AstProgItem: %d", item->kind);
-        }
+        typeCheck(item);
+    }
+}
+
+void TypeChecker::typeCheck(AstProgItem* item) {
+    if (item->kind == AstProgItem::Kind::Function) {
+        auto* func = (AstFunction*) item;
+        typeCheck(func->getBlock(), func->getReturnType());
+    }
+    else if (item->kind == AstProgItem::Kind::Struct) {
+    }
+    else {
+        sparkError("TypeChecker", "Unknown AstProgItem: %d", item->kind);
     }
 }
 

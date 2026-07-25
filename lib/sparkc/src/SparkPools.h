@@ -6,34 +6,30 @@
 class SparkPools {
 public:
     SparkPools(size_t mem)
-        : SparkPools(mem / 4, mem / 4, mem / 4, mem / 4) { }
+        : SparkPools(mem / 3, mem / 3, mem / 3) { }
 
-    SparkPools(size_t pool1sz, size_t pool2sz, size_t pool3sz, size_t sharedSz)
+    SparkPools(size_t pool1sz, size_t pool2sz, size_t sharedSz)
         : pool1("pool1", pool1sz)
         , pool2("pool2", pool2sz)
-        , pool3("pool3", pool3sz)
         , shared("shared", sharedSz) { }
 
     void reset() {
         // clang-format off
         pool1.reset(); pool1.resetPeak();
         pool2.reset(); pool2.resetPeak();
-        pool3.reset(); pool3.resetPeak();
         shared.reset(); shared.resetPeak();
         // clang-format on
     }
 
-    MemUsageStats getMemoryUsage() const {
+    MemUsageStats getMemoryUsage() {
         return MemUsageStats(
+            shared.getPeakMemoryUsage(),
             pool1.getPeakMemoryUsage(),
-            pool2.getPeakMemoryUsage(),
-            pool3.getPeakMemoryUsage(),
-            shared.getPeakMemoryUsage()
+            pool2.getPeakMemoryUsage()
         );
     }
 
     StatAllocator<LinearAllocator> pool1;
     StatAllocator<LinearAllocator> pool2;
-    StatAllocator<LinearAllocator> pool3;
     StatAllocator<LinearAllocator> shared;
 };

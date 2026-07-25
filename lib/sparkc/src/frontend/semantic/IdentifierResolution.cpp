@@ -15,12 +15,6 @@ IdentifierResolution::IdentifierResolution(
 
 void IdentifierResolution::resolve(AstProgram* program) {
     for (auto* it : program->items) {
-        if (it->kind == AstProgItem::Kind::Function) {
-            declareFunction((AstFunction*) it);
-        }
-    }
-
-    for (auto* it : program->items) {
         resolve(it);
     }
 }
@@ -68,7 +62,9 @@ void IdentifierResolution::resolve(AstProgItem* progItem) {
         resolve((AstStruct*) progItem);
     }
     else if (progItem->kind == AstProgItem::Kind::Function) {
-        resolve((AstFunction*) progItem);
+        auto* fun = (AstFunction*) progItem;
+        declareFunction(fun);
+        resolve(fun);
     }
     else {
         sparkError("IdentifierResolution", "Unknown AstProgItem: %d", progItem->kind);

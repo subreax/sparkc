@@ -21,11 +21,24 @@ void printMemUsage(const char* name, MemoryUsage memUsage);
 
 class DebugCallback : public SparkDebugCallback {
 public:
-    void onAstBuild(AstProgram* ast) override {
-        AstPrinter(cout).print(ast);
-        cout << endl;
+    void onAstBuild(AstProgItem* item) override {
+        cout << "== ast ==" << endl;
+        AstPrinter(cout).print(item);
+        cout << endl
+             << endl;
 
-        AstMermaidPrinter::saveToFile(ast, "ast.md");
+        std::string outFileName;
+        if (item->kind == AstProgItem::Kind::Function) {
+            outFileName = "f_" + ((AstFunction*) item)->getName().toString();
+        }
+        else if (item->kind == AstProgItem::Kind::Struct) {
+            outFileName = "s_" + ((AstStruct*) item)->getTag().toString();
+        }
+        else {
+            outFileName = "unknown";
+        }
+        std::ofstream astOut(outFileName + ".md");
+        AstMermaidPrinter::print(astOut, item);
     }
 
     void onEmitSkrFunc(SkrFunction* skrFunc) override {
@@ -88,7 +101,7 @@ int main(int argc, char** argv) {
     DebugCallback debugCallback;
 
     SparkCompilerConfig config;
-    config.poolSize = 16384;
+    config.poolSize = 2048 * 3;
     config.outBin = binary;
     config.outCap = sizeof(binary);
     config.debugCallback = &debugCallback;
@@ -111,7 +124,6 @@ int main(int argc, char** argv) {
     auto memoryUsage = SparkCompiler::getMemoryUsage();
     printMemUsage("pool1", memoryUsage.pool1);
     printMemUsage("pool2", memoryUsage.pool2);
-    printMemUsage("pool3", memoryUsage.pool3);
     printMemUsage("shared", memoryUsage.shared);
     printMemUsage("bin", MemoryUsage(buildResult.getBinarySize(), sizeof(binary)));
     MemUtils::dump(
