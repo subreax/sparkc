@@ -7,6 +7,8 @@
 #include "BuildResult.h"
 #include "MemUsageStats.h"
 #include "SparkRuntime.h"
+#include "SparkInitContext.h"
+#include <functional>
 #include <vector>
 #include <unordered_map>
 
@@ -28,12 +30,13 @@ struct SparkCompilerConfig {
 
 class SparkCompiler {
 public:
+    using OnInitCallback = std::function<void(SparkInitContext&)>;
+
     static void init(const SparkCompilerConfig& config);
     static void destroy();
 
+    static void addOnInitCallback(OnInitCallback cbk);
+
     static BuildResult build(const char* src);
     static MemUsageStats getMemoryUsage();
-
-    static const SymbolTable& getSymbolTable();
-    static const TypeTable& getTypeTable();
 };

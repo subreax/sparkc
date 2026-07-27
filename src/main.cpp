@@ -43,21 +43,21 @@ public:
 
     void onEmitSkrFunc(SkrFunction* skrFunc) override {
         cout << "== skr ==" << endl;
-        SkrPrinter::print(cout, skrFunc, SparkCompiler::getSymbolTable());
+        SkrPrinter::print(cout, skrFunc, getSymbolTable());
         cout << endl;
     }
 
     void onCfgCreated(StringRef funName, int iteration, CfGraph<SkrInstruction*>* graph) override {
         SkrCfgMermaidPrinter::saveToFile(
             *graph,
-            SparkCompiler::getSymbolTable(),
+            getSymbolTable(),
             funName.toString() + "." + std::to_string(iteration) + ".md"
         );
     }
 
     void onOptimizeSkrFunc(SkrFunction* skrFunc) override {
         cout << "== skr optimized ==" << endl;
-        SkrPrinter::print(cout, skrFunc, SparkCompiler::getSymbolTable());
+        SkrPrinter::print(cout, skrFunc, getSymbolTable());
         cout << endl;
     }
 
@@ -90,6 +90,8 @@ int main(int argc, char** argv) {
         return 1;
     }
 
+    int fakeFun;
+
     uint8_t binary[1024];
     const char* srcFile = argv[1];
     string source;
@@ -111,6 +113,15 @@ int main(int argc, char** argv) {
     config.optimizations.deadStoreElimination = true;
     config.runtime.divq15 = divq15;
     SparkCompiler::init(config);
+
+    SparkCompiler::addOnInitCallback([&fakeFun](SparkInitContext& ctx) {
+        ctx.bindFunction(
+            (void*) &fakeFun,
+            "sumi32",
+            ctx.types().int_(),
+            { ctx.types().int_(), ctx.types().int_() }
+        );
+    });
 
     BuildResult buildResult;
     try {

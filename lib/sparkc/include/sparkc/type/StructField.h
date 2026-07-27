@@ -7,9 +7,6 @@ struct StructField {
         , type(type)
         , offset(offset) { }
 
-    StructField(const char* name, SymbolType* type)
-        : StructField(StringRef::cstr(name), type) { }
-
     StringRef name;
     SymbolType* type;
     size_t offset;

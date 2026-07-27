@@ -9,6 +9,7 @@
 #include "backend/rv/Skr2RvaPseudo.h"
 #include "sparkc/backend/rv/asm/RvAssembler.h"
 #include "sparkc/backend/rv/instr/RvaInstruction.h"
+#include "SparkInitContextImpl.h"
 
 static SparkPools* pools = nullptr;
 static uint8_t* outBin = nullptr;
@@ -17,13 +18,12 @@ static size_t outCap = 0;
 static SparkDebugCallback nullDebugCallback;
 static SparkDebugCallback* debugCallback = &nullDebugCallback;
 
-static SymbolTable* symTable = nullptr;
-static TypeTable* typeTable = nullptr;
-
 static SparkRuntime runtime;
 static SkrOptimizerConfig skrOptimizerConfig;
 
-static BuildResult buildResult(RvAssembler& assembler);
+static std::vector<SparkCompiler::OnInitCallback> initCallbacks;
+
+static BuildResult buildResult(SymbolTable& symTable, RvAssembler& assembler);
 
 void SparkCompiler::init(const SparkCompilerConfig& config) {
     if (pools != nullptr) {
@@ -44,22 +44,31 @@ void SparkCompiler::init(const SparkCompilerConfig& config) {
 void SparkCompiler::destroy() {
 }
 
+void SparkCompiler::addOnInitCallback(OnInitCallback cbk) {
+    initCallbacks.emplace_back(std::move(cbk));
+}
+
 BuildResult SparkCompiler::build(const char* src) {
-    delete symTable;
-    delete typeTable;
     pools->reset();
 
-    symTable = new SymbolTable(pools->shared);
-    typeTable = new TypeTable(pools->shared);
-    SymbolSize symSize(*symTable, *typeTable);
+    SymbolTable symTable(pools->shared);
+    TypeTable typeTable(pools->shared);
+    SymbolSize symSize(symTable, typeTable);
     IdentifierGen idGen(pools->shared);
     LabelGen labelGen(pools->shared);
     RvAssembler assembler(outBin, outCap);
 
+    debugCallback->setSymbolTable(symTable);
     assembler.addExternalLabel(StringRef::cstr(SparkRuntime::divq15FunName), (void*) runtime.divq15);
+    {
+        SparkInitContextImpl initCtx(idGen, symTable, typeTable, assembler);
+        for (auto& cbk : initCallbacks) {
+            cbk(initCtx);
+        }
+    }
 
     AstFactory astFactory(pools->pool1);
-    Frontend frontend(src, astFactory, *symTable, *typeTable, idGen);
+    Frontend frontend(src, astFactory, symTable, typeTable, idGen);
 
     std::vector<SkrInstruction*> skrsBuf;
     std::vector<RvaInstruction*> tempRvas;
@@ -82,8 +91,8 @@ BuildResult SparkCompiler::build(const char* src) {
         auto* skrFunc = SkrEmitter::emit(
             (AstFunction*) astProgItem,
             pools->pool2,
-            *symTable,
-            *typeTable,
+            symTable,
+            typeTable,
             idGen,
             labelGen,
             skrsBuf
@@ -101,7 +110,7 @@ BuildResult SparkCompiler::build(const char* src) {
 
         pools->pool1.reset();
         StackFrame stackFrame(pools->pool1);
-        Skr2RvaPseudo::emit(skrFunc, pools->pool1, idGen, *symTable, symSize, stackFrame, tempRvas);
+        Skr2RvaPseudo::emit(skrFunc, pools->pool1, idGen, symTable, symSize, stackFrame, tempRvas);
         debugCallback->onEmitRva(tempRvas);
 
         RvaPseudoReplacer::replace(tempRvas, stackFrame, symSize);
@@ -115,27 +124,19 @@ BuildResult SparkCompiler::build(const char* src) {
     }
 
     assembler.link();
-    return buildResult(assembler);
+    return buildResult(symTable, assembler);
 }
 
 MemUsageStats SparkCompiler::getMemoryUsage() {
     return pools->getMemoryUsage();
 }
 
-const SymbolTable& SparkCompiler::getSymbolTable() {
-    return *symTable;
-}
-
-const TypeTable& SparkCompiler::getTypeTable() {
-    return *typeTable;
-}
-
-static BuildResult buildResult(RvAssembler& assembler) {
+static BuildResult buildResult(SymbolTable& symTable, RvAssembler& assembler) {
     std::unordered_map<StringRef, BuildResult::Function> functions;
 
     auto publicLabels = assembler.getPublicLabels();
     for (const auto& label : publicLabels) {
-        auto* type = symTable->get(label.value);
+        auto* type = symTable.get(label.value);
         if (type->kind == SymbolType::Kind::Function) {
             void* ptr = outBin + label.offset;
             auto fun = BuildResult::Function(
