@@ -1,10 +1,11 @@
 #pragma once
 
-class MemoryUsage {
+class MemoryStats {
 public:
-    MemoryUsage(size_t used, size_t total)
-        : used(used), total(total) {  }
-    
+    MemoryStats(size_t used, size_t total)
+        : used(used)
+        , total(total) { }
+
     size_t getUsed() const { return used; }
     size_t getTotal() const { return total; }
     size_t getFree() const { return total - used; }

@@ -121,7 +121,7 @@ private:
         SkrValue* right
     ) {
         uint8_t arrayBuf[sizeof(SkrValue*) * 2];
-        BoundArray<SkrValue*> args(MemBlock(sizeof(arrayBuf), arrayBuf));
+        BoundArray<SkrValue*> args(MemBlockRef(sizeof(arrayBuf), arrayBuf));
         args[0] = left;
         args[1] = right;
         SkrFunCall funCall(StringRef::cstr(SparkRuntime::divq15FunName), args, dst);

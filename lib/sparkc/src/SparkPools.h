@@ -1,7 +1,7 @@
 #pragma once
 #include "sparkc/common/alloc/LinearAllocator.h"
 #include "sparkc/common/alloc/StatAllocator.h"
-#include "sparkc/MemUsageStats.h"
+#include "sparkc/PoolsMemoryStats.h"
 
 class SparkPools {
 public:
@@ -21,11 +21,11 @@ public:
         // clang-format on
     }
 
-    MemUsageStats getMemoryUsage() {
-        return MemUsageStats(
-            shared.getPeakMemoryUsage(),
-            pool1.getPeakMemoryUsage(),
-            pool2.getPeakMemoryUsage()
+    PoolsMemoryStats getMemoryUsage() {
+        return PoolsMemoryStats(
+            shared.getPeakMemoryStats(),
+            pool1.getPeakMemoryStats(),
+            pool2.getPeakMemoryStats()
         );
     }
 

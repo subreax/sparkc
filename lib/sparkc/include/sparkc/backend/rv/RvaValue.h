@@ -60,10 +60,6 @@ private:
 
 class RvaRegister : public RvaValue {
 public:
-    RvaRegister(RvReg reg)
-        : RvaValue(Kind::Register)
-        , reg(reg) { }
-
     RvReg getReg() const { return reg; }
 
     static RvaRegister* get(RvReg reg) {
@@ -106,6 +102,10 @@ public:
     }
 
 private:
+    RvaRegister(RvReg reg)
+        : RvaValue(Kind::Register)
+        , reg(reg) { }
+
     RvReg reg;
 };
 

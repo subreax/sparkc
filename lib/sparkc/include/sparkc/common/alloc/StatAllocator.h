@@ -1,6 +1,6 @@
 #pragma once
 #include "Allocator.h"
-#include "MemoryUsage.h"
+#include "MemoryStats.h"
 
 template <typename T>
 class StatAllocator : public Allocator {
@@ -10,7 +10,7 @@ public:
         : Allocator(name)
         , allocator(name, args...) { }
 
-    MemBlock allocate(size_t sz) override {
+    MemBlockRef allocate(size_t sz) override {
         return allocator.allocate(sz);
     }
 
@@ -35,9 +35,9 @@ public:
         peak = 0;
     }
 
-    MemoryUsage getPeakMemoryUsage() {
+    MemoryStats getPeakMemoryStats() {
         updatePeak();
-        return MemoryUsage(peak, getCapacity());
+        return MemoryStats(peak, getCapacity());
     }
 
     T& getAllocator() { return allocator; }

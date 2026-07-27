@@ -1,6 +1,6 @@
 #pragma once
 #include "StringRef.h"
-#include "alloc/MemBlock.h"
+#include "alloc/MemBlockRef.h"
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
@@ -11,7 +11,7 @@ public:
         : buf(buf)
         , capacity(capacity) { }
 
-    StringBuilder(MemBlock block)
+    StringBuilder(MemBlockRef block)
         : StringBuilder((char*) block.mem, block.sz) { }
 
     StringBuilder& append(StringRef str, size_t maxChars = SIZE_MAX) {

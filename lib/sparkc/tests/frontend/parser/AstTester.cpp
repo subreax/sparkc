@@ -4,7 +4,7 @@
 #include "sparkc/frontend/Frontend.h"
 #include "sparkc/frontend/utils/AstPrinter.h"
 
-std::string buildAst(const char* src) {
+static std::string buildAst(const char* src) {
     LinearAllocator allocator("parser", 4096, true);
     LinearAllocator commonAllocator("common", 2048, true);
     SymbolTable symbolTable(commonAllocator);

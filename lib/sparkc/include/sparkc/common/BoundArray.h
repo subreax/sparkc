@@ -56,7 +56,7 @@ public:
     using Iterator = BaIterator<BoundArray<T>>;
     using ConstIterator = BaConstIterator<BoundArray<T>>;
 
-    BoundArray(MemBlock block)
+    BoundArray(MemBlockRef block)
         : mem((T*) block.mem)
         , itemsCount(block.sz / sizeof(T)) { }
 

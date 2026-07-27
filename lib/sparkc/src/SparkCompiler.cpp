@@ -35,10 +35,10 @@ void SparkCompiler::init(const SparkCompilerConfig& config) {
     outCap = config.outCap;
     runtime = config.runtime;
     debugCallback = config.debugCallback;
-    skrOptimizerConfig.constantFolding = config.optimizations.constantFolding;
-    skrOptimizerConfig.copyPropagation = config.optimizations.copyPropagation;
-    skrOptimizerConfig.deadCodeElimination = config.optimizations.deadCodeElimination;
-    skrOptimizerConfig.deadStoreElimination = config.optimizations.deadStoreElimination;
+    skrOptimizerConfig.constantFolding = config.optimizations & SPARK_OPT_CONSTANT_FOLDING;
+    skrOptimizerConfig.copyPropagation = config.optimizations & SPARK_OPT_COPY_PROPAGATION;
+    skrOptimizerConfig.deadCodeElimination = config.optimizations & SPARK_OPT_DEAD_CODE_ELIM;
+    skrOptimizerConfig.deadStoreElimination = config.optimizations & SPARK_OPT_DEAD_STORE_ELIM;
 }
 
 void SparkCompiler::destroy() {
@@ -127,7 +127,7 @@ BuildResult SparkCompiler::build(const char* src) {
     return buildResult(symTable, assembler);
 }
 
-MemUsageStats SparkCompiler::getMemoryUsage() {
+PoolsMemoryStats SparkCompiler::getMemoryUsage() {
     return pools->getMemoryUsage();
 }
 

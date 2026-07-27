@@ -15,9 +15,9 @@
 #include "printer/skr/SkrPrinter.h"
 using namespace std;
 
-void printError(const ParseException& e, const string& source);
-string getLine(const string& src, int lineNo);
-void printMemUsage(const char* name, MemoryUsage memUsage);
+static void printError(const ParseException& e, const string& source);
+static string getLine(const string& src, int lineNo);
+static void printMemUsage(const char* name, MemoryStats stats);
 
 class DebugCallback : public SparkDebugCallback {
 public:
@@ -107,10 +107,7 @@ int main(int argc, char** argv) {
     config.outBin = binary;
     config.outCap = sizeof(binary);
     config.debugCallback = &debugCallback;
-    config.optimizations.constantFolding = true;
-    config.optimizations.copyPropagation = true;
-    config.optimizations.deadCodeElimination = true;
-    config.optimizations.deadStoreElimination = true;
+    config.optimizations = SPARK_OPT_ALL;
     config.runtime.divq15 = divq15;
     SparkCompiler::init(config);
 
@@ -136,7 +133,7 @@ int main(int argc, char** argv) {
     printMemUsage("pool1", memoryUsage.pool1);
     printMemUsage("pool2", memoryUsage.pool2);
     printMemUsage("shared", memoryUsage.shared);
-    printMemUsage("bin", MemoryUsage(buildResult.getBinarySize(), sizeof(binary)));
+    printMemUsage("bin", MemoryStats(buildResult.getBinarySize(), sizeof(binary)));
     MemUtils::dump(
         binary,
         buildResult.getBinarySize(),
@@ -145,7 +142,7 @@ int main(int argc, char** argv) {
     return 0;
 }
 
-void printError(const ParseException& e, const string& source) {
+static void printError(const ParseException& e, const string& source) {
     const auto& token = e.getToken();
     cout << e.what() << endl;
 
@@ -160,7 +157,7 @@ void printError(const ParseException& e, const string& source) {
     cout << "^" << endl;
 }
 
-string getLine(const string& src, int lineNo) {
+static string getLine(const string& src, int lineNo) {
     size_t offset = 0;
     for (int i = 0; i < lineNo; i++) {
         offset = src.find('\n', offset);
@@ -179,6 +176,6 @@ string getLine(const string& src, int lineNo) {
     }
 }
 
-void printMemUsage(const char* name, MemoryUsage memUsage) {
-    cout << name << ": " << memUsage.getUsageInPercents() << "%" << endl;
+static void printMemUsage(const char* name, MemoryStats stats) {
+    cout << name << ": " << stats.getUsageInPercents() << "%" << endl;
 }

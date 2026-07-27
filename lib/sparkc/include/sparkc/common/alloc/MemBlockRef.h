@@ -2,8 +2,8 @@
 #include <cstdint>
 #include <stdexcept>
 
-struct MemBlock {
-    MemBlock(size_t sz, uint8_t* mem)
+struct MemBlockRef {
+    MemBlockRef(size_t sz, uint8_t* mem)
         : sz(sz)
         , mem(mem) { }
 
@@ -12,7 +12,7 @@ struct MemBlock {
         if (sz <= sizeof(T)) {
             return new (mem) T(args...);
         }
-        throw std::out_of_range("Can't init object in MemBlock");
+        throw std::out_of_range("Can't init object in MemBlockRef");
     }
 
     const size_t sz;

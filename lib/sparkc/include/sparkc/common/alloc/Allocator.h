@@ -1,8 +1,8 @@
 #pragma once
 #include "../StringRef.h"
-#include "MemBlock.h"
+#include "MemBlockRef.h"
 #include "NoMemoryException.h"
-#include "MemoryUsage.h"
+#include "MemoryStats.h"
 
 class Allocator {
 public:
@@ -14,15 +14,15 @@ public:
 
     virtual ~Allocator() = default;
 
-    virtual MemBlock allocate(size_t sz) = 0;
+    virtual MemBlockRef allocate(size_t sz) = 0;
     virtual void reset() = 0;
 
     virtual size_t getFreeSize() const = 0;
     virtual size_t getUsedSize() const = 0;
     virtual size_t getCapacity() const = 0;
 
-    MemoryUsage getMemoryUsage() const {
-        return MemoryUsage(getUsedSize(), getCapacity());
+    MemoryStats getMemoryStats() const {
+        return MemoryStats(getUsedSize(), getCapacity());
     }
 
     template <typename T, typename... Args>

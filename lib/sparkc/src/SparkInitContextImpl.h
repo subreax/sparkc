@@ -26,7 +26,7 @@ public:
         std::initializer_list<SymbolType*> params
     ) {
         auto nameRef = idGen.copy(StringRef::cstr(name));
-        symbolTable.declareFunc(nameRef, type, params);
+        symbolTable.declareFunc(nameRef, type, std::move(params));
         assembler.addExternalLabel(nameRef, ptr);
     }
 
