@@ -7,7 +7,7 @@ constexpr uint32_t _1010 = 0b10101010101010101010101010101010u;
 // reg 01010 - A0
 // reg 10101 - S5
 
-TEST_CASE("Test core risc-v instructions", "[riscv-core]") {
+TEST_CASE("Test core risc-v instructions", "[rv-instr]") {
     // R Type
     // ...0101
     // f7: 0101010 rs2:10101 rs1:01010 f3:101 rd:01010 op:1010101

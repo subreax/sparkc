@@ -2,7 +2,7 @@
 #include <sparkc/backend/rv/asm/RvListing.h>
 #include <sparkc/backend/rv/instr/RvaMov.h>
 
-TEST_CASE("Test RvaMov", "[rva]") {
+TEST_CASE("Test RvaMov", "[rv-instr]") {
     uint32_t buf[2] = { 0, 0 };
     RvListing listing((uint8_t*) buf, sizeof(buf));
     auto* reg = RvaRegister::get(RvReg::T0);

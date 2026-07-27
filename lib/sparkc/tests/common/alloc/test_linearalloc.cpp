@@ -1,7 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include <sparkc/common/alloc/LinearAllocator.h>
 
-TEST_CASE("Linear allocator test", "[linear-allocator]") {
+TEST_CASE("Linear allocator test", "[common-alloc]") {
     LinearAllocator allocator("test", 16, true);
     REQUIRE(allocator.getUsedSize() == 0);
     REQUIRE(allocator.getFreeSize() == 16);

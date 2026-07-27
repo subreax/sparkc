@@ -52,16 +52,17 @@ find_package(Catch2 3 REQUIRED)
 add_executable(tests)
 target_sources(tests 
   PRIVATE 
+    tests/common/alloc/test_linearalloc.cpp
     tests/frontend/parser/AstTester.cpp
     tests/frontend/parser/ParserTest.cpp
     tests/frontend/parser/ParserTestLoader.cpp
-    tests/alloc/test_linearalloc.cpp
-    tests/asm/test_rv32base.cpp
-    tests/rva/RvaMovTest.cpp
+    tests/backend/rv/test_rv32base.cpp
+    tests/backend/rv/RvaMovTest.cpp
+    tests/main.cpp
 )
 target_include_directories(tests PRIVATE
   src/
   tests/
 )
 
-target_link_libraries(tests PRIVATE sparkc Catch2::Catch2WithMain)
+target_link_libraries(tests PRIVATE sparkc Catch2::Catch2)
