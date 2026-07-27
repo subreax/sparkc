@@ -5,6 +5,7 @@
 #include <sparkc/frontend/utils/AstPrinter.h>
 #include <sparkc/frontend/parser/except/ParseException.h>
 #include <sstream>
+#include "Cli.h"
 
 #include "FileUtils.h"
 #include "MemUtils.h"
@@ -21,7 +22,14 @@ static void printMemUsage(const char* name, MemoryStats stats);
 
 class DebugCallback : public SparkDebugCallback {
 public:
+    DebugCallback(const CliOptions& options)
+        : options(options) { }
+
     void onAstBuild(AstProgItem* item) override {
+        if (!options.printAst) {
+            return;
+        }
+
         cout << "== ast ==" << endl;
         AstPrinter(cout).print(item);
         cout << endl
@@ -42,6 +50,10 @@ public:
     }
 
     void onEmitSkrFunc(SkrFunction* skrFunc) override {
+        if (!options.printSkr) {
+            return;
+        }
+
         cout << "== skr ==" << endl;
         SkrPrinter::print(cout, skrFunc, getSymbolTable());
         cout << endl;
@@ -56,36 +68,56 @@ public:
     }
 
     void onOptimizeSkrFunc(SkrFunction* skrFunc) override {
+        if (!options.printSkrOpt) {
+            return;
+        }
+
         cout << "== skr optimized ==" << endl;
         SkrPrinter::print(cout, skrFunc, getSymbolTable());
         cout << endl;
     }
 
     void onEmitRva(const std::vector<RvaInstruction*>& rva) override {
+        if (!options.printRvaBase) {
+            return;
+        }
+
         cout << "== rva ==" << endl;
         RvaPrinter::print(cout, rva);
         cout << endl;
     }
 
     void onReplaceRvaPseudo(const std::vector<RvaInstruction*>& rva) override {
+        if (!options.printRvaRepl) {
+            return;
+        }
+
         cout << "== rva pseudo replaced ==" << endl;
         RvaPrinter::print(cout, rva);
         cout << endl;
     }
 
     void onFixRva(const std::vector<RvaInstruction*>& rva) override {
+        if (!options.printRvaFix) {
+            return;
+        }
+
         cout << "== rva fixed ==" << endl;
         RvaPrinter::print(cout, rva);
         cout << endl;
     }
+
+private:
+    CliOptions options;
 };
 
 int32_t divq15(int32_t a, int32_t b) {
     return (int64_t(a) << 15) / b;
 }
 
-int main(int argc, char** argv) {
-    if (argc == 1) {
+int main(int argc, const char** argv) {
+    auto cliOptions = Cli::parse(argc, argv);
+    if (cliOptions.srcPath == nullptr) {
         cout << "Specify source file to compile" << endl;
         return 1;
     }
@@ -93,14 +125,14 @@ int main(int argc, char** argv) {
     int fakeFun;
 
     uint8_t binary[1024];
-    const char* srcFile = argv[1];
+    const char* srcPath = cliOptions.srcPath;
     string source;
-    if (!FileUtils::readFile(srcFile, source)) {
-        std::cout << "Failed to open file " << srcFile << endl;
+    if (!FileUtils::readFile(srcPath, source)) {
+        std::cout << "Failed to open file " << srcPath << endl;
         return 1;
     }
 
-    DebugCallback debugCallback;
+    DebugCallback debugCallback(cliOptions);
 
     SparkCompilerConfig config;
     config.poolSize = 2048 * 3;
@@ -137,7 +169,7 @@ int main(int argc, char** argv) {
     MemUtils::dump(
         binary,
         buildResult.getBinarySize(),
-        FileUtils::changeExtension(FileUtils::getFileName(srcFile), "bin")
+        FileUtils::changeExtension(FileUtils::getFileName(srcPath), "bin")
     );
     return 0;
 }
