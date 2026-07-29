@@ -1,5 +1,5 @@
 #pragma once
-#include "StringBuilder.h"
+#include "FixedStringBuilder.h"
 #include "StringRef.h"
 #include "alloc/Allocator.h"
 
@@ -15,7 +15,7 @@ public:
     StringRef unique(StringRef id, const char* prefix) {
         char buf[MAX_ID_LEN];
         return unique(
-            StringBuilder(buf, sizeof(buf))
+            FixedStringBuilder(buf, sizeof(buf))
                 .append(StringRef::cstr(prefix))
                 .append(StringRef::cstr("_"))
                 .append(id)
@@ -25,7 +25,7 @@ public:
 
     StringRef unique(StringRef id) {
         return copy(
-            StringBuilder(nameBuf, sizeof(nameBuf))
+            FixedStringBuilder(nameBuf, sizeof(nameBuf))
                 .append(id, std::min(id.getLength(), MAX_ID_LEN))
                 .append(StringRef::cstr("."))
                 .append(counter++)
@@ -35,7 +35,7 @@ public:
 
     StringRef copy(StringRef ref) {
         auto len = std::min(ref.getLength(), sizeof(nameBuf));
-        return StringBuilder(allocator.allocate(len))
+        return FixedStringBuilder(allocator.allocate(len))
             .append(ref)
             .toString();
     }

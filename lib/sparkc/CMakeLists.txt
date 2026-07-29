@@ -36,6 +36,8 @@ set(SPARKC_SRC
   src/frontend/semantic/TypeChecker.cpp
   src/frontend/utils/AstPrinter.cpp
   src/skr/SkrEmitter.cpp
+  src/skr/instr/SkrBinary.cpp
+  src/skr/instr/SkrBranch.cpp
   src/skr/value/SkrValue.cpp
   src/skr/optimizer/SkrCfgOverloadings.cpp
   src/skr/optimizer/copyprop/CopyPropagation.cpp

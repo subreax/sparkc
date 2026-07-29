@@ -1,175 +1,162 @@
 #include "SkrPrinter.h"
 #include "../Colored.h"
 
-std::ostream& operator<<(std::ostream& os, const SymbolType& type) {
-    os << type.toString();
-    return os;
+static const char* op(SkrBinary::Operator op) {
+    return SkrBinary::operatorStringValue(op);
 }
 
-std::ostream& operator<<(std::ostream& os, const SkrValue& skr) {
-    if (skr.isConst()) {
-        auto* c = skr.toSkrConst()->getConst();
-        if (c->type->kind == SymbolType::Kind::Integer) {
-            os << ((IntConstant*) c)->val;
-        }
-        else if (c->type->kind == SymbolType::Kind::Float) {
-            os << ((FloatConstant*) c)->val;
-        }
-        else {
-            os << "err_unknown_constant";
-        }
-    }
-    else if (skr.isVar()) {
-        os << ((SkrVar*) &skr)->getId().toString();
-    }
-    else {
-        os << "_unknown_: " << (int) skr.kind;
-    }
-    return os;
+static const char* op(SkrBranch::Operator op) {
+    return SkrBranch::operatorStringValue(op);
 }
 
-std::ostream& operator<<(std::ostream& os, SkrBinary::Operator op) {
-    static constexpr const char* OPS[] = { "+", "-", "*", "/", "%", "==", "!=", "<", "<=", ">", ">=" };
-    static constexpr int OPS_SZ = sizeof(OPS) / sizeof(const char*);
-    int iop = (int) op;
-    if (iop < OPS_SZ) {
-        os << OPS[iop];
-    }
-    else {
-        os << "_unknown_:" << iop;
-    }
-    return os;
-}
+std::string SkrPrinter::toString(SkrFunction* func) {
+    sb << "fun " << label(func->getName()) << "(";
 
-std::ostream& operator<<(std::ostream& os, SkrBranch::Operator op) {
-    static const char* OPS[] = { "==", "!=", "<", "<=", ">", ">=" };
-    static constexpr int OPS_SZ = sizeof(OPS) / sizeof(const char*);
-    int iop = (int) op;
-    if (iop < OPS_SZ) {
-        os << OPS[iop];
-    }
-    else {
-        os << "_unknown_:" << iop;
-    }
-    return os;
-}
-
-void SkrPrinter::print(std::ostream& os, SkrFunction* func, const SymbolTable& table) {
-    os << "fun " << Colored::label(func->getName()) << "(";
-    auto* funcType = (SymbolFunctionType*) table.get(func->getName());
+    auto* funcDecl = (SymbolFunctionType*) symbolTable.get(func->getName());
     auto params = func->getParams();
     for (size_t i = 0; i < params.size(); i++) {
-        auto* type = table.get(params[i]->getId());
-        os << *params[i] << ": " << *type;
+        auto* type = symbolTable.get(params[i]->getId());
+        sb << val(params[i]);
         if (i != params.size() - 1) {
-            os << ", ";
+            sb << ", ";
         }
     }
-    os << "): " << *funcType->getReturnType() << "\n";
+    sb << "): " << type(funcDecl->getReturnType()) << "\n";
 
     const auto& skrs = func->getInstructions();
     for (auto* skr : skrs) {
-        os << "    ";
-        print(os, skr, table);
-        os << "\n";
+        sb << "    ";
+        append(skr);
+        sb << "\n";
     }
+
+    return sb.toString();
 }
 
-void SkrPrinter::print(
-    std::ostream& os,
-    SkrInstruction* skr,
-    const SymbolTable& table,
-    bool colored
-) {
+void SkrPrinter::append(const SkrInstruction* skr) {
     auto kind = skr->kind;
     if (kind == SkrInstruction::Kind::Binary) {
         auto* bin = (SkrBinary*) skr;
-        os << *bin->getDst() << " = "
-           << *bin->getLeft() << " " << bin->getOperator() << " " << *bin->getRight();
+        sb << val(bin->getDst()) << " = "
+           << type(bin->getDst()) << " "
+           << val(bin->getLeft())
+           << " " << op(bin->getOperator()) << " "
+           << val(bin->getRight());
     }
     else if (kind == SkrInstruction::Kind::Copy) {
         auto* it = (SkrCopy*) skr;
-        os << "copy " << *it->getTo() << " = " << *it->getFrom();
+        sb << "copy "
+           << val(it->getTo()) << " = " << type(it->getFrom()) << " " << val(it->getFrom());
     }
     else if (kind == SkrInstruction::Kind::Jump) {
         auto* it = (SkrJump*) skr;
-        os << "jmp ";
-        if (colored) {
-            os << Colored::label(it->getLabel());
-        }
-        else {
-            os << it->getLabel().toString();
-        }
+        sb << "jmp " << label(it->getLabel());
     }
     else if (kind == SkrInstruction::Kind::Label) {
         auto* it = (SkrLabel*) skr;
-        if (colored) {
-            os << Colored::label(it->getLabel()) << ":";
-        }
-        else {
-            os << it->getLabel().toString() << ":";
-        }
+        sb << label(it->getLabel()) << ":";
     }
     else if (kind == SkrInstruction::Kind::Branch) {
         auto* it = (SkrBranch*) skr;
-        os << "jmp ";
-        if (colored) {
-            os << Colored::label(it->getLabel());
-        }
-        else {
-            os << it->getLabel().toString();
-        }
-        os << " if " << *it->getLeft() << " " << it->getOperator() << " " << *it->getRight();
+        sb << "jmp " << label(it->getLabel())
+           << " if "
+           << type(it->getLeft()) << " " << val(it->getLeft())
+           << " " << op(it->getOperator()) << " "
+           << val(it->getRight());
     }
     else if (kind == SkrInstruction::Kind::FunCall) {
         auto* it = (SkrFunCall*) skr;
-        os << *it->getRetVar() << " = ";
-        if (colored) {
-            os << Colored::label(it->getName());
-        }
-        else {
-            os << it->getName().toString();
-        }
-        os << "(";
         auto args = it->getArgs();
+        sb << val(it->getRetVar()) << " = " << type(it->getRetVar()) << " " << label(it->getName()) << "(";
         for (size_t i = 0; i < args.size(); i++) {
-            os << *args[i];
+            sb << val(args[i]);
             if (i != args.size() - 1) {
-                os << ", ";
+                sb << ", ";
             }
         }
-        os << ")";
+        sb << ")";
     }
     else if (kind == SkrInstruction::Kind::Int2Float) {
         auto* it = (SkrInt2Float*) skr;
-        os << *it->getDst() << " = (float) " << *it->getSrc();
+        sb << val(it->getDst()) << " = toFloat(" << val(it->getSrc()) << ")";
     }
     else if (kind == SkrInstruction::Kind::Float2Int) {
         auto* it = (SkrFloat2Int*) skr;
-        os << *it->getDst() << " = (int) " << *it->getSrc();
+        sb << val(it->getDst()) << " = toInt(" << val(it->getSrc()) << ")";
     }
     else if (kind == SkrInstruction::Kind::Load) {
         auto* it = (SkrLoad*) skr;
-        os << "load " << *it->getTo() << " = " << it->getFromOffset() << "(" << *it->getFrom() << ")";
+        sb << "load "
+           << val(it->getTo()) << " = " << type(it->getTo()) << it->getFromOffset() << "(" << val(it->getFrom()) << ")";
     }
     else if (kind == SkrInstruction::Kind::Store) {
         auto* it = (SkrStore*) skr;
-        os << "store " << it->getToOffset() << "(" << *it->getTo() << ") = " << *it->getFrom();
+        sb << "store "
+           << it->getToOffset() << "(" << val(it->getTo()) << ") = " << type(it->getFrom()) << " " << val(it->getFrom());
     }
     else if (kind == SkrInstruction::Kind::GetAddr) {
         auto* it = (SkrGetAddr*) skr;
-        os << *it->getTo() << " = addrOf(" << *it->getVar() << ")";
+        sb << val(it->getTo()) << " = addrOf(" << val(it->getVar()) << ")";
     }
     else if (kind == SkrInstruction::Kind::CopyToOffset) {
         auto* it = (SkrCopyToOffset*) skr;
-        os << "copy " << it->getToOffset() << "(" << *it->getTo() << ") = " << *it->getFrom();
+        sb << "copy "
+           << it->getToOffset() << "(" << val(it->getTo()) << ") = " << type(it->getFrom()) << " " << val(it->getFrom());
     }
     else if (kind == SkrInstruction::Kind::CopyFromOffset) {
         auto* it = (SkrCopyFromOffset*) skr;
-        os << "copy " << *it->getTo() << " = " << it->getFromOffset() << "(" << *it->getFrom()
-           << ")";
+        sb << "copy "
+           << val(it->getTo()) << " = " << type(it->getTo()) << " " << it->getFromOffset() << "(" << val(it->getFrom()) << ")";
     }
     else {
-        os << "unknown skr: " << (int) kind;
+        sparkError("SkrPrinter", "Unknown skr: %d", kind);
     }
+}
+
+std::string SkrPrinter::val(const SkrValue* val) const {
+    if (val->isConst()) {
+        auto* c = val->toSkrConst()->getConst();
+        if (c->type->kind == SymbolType::Kind::Integer) {
+            return std::to_string(c->intValue());
+        }
+        else if (c->type->kind == SymbolType::Kind::Float) {
+            return std::to_string(c->floatValue());
+        }
+        else {
+            sparkError("SkrPrinter", "Unknown Constant::Kind %d", c->type->kind);
+        }
+    }
+    else if (val->isVar()) {
+        return val->toSkrVar()->getId().toString();
+    }
+    else {
+        sparkError("SkrPrinter", "Unknown SkrValue::Kind %d", val->kind);
+    }
+    return "";
+}
+
+std::string SkrPrinter::type(const SkrValue* val) const {
+    if (val->isConst()) {
+        auto* skrConst = (const SkrConst*) val;
+        auto* constant = skrConst->getConst();
+        return type(constant->type);
+    }
+    else if (val->isVar()) {
+        auto* skrVar = (const SkrVar*) val;
+        return type(symbolTable.get(skrVar->getId()));
+    }
+    sparkError("SkrPrinter2", "Unknown SkrValue kind");
+    return "";
+}
+
+std::string SkrPrinter::type(const SymbolType* t) const {
+    auto tstr = t->toString();
+    return isColored ? Colored::type(tstr) : tstr;
+}
+
+std::string SkrPrinter::label(StringRef value) const {
+    if (isColored) {
+        return Colored::label(value);
+    }
+    return value.toString();
 }

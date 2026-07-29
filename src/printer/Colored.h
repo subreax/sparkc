@@ -16,4 +16,8 @@ public:
     static std::string comment(const std::string& s) {
         return "\033[2m" + s + "\033[0m";
     }
+
+    static std::string type(const std::string& t) {
+        return "\033[2m" + t + "\033[0m";
+    }
 };

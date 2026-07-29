@@ -1,4 +1,5 @@
 #include "sparkc/symbol/SymbolType.h"
+#include "sparkc/common/Error.h"
 
 std::string SymbolType::toString() const {
     switch (kind) {
@@ -16,6 +17,7 @@ std::string SymbolType::toString() const {
     }
 
     default:
-        return "kind-" + std::to_string((int) kind);
+        sparkError("SymbolType", "Unknown SymbolType::Kind: %d", kind);
+        return "";
     }
 }

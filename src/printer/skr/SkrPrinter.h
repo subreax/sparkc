@@ -1,11 +1,36 @@
 #pragma once
-#include <iostream>
 #include <sparkc/skr/SkrFunction.h>
 #include <sparkc/skr/instr/everything.h>
 #include <sparkc/symbol/SymbolTable.h>
-#include <vector>
+#include "../StringBuilder.h"
 
-namespace SkrPrinter {
-void print(std::ostream& os, SkrFunction* func, const SymbolTable& table);
-void print(std::ostream& os, SkrInstruction* skr, const SymbolTable& table, bool colored = true);
-}; // namespace SkrPrinter
+class SkrPrinter {
+public:
+    SkrPrinter(const SymbolTable& symbolTable, bool isColored = true)
+        : symbolTable(symbolTable)
+        , isColored(isColored) { }
+
+    static std::string toString(const SymbolTable& symbolTable, bool colored, SkrFunction* func) {
+        return SkrPrinter(symbolTable, colored).toString(func);
+    }
+
+    static std::string toString(const SymbolTable& symbolTable, bool colored, SkrInstruction* instr) {
+        SkrPrinter printer(symbolTable, colored);
+        printer.append(instr);
+        return printer.sb.toString();
+    }
+
+    std::string toString(SkrFunction* func);
+
+private:
+    void append(const SkrInstruction* skr);
+
+    std::string val(const SkrValue* val) const;
+    std::string type(const SkrValue* val) const;
+    std::string type(const SymbolType* t) const;
+    std::string label(StringRef value) const;
+
+    const SymbolTable& symbolTable;
+    StringBuilder sb;
+    bool isColored;
+};

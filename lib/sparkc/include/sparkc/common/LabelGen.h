@@ -1,5 +1,5 @@
 #pragma once
-#include "StringBuilder.h"
+#include "FixedStringBuilder.h"
 #include "alloc/Allocator.h"
 
 class LabelGen {
@@ -8,14 +8,14 @@ public:
         : allocator(allocator) { }
 
     StringRef uniquePrivate(const char* id) {
-        StringRef str = StringBuilder(buf, sizeof(buf))
+        StringRef str = FixedStringBuilder(buf, sizeof(buf))
                             .append(StringRef::cstr("."))
                             .append(StringRef::cstr(id), LABEL_MAX_LEN)
                             .append(StringRef::cstr("_"))
                             .append(counter++)
                             .toString();
 
-        return StringBuilder(allocator.allocate(str.getLength()))
+        return FixedStringBuilder(allocator.allocate(str.getLength()))
             .append(str)
             .toString();
     }

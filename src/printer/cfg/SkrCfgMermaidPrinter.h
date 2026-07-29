@@ -63,12 +63,10 @@ private:
         if (!body.empty()) {
             for (auto* instr : body) {
                 if (instr->kind == SkrInstruction::Kind::Label) {
-                    out << "**";
-                    SkrPrinter::print(out, instr, table, false);
-                    out << "**\n";
+                    out << "**" << SkrPrinter::toString(table, false, instr) << "**\n";
                 }
                 else {
-                    SkrPrinter::print(out, instr, table, false);
+                    out << SkrPrinter::toString(table, false, instr);
                 }
                 out << "\n";
             }

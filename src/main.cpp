@@ -55,8 +55,7 @@ public:
         }
 
         cout << "== skr ==" << endl;
-        SkrPrinter::print(cout, skrFunc, getSymbolTable());
-        cout << endl;
+        cout << SkrPrinter::toString(getSymbolTable(), true, skrFunc) << endl;
     }
 
     void onCfgCreated(StringRef funName, int iteration, CfGraph<SkrInstruction*>* graph) override {
@@ -73,8 +72,7 @@ public:
         }
 
         cout << "== skr optimized ==" << endl;
-        SkrPrinter::print(cout, skrFunc, getSymbolTable());
-        cout << endl;
+        cout << SkrPrinter(getSymbolTable()).toString(skrFunc) << endl;
     }
 
     void onEmitRva(const std::vector<RvaInstruction*>& rva) override {
