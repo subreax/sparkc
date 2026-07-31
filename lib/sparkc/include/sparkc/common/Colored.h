@@ -1,6 +1,6 @@
 #pragma once
-#include <sparkc/common/LabelGen.h>
 #include <string>
+#include "LabelGen.h"
 
 class Colored {
 public:

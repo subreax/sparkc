@@ -1,5 +1,5 @@
-#include "SkrPrinter.h"
-#include "../Colored.h"
+#include "sparkc/skr/SkrPrinter.h"
+#include "sparkc/common/Colored.h"
 
 static const char* op(SkrBinary::Operator op) {
     return SkrBinary::operatorStringValue(op);
@@ -9,7 +9,7 @@ static const char* op(SkrBranch::Operator op) {
     return SkrBranch::operatorStringValue(op);
 }
 
-std::string SkrPrinter::toString(SkrFunction* func) {
+SkrPrinter& SkrPrinter::append(SkrFunction* func) {
     sb << "fun " << label(func->getName()) << "(";
 
     auto* funcDecl = (SymbolFunctionType*) symbolTable.get(func->getName());
@@ -29,8 +29,9 @@ std::string SkrPrinter::toString(SkrFunction* func) {
         append(skr);
         sb << "\n";
     }
+    sb << "\n";
 
-    return sb.toString();
+    return *this;
 }
 
 void SkrPrinter::append(const SkrInstruction* skr) {

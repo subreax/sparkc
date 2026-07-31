@@ -10,7 +10,9 @@ int main(int argc, char* argv[]) {
 
     auto cli = session.cli()
         | Opt(testOptions.parserMatchTestsPath, "path")
-            ["--parser-tests"]("Path to parser match tests folder");
+            ["--parser-tests"]("Path to parser match tests folder")
+        | Opt(testOptions.skrMatchTestsPath, "path")
+            ["--skr-tests"]("Path to skr match tests folder");
 
     session.cli(cli);
 

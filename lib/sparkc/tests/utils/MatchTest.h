@@ -1,10 +1,9 @@
 #pragma once
 #include <string>
 
-struct ParserTest {
+struct MatchTest {
     std::string path;
     std::string src;
-
-    std::string expectedTree;
+    std::string expected;
     bool expectFailure;
 };

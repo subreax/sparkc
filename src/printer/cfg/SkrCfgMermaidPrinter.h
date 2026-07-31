@@ -1,5 +1,5 @@
 #pragma once
-#include "../skr/SkrPrinter.h"
+#include "sparkc/skr/SkrPrinter.h"
 #include <fstream>
 #include <iostream>
 #include <sparkc/common/cfg/CfGraph.h>

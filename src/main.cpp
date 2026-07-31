@@ -13,7 +13,7 @@
 #include "printer/cfg/SkrCfgMermaidPrinter.h"
 #include "printer/mem/MemUsagePrinter.h"
 #include "printer/rva/RvaPrinter.h"
-#include "printer/skr/SkrPrinter.h"
+#include "sparkc/skr/SkrPrinter.h"
 using namespace std;
 
 static void printError(const ParseException& e, const string& source);
@@ -55,7 +55,7 @@ public:
         }
 
         cout << "== skr ==" << endl;
-        cout << SkrPrinter::toString(getSymbolTable(), true, skrFunc) << endl;
+        cout << SkrPrinter::toString(getSymbolTable(), false, skrFunc) << endl;
     }
 
     void onCfgCreated(StringRef funName, int iteration, CfGraph<SkrInstruction*>* graph) override {
@@ -72,7 +72,7 @@ public:
         }
 
         cout << "== skr optimized ==" << endl;
-        cout << SkrPrinter(getSymbolTable()).toString(skrFunc) << endl;
+        cout << SkrPrinter::toString(getSymbolTable(), false, skrFunc) << endl;
     }
 
     void onEmitRva(const std::vector<RvaInstruction*>& rva) override {

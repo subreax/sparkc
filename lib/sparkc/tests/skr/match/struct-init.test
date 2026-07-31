@@ -1,0 +1,16 @@
+#src
+struct color(r: float, g: float, b: float);
+
+fun sum(to: int): int {
+    var c = color(1.0f, 0.8f, 0.2f);
+    return 0;
+}
+
+#expect
+fun sum(to.0): int
+    copy 0(c.1) = float 1.000000
+    copy 4(c.1) = float 0.800000
+    copy 8(c.1) = float 0.200000
+    copy retval.2 = int 0
+    jmp .ret_0
+    .ret_0:

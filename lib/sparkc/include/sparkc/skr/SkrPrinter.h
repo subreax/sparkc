@@ -1,17 +1,19 @@
 #pragma once
-#include <sparkc/skr/SkrFunction.h>
-#include <sparkc/skr/instr/everything.h>
-#include <sparkc/symbol/SymbolTable.h>
-#include "../StringBuilder.h"
+#include "sparkc/skr/SkrFunction.h"
+#include "sparkc/skr/instr/everything.h"
+#include "sparkc/symbol/SymbolTable.h"
+#include "sparkc/common/StringBuilder.h"
 
 class SkrPrinter {
 public:
-    SkrPrinter(const SymbolTable& symbolTable, bool isColored = true)
+    SkrPrinter(const SymbolTable& symbolTable, bool isColored)
         : symbolTable(symbolTable)
         , isColored(isColored) { }
 
     static std::string toString(const SymbolTable& symbolTable, bool colored, SkrFunction* func) {
-        return SkrPrinter(symbolTable, colored).toString(func);
+        return SkrPrinter(symbolTable, colored)
+            .append(func)
+            .toString();
     }
 
     static std::string toString(const SymbolTable& symbolTable, bool colored, SkrInstruction* instr) {
@@ -20,7 +22,11 @@ public:
         return printer.sb.toString();
     }
 
-    std::string toString(SkrFunction* func);
+    SkrPrinter& append(SkrFunction* func);
+
+    std::string toString() const {
+        return sb.toString();
+    }
 
 private:
     void append(const SkrInstruction* skr);

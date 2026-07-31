@@ -183,6 +183,7 @@ SkrExpRes SkrEmitter::emit(AstExp* exp, SkrVar* dst) {
         auto* c = getSkrConst(it->getValue());
         if (dst) {
             out.emplace_back(allocator.create<SkrCopy>(dst, c));
+            return SkrExpRes::val(dst);
         }
         return SkrExpRes::val(c);
     }
@@ -209,18 +210,22 @@ SkrExpRes SkrEmitter::emit(AstExp* exp, SkrVar* dst) {
     }
     else if (kind == AstExp::Kind::Var) {
         auto* var = allocator.create<SkrVar>(((AstVar*) exp)->getId());
+        if (dst != nullptr) {
+            out.emplace_back(allocator.create<SkrCopy>(dst, var));
+            return SkrExpRes::val(dst);
+        }
         return SkrExpRes::val(var);
     }
     else if (kind == AstExp::Kind::Assignment) {
         auto* ass = (AstAssignment*) exp;
         SkrExpRes left = emit(ass->getVar());
-        SkrValue* right = emitAndConvert(ass->getExp());
         /* if (left.kind == SkrExpRes::Kind::Ptr) {
             out.emplace_back(allocator.create<SkrStore>(left.getBase(),
         left.getOffset(), right)); return left;
         }
         else */
         if (left.kind == SkrExpRes::Kind::Field) {
+            SkrValue* right = emitAndConvert(ass->getExp());
             out.emplace_back(allocator.create<SkrCopyToOffset>(
                 left.getBase(),
                 left.getOffset(),
@@ -229,10 +234,7 @@ SkrExpRes SkrEmitter::emit(AstExp* exp, SkrVar* dst) {
             return SkrExpRes::val(right);
         }
         else {
-            out.emplace_back(
-                allocator.create<SkrCopy>(left.get()->toSkrVar(), right)
-            );
-            return SkrExpRes::val(right);
+            return SkrExpRes::val(emitAndConvert(ass->getExp(), left.get()->toSkrVar()));
         }
     }
     else if (kind == AstExp::Kind::FunCall) {

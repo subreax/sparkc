@@ -36,6 +36,7 @@ set(SPARKC_SRC
   src/frontend/semantic/TypeChecker.cpp
   src/frontend/utils/AstPrinter.cpp
   src/skr/SkrEmitter.cpp
+  src/skr/SkrPrinter.cpp
   src/skr/instr/SkrBinary.cpp
   src/skr/instr/SkrBranch.cpp
   src/skr/value/SkrValue.cpp
@@ -55,11 +56,16 @@ add_executable(tests)
 target_sources(tests 
   PRIVATE 
     tests/common/alloc/test_linearalloc.cpp
-    tests/frontend/parser/AstTester.cpp
+    
     tests/frontend/parser/ParserTest.cpp
-    tests/frontend/parser/ParserTestLoader.cpp
+
+    tests/skr/SkrTest.cpp
+
     tests/backend/rv/test_rv32base.cpp
     tests/backend/rv/RvaMovTest.cpp
+
+    tests/utils/MatchTestLoader.cpp
+
     tests/main.cpp
 )
 target_include_directories(tests PRIVATE

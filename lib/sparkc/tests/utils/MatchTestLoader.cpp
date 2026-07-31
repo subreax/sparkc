@@ -1,22 +1,21 @@
-#include "ParserTestLoader.h"
+#include "MatchTestLoader.h"
 #include <filesystem>
 #include <fstream>
 #include <sstream>
+#include "StringUtils.h"
 
-namespace ParserTestLoader {
 namespace fs = std::filesystem;
 
-void loadTestFile(const std::string& path, ParserTest& out);
+static MatchTest loadTestFile(const std::string& path);
 
-void loadRecursively(
-    const std::string& dirPath,
-    std::function<void(const ParserTest&)> onTestLoaded
+void MatchTestLoader::loadRecursively(
+    const std::string& basePath,
+    std::function<void(const MatchTest&)> onTestLoaded
 ) {
-    ParserTest test;
-    auto dirIterator = fs::directory_iterator(dirPath);
+    auto dirIterator = fs::directory_iterator(basePath);
     for (const auto& entry : dirIterator) {
         if (fs::is_regular_file(entry)) {
-            loadTestFile(entry.path().string(), test);
+            MatchTest test = loadTestFile(entry.path().string());
             onTestLoaded(test);
         }
         else if (fs::is_directory(entry)) {
@@ -25,20 +24,7 @@ void loadRecursively(
     }
 }
 
-std::string trim(const std::string& str) {
-    size_t b = 0, e = str.length();
-    while (b < e && std::isspace(str[b])) {
-        b++;
-    }
-
-    while (e > b && std::isspace(str[e - 1])) {
-        e--;
-    }
-
-    return str.substr(b, e - b);
-}
-
-void loadTestFile(const std::string& path, ParserTest& out) {
+MatchTest loadTestFile(const std::string& path) {
     std::ifstream fin(path);
     std::ostringstream sections[2];
 
@@ -67,9 +53,10 @@ void loadTestFile(const std::string& path, ParserTest& out) {
     }
     fin.close();
 
+    MatchTest out;
     out.path = path;
-    out.src = trim(sections[S_SRC].str());
-    out.expectedTree = trim(sections[S_EXPECTED].str());
+    out.src = StringUtils::trim(sections[S_SRC].str());
+    out.expected = StringUtils::trim(sections[S_EXPECTED].str());
     out.expectFailure = expectFailure;
+    return out;
 }
-}; // namespace ParserTestLoader

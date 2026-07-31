@@ -1,0 +1,10 @@
+#src
+fun main(): int {
+    return 5;
+}
+
+#expect
+fun main(): int
+    copy retval.0 = int 5
+    jmp .ret_0
+    .ret_0:

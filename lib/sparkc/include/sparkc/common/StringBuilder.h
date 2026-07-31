@@ -1,5 +1,5 @@
 #pragma once
-#include <sparkc/common/StringRef.h>
+#include "StringRef.h"
 
 class StringBuilder {
 public:

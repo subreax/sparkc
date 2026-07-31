@@ -1,5 +1,5 @@
 #include "RvaPrinter.h"
-#include "../Colored.h"
+#include "sparkc/common/Colored.h"
 #include <cstring>
 #include <iomanip>
 

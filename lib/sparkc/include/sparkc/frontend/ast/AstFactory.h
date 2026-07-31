@@ -20,8 +20,16 @@ public:
         return allocator.create<AstFunction>(name, returnType, paramsBA, body);
     }
 
+    AstFunction* function(const char* name, SymbolType* type, const std::vector<AstFunParam*>& params, AstBlock* body) {
+        return function(StringRef::cstr(name), type, params, body);
+    }
+
     AstFunParam* functionParam(StringRef id, SymbolType* type) {
         return allocator.create<AstFunParam>(id, type);
+    }
+
+    AstFunParam* functionParam(const char* id, SymbolType* type) {
+        return functionParam(StringRef::cstr(id), type);
     }
 
     AstStruct* struct_(StringRef tag, const std::vector<AstStructField*>& fields) {
