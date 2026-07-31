@@ -1,0 +1,21 @@
+#src
+fun ping(): int {
+    return 1;
+}
+
+fun main(): int {
+    ping();
+    return 0;
+}
+
+#expect
+fun ping(): int
+    copy retval.0 = int 1
+    jmp .ret_0
+    .ret_0:
+
+fun main(): int
+    r_ping.2 = int ping()
+    copy retval.1 = int 0
+    jmp .ret_1
+    .ret_1:

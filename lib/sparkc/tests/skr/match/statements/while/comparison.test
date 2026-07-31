@@ -10,7 +10,7 @@ fun sum(to: int): int {
 }
 
 #expect
-fun sum(to.0): int
+fun sum(to.0: int): int
     copy sum.1 = int 0
     copy i.2 = int 1
     .start_1:

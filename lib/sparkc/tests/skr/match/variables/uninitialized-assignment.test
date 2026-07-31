@@ -1,0 +1,13 @@
+#src
+fun main(): int {
+    var a: int;
+    a = 42;
+    return a;
+}
+
+#expect
+fun main(): int
+    copy a.0 = int 42
+    copy retval.1 = int a.0
+    jmp .ret_0
+    .ret_0:

@@ -55,7 +55,7 @@ public:
         }
 
         cout << "== skr ==" << endl;
-        cout << SkrPrinter::toString(getSymbolTable(), false, skrFunc) << endl;
+        cout << SkrPrinter::toString(getSymbolTable(), options.colored, skrFunc) << endl;
     }
 
     void onCfgCreated(StringRef funName, int iteration, CfGraph<SkrInstruction*>* graph) override {
@@ -72,7 +72,7 @@ public:
         }
 
         cout << "== skr optimized ==" << endl;
-        cout << SkrPrinter::toString(getSymbolTable(), false, skrFunc) << endl;
+        cout << SkrPrinter::toString(getSymbolTable(), options.colored, skrFunc) << endl;
     }
 
     void onEmitRva(const std::vector<RvaInstruction*>& rva) override {
@@ -133,7 +133,7 @@ int main(int argc, const char** argv) {
     DebugCallback debugCallback(cliOptions);
 
     SparkCompilerConfig config;
-    config.poolSize = 2048 * 3;
+    config.poolSize = 4096 * 3;
     config.outBin = binary;
     config.outCap = sizeof(binary);
     config.debugCallback = &debugCallback;
@@ -158,12 +158,15 @@ int main(int argc, const char** argv) {
         return 1;
     }
 
-    cout << "== memory stats ==" << endl;
-    auto memoryUsage = SparkCompiler::getMemoryUsage();
-    printMemUsage("pool1", memoryUsage.pool1);
-    printMemUsage("pool2", memoryUsage.pool2);
-    printMemUsage("shared", memoryUsage.shared);
-    printMemUsage("bin", MemoryStats(buildResult.getBinarySize(), sizeof(binary)));
+    if (cliOptions.printMem) {
+        cout << "== memory stats ==" << endl;
+        auto memoryUsage = SparkCompiler::getMemoryUsage();
+        printMemUsage("pool1", memoryUsage.pool1);
+        printMemUsage("pool2", memoryUsage.pool2);
+        printMemUsage("shared", memoryUsage.shared);
+        printMemUsage("bin", MemoryStats(buildResult.getBinarySize(), sizeof(binary)));
+    }
+
     MemUtils::dump(
         binary,
         buildResult.getBinarySize(),

@@ -11,7 +11,7 @@ extern TestOptions testOptions;
 
 static std::string buildSkr(const std::string& src) {
     LinearAllocator shared("shared", 2048);
-    LinearAllocator pool1("pool1", 2048);
+    LinearAllocator pool1("pool1", 4096);
     LinearAllocator pool2("pool2", 2048);
     SymbolTable symbolTable(shared);
     TypeTable typeTable(shared);
@@ -28,6 +28,7 @@ static std::string buildSkr(const std::string& src) {
         if (astItem->kind == AstProgItem::Kind::Function) {
             auto* skrFun = SkrEmitter::emit((AstFunction*) astItem, pool2, symbolTable, typeTable, idGen, labelGen, skrs);
             skrPrinter.append(skrFun);
+            skrs.clear();
         }
     }
     return skrPrinter.toString();

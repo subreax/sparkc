@@ -15,8 +15,7 @@ SkrPrinter& SkrPrinter::append(SkrFunction* func) {
     auto* funcDecl = (SymbolFunctionType*) symbolTable.get(func->getName());
     auto params = func->getParams();
     for (size_t i = 0; i < params.size(); i++) {
-        auto* type = symbolTable.get(params[i]->getId());
-        sb << val(params[i]);
+        sb << val(params[i]) << ": " << type(params[i]);
         if (i != params.size() - 1) {
             sb << ", ";
         }
@@ -118,10 +117,10 @@ std::string SkrPrinter::val(const SkrValue* val) const {
     if (val->isConst()) {
         auto* c = val->toSkrConst()->getConst();
         if (c->type->kind == SymbolType::Kind::Integer) {
-            return std::to_string(c->intValue());
+            return StringBuilder(16).append(c->intValue()).toString();
         }
         else if (c->type->kind == SymbolType::Kind::Float) {
-            return std::to_string(c->floatValue());
+            return StringBuilder(24).append(c->floatValue()).toString();
         }
         else {
             sparkError("SkrPrinter", "Unknown Constant::Kind %d", c->type->kind);

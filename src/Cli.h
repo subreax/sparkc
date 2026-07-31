@@ -9,6 +9,8 @@ struct CliOptions {
     bool printRvaBase = false;
     bool printRvaRepl = false;
     bool printRvaFix = false;
+    bool colored = false;
+    bool printMem = false;
 };
 
 class Cli {
@@ -22,17 +24,20 @@ public:
     }
 
     CliOptions parse() {
-        bool printSkrAll = contains("--print-skr-all");
-        bool printRvaAll = contains("--print-rva-all");
+        bool printAll = contains("--print-all");
+        bool printSkrAll = printAll || contains("--print-skr-all");
+        bool printRvaAll = printAll || contains("--print-rva-all");
 
         CliOptions options;
         options.srcPath = findSrcPath();
-        options.printAst = contains("--print-ast");
+        options.printAst = printAll || contains("--print-ast");
         options.printSkr = printSkrAll || contains("--print-skr");
         options.printSkrOpt = printSkrAll || contains("--print-skr-opt");
         options.printRvaBase = printRvaAll || contains("--print-rva-base");
         options.printRvaRepl = printRvaAll || contains("--print-rva-repl");
         options.printRvaFix = printRvaAll || contains("--print-rva-fix");
+        options.colored = contains("--colored");
+        options.printMem = printAll || contains("--print-mem");
         return options;
     }
 

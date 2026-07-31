@@ -300,37 +300,43 @@ SkrValue* SkrEmitter::emitBinary(AstBinaryExp* exp, SkrVar* dst) {
         auto falseLabel = labelGen.uniquePrivate("and_false");
         auto endLabel = labelGen.uniquePrivate("and_end");
 
-        SkrVar* result = createVar("and", symbolTable.getTypeFactory().int_());
+        if (dst == nullptr) {
+            dst = createVar("and", symbolTable.getTypeFactory().int_());
+        }
+
         emitInvertBranch(exp->getLeft(), falseLabel);
         emitInvertBranch(exp->getRight(), falseLabel);
         // true
-        out.emplace_back(allocator.create<SkrCopy>(result, getSkrIntConst(1)));
+        out.emplace_back(allocator.create<SkrCopy>(dst, getSkrIntConst(1)));
         out.emplace_back(allocator.create<SkrJump>(endLabel));
 
         // false
         out.emplace_back(allocator.create<SkrLabel>(falseLabel));
-        out.emplace_back(allocator.create<SkrCopy>(result, getSkrIntConst(0)));
+        out.emplace_back(allocator.create<SkrCopy>(dst, getSkrIntConst(0)));
 
         out.emplace_back(allocator.create<SkrLabel>(endLabel));
-        return result;
+        return dst;
     }
     else if (astOp == AstBinaryExp::Operator::Or) {
         auto trueLabel = labelGen.uniquePrivate("or_true");
         auto endLabel = labelGen.uniquePrivate("or_end");
 
-        SkrVar* result = createVar("or", symbolTable.getTypeFactory().int_());
+        if (dst == nullptr) {
+            dst = createVar("or", symbolTable.getTypeFactory().int_());
+        }
+
         emitBranch(exp->getLeft(), trueLabel);
         emitBranch(exp->getRight(), trueLabel);
         // false
-        out.emplace_back(allocator.create<SkrCopy>(result, getSkrIntConst(0)));
+        out.emplace_back(allocator.create<SkrCopy>(dst, getSkrIntConst(0)));
         out.emplace_back(allocator.create<SkrJump>(endLabel));
 
         // true
         out.emplace_back(allocator.create<SkrLabel>(trueLabel));
-        out.emplace_back(allocator.create<SkrCopy>(result, getSkrIntConst(1)));
+        out.emplace_back(allocator.create<SkrCopy>(dst, getSkrIntConst(1)));
 
         out.emplace_back(allocator.create<SkrLabel>(endLabel));
-        return result;
+        return dst;
     }
     else {
         SkrValue* left = emitAndConvert(exp->getLeft());

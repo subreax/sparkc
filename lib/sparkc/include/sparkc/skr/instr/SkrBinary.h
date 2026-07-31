@@ -8,7 +8,7 @@
     X(Mul, "*")               \
     X(Div, "/")               \
     X(Rem, "%")               \
-    X(Equals, "=")            \
+    X(Equals, "==")           \
     X(NotEquals, "!=")        \
     X(LessThan, "<")          \
     X(LessOrEqual, "<=")      \
