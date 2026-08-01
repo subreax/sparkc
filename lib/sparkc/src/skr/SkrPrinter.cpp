@@ -1,5 +1,5 @@
 #include "sparkc/skr/SkrPrinter.h"
-#include "sparkc/common/Colored.h"
+#include "sparkc/common/printer/Colored.h"
 
 static const char* op(SkrBinary::Operator op) {
     return SkrBinary::operatorStringValue(op);
@@ -117,10 +117,10 @@ std::string SkrPrinter::val(const SkrValue* val) const {
     if (val->isConst()) {
         auto* c = val->toSkrConst()->getConst();
         if (c->type->kind == SymbolType::Kind::Integer) {
-            return StringBuilder(16).append(c->intValue()).toString();
+            return ExpandableStringBuilder(16).append(c->intValue()).toString();
         }
         else if (c->type->kind == SymbolType::Kind::Float) {
-            return StringBuilder(24).append(c->floatValue()).toString();
+            return ExpandableStringBuilder(24).append(c->floatValue()).toString();
         }
         else {
             sparkError("SkrPrinter", "Unknown Constant::Kind %d", c->type->kind);

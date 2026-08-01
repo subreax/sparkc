@@ -1,9 +1,6 @@
 #pragma once
 #include "StringRef.h"
 #include "alloc/MemBlockRef.h"
-#include <cstdint>
-#include <cstdlib>
-#include <cstring>
 
 class FixedStringBuilder {
 public:
@@ -43,5 +40,5 @@ private:
 
     char* buf;
     size_t len = 0;
-    size_t capacity;
+    const size_t capacity;
 };

@@ -2,7 +2,7 @@
 #include "sparkc/skr/SkrFunction.h"
 #include "sparkc/skr/instr/everything.h"
 #include "sparkc/symbol/SymbolTable.h"
-#include "sparkc/common/StringBuilder.h"
+#include "sparkc/common/ExpandableStringBuilder.h"
 
 class SkrPrinter {
 public:
@@ -37,6 +37,6 @@ private:
     std::string label(StringRef value) const;
 
     const SymbolTable& symbolTable;
-    StringBuilder sb;
+    ExpandableStringBuilder sb;
     bool isColored;
 };

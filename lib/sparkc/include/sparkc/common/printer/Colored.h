@@ -1,6 +1,5 @@
 #pragma once
-#include <string>
-#include "LabelGen.h"
+#include "../LabelGen.h"
 
 class Colored {
 public:

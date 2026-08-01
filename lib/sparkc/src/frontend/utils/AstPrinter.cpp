@@ -1,6 +1,6 @@
 #include "sparkc/frontend/utils/AstPrinter.h"
 #include <sstream>
-#include "sparkc/common/TreePrinter.h"
+#include "sparkc/common/printer/TreePrinter.h"
 
 static void print(TreePrinter& p, const AstProgItem* item);
 static void print(TreePrinter& p, const AstStruct* st);
