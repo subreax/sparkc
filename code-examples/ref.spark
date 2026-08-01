@@ -1,3 +1,0 @@
-int doSmth(int& out, int& a) {
-    out = a + 5;
-}

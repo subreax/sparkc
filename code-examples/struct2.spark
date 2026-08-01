@@ -1,6 +1,0 @@
-struct color(float r, float g, float b, float a);
-
-int pixel(color& out) {
-    out.b = 1.0;
-    return 0;
-}

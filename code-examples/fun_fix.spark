@@ -1,7 +1,0 @@
-int color(int x) {
-    return x;
-}
-
-int fixme() {
-    return x;
-}

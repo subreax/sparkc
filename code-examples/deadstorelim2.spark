@@ -1,7 +1,0 @@
-struct color(float r, float g, float b, float a);
-
-color pixel(float x) {
-    color delme = color(1.0, 1.0, 1.0, 1.0);
-    float tmp = delme.g;
-    return color(1.0, 0.2, 0.3, 1.0);
-}
