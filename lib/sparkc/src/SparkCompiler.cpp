@@ -3,6 +3,7 @@
 
 #include "sparkc/frontend/Frontend.h"
 #include "skr/SkrEmitter.h"
+#include "sparkc/skr/SkrFactory.h"
 #include "skr/optimizer/SkrOptimizer.h"
 #include "backend/rv/RvaFixer.h"
 #include "backend/rv/RvaPseudoReplacer.h"
@@ -68,6 +69,7 @@ BuildResult SparkCompiler::build(const char* src) {
     }
 
     AstFactory astFactory(pools->pool1);
+    SkrFactory skrFactory(pools->pool2);
     Frontend frontend(src, astFactory, symTable, typeTable, idGen);
 
     std::vector<SkrInstruction*> skrsBuf;
@@ -90,7 +92,7 @@ BuildResult SparkCompiler::build(const char* src) {
 
         auto* skrFunc = SkrEmitter::emit(
             (AstFunction*) astProgItem,
-            pools->pool2,
+            skrFactory,
             symTable,
             typeTable,
             idGen,

@@ -5,6 +5,7 @@
 #include "sparkc/frontend/Frontend.h"
 #include "utils/MatchTestRunner.h"
 #include "sparkc/skr/SkrPrinter.h"
+#include "sparkc/skr/SkrFactory.h"
 #include "TestOptions.h"
 
 extern TestOptions testOptions;
@@ -19,6 +20,7 @@ static std::string buildSkr(const std::string& src) {
     LabelGen labelGen(shared);
 
     AstFactory astf(pool1);
+    SkrFactory skrf(pool2);
     Frontend frontend(src.c_str(), astf, symbolTable, typeTable, idGen);
     std::vector<SkrInstruction*> skrs;
     SkrPrinter skrPrinter(symbolTable, false);
@@ -26,7 +28,15 @@ static std::string buildSkr(const std::string& src) {
     while (frontend.hasNext()) {
         auto* astItem = frontend.processNextItem();
         if (astItem->kind == AstProgItem::Kind::Function) {
-            auto* skrFun = SkrEmitter::emit((AstFunction*) astItem, pool2, symbolTable, typeTable, idGen, labelGen, skrs);
+            auto* skrFun = SkrEmitter::emit(
+                (AstFunction*) astItem,
+                skrf,
+                symbolTable,
+                typeTable,
+                idGen,
+                labelGen,
+                skrs
+            );
             skrPrinter.append(skrFun);
             skrs.clear();
         }
