@@ -15,7 +15,7 @@ public:
               "  look: neo\n"
               "  theme: redux-dark\n"
               "---\n"
-              "flowchart LR\n";
+              "flowchart TB\n";
 
         AstMermaidPrinter printer(os);
         printer.toMermaid(prog);
@@ -29,7 +29,7 @@ public:
               "  look: neo\n"
               "  theme: redux-dark\n"
               "---\n"
-              "flowchart LR\n";
+              "flowchart TB\n";
 
         AstMermaidPrinter printer(os);
         os << printer.toMermaid(item);
@@ -315,12 +315,12 @@ private:
     }
 
     void declare(const Node& node) {
-        os << node.id << "(\"**[" << node.kind << "]**";
+        os << node.id << "(\"[" << node.kind << "]";
         auto& fields = node.fields;
         if (!fields.empty()) {
             os << "\n";
             for (size_t i = 0; i < fields.size(); i += 2) {
-                os << fields[i] << ": " << bslashIfNeeded(fields[i + 1]) << fields[i + 1];
+                os << fields[i] << ": " << fields[i + 1];
                 if (i + 2 < fields.size()) {
                     os << "\n";
                 }
@@ -335,14 +335,6 @@ private:
             os << "|" << comment << "|";
         }
         os << " " << childId << "\n";
-    }
-
-    const char* bslashIfNeeded(const std::string& s) {
-        if (s.empty())
-            return "";
-        if (isalnum(s[0]))
-            return "";
-        return "\\";
     }
 
     std::string type2string(AstExp* exp) { return type2string(exp->type); }
