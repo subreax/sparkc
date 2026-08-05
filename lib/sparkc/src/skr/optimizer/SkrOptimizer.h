@@ -6,6 +6,7 @@
 #include "dselim/DeadStoreElimination.h"
 #include "sparkc/common/alloc/LinearAllocator.h"
 #include "sparkc/common/cfg/CfgBuilder.h"
+#include "sparkc/skr/SkrFactory.h"
 #include "sparkc/skr/SkrFunction.h"
 #include "sparkc/skr/instr/everything.h"
 #include "sparkc/skr/optimizer/SkrOptimizerConfig.h"
@@ -27,10 +28,11 @@ public:
 
     SkrFunction* optimize(const SkrOptimizerConfig& config) {
         std::vector<SkrInstruction*> optimized = raw;
+        SkrFactory skrf(a1);
 
         for (size_t i = 1; i <= MAX_ITERATIONS; i++) {
             if (config.constantFolding) {
-                ConstantFolding::run(a1, optimized);
+                ConstantFolding::run(skrf, optimized);
             }
 
             auto* graph = CfgBuilder<SkrInstruction>().build_delGraphWhenDone(optimized);

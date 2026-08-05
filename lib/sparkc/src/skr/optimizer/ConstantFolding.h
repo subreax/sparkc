@@ -1,96 +1,118 @@
 #pragma once
 #include "SkrOptimizerUtils.h"
-#include "sparkc/common/alloc/Allocator.h"
+#include "sparkc/skr/SkrFactory.h"
 #include "sparkc/skr/instr/everything.h"
 #include <cmath>
 
 class ConstantFolding {
 public:
-    static void run(Allocator& a, std::vector<SkrInstruction*>& instructions) {
+    static void run(SkrFactory& skrf, std::vector<SkrInstruction*>& instructions) {
+        ConstantFolding(skrf).run(instructions);
+    }
+
+private:
+    explicit ConstantFolding(SkrFactory& skrf)
+        : skrf(skrf) { }
+
+    void run(std::vector<SkrInstruction*>& instructions) {
         auto it = instructions.begin();
         auto end = instructions.end();
         while (it != end) {
-            auto* skr = *it;
-            if (skr->kind == SkrInstruction::Kind::Binary) {
-                auto* bin = (SkrBinary*) skr;
-                auto* left = bin->getLeft();
-                auto* right = bin->getRight();
-                if (left->isConst() && right->isConst()) {
-                    *it = a.create<SkrCopy>(
-                        bin->getDst(),
-                        evaluate(a, left->toSkrConst(), bin->getOperator(), right->toSkrConst())
-                    );
-                }
+            SkrInstruction* initial = *it;
+            SkrInstruction* simplified = initial;
+            switch (initial->kind) {
+            case SkrInstruction::Kind::Binary:
+                simplified = processBinary((SkrBinary*) initial);
+                break;
+
+            case SkrInstruction::Kind::Branch:
+                simplified = processBranch((SkrBranch*) initial);
+                break;
+
+            case SkrInstruction::Kind::Int2Float:
+                simplified = processInt2Float((SkrInt2Float*) initial);
+                break;
+
+            case SkrInstruction::Kind::Float2Int:
+                simplified = processFloat2Int((SkrFloat2Int*) initial);
+                break;
+
+            default:
+                break;
             }
-            else if (skr->kind == SkrInstruction::Kind::Branch) {
-                auto* br = (SkrBranch*) skr;
-                auto* left = br->getLeft();
-                auto* right = br->getRight();
-                if (left->isConst() && right->isConst()) {
-                    *it = evaluateConst(a, br);
-                }
-                else if (left->isVar() && *left == *right) {
-                    if (br->getOperator() == SkrBranch::Operator::Equals) {
-                        *it = a.create<SkrJump>(br->getLabel());
-                    }
-                    else {
-                        *it = nullptr;
-                    }
-                }
+
+            if (initial != simplified) {
+                *it = simplified;
             }
-            else if (skr->kind == SkrInstruction::Kind::Int2Float) {
-                auto* i2f = (SkrInt2Float*) skr;
-                if (i2f->getSrc()->isConst()) {
-                    auto* c = i2f->getSrc()->toSkrConst()->getConst();
-                    float evaluated = (float) c->intValue();
-                    *it = a.create<SkrCopy>(
-                        i2f->getDst(),
-                        a.create<SkrConst>(a.create<FloatConstant>(evaluated))
-                    );
-                }
-            }
-            else if (skr->kind == SkrInstruction::Kind::Float2Int) {
-                auto* f2i = (SkrInt2Float*) skr;
-                if (f2i->getSrc()->isConst()) {
-                    auto* c = f2i->getSrc()->toSkrConst()->getConst();
-                    int32_t evaluated = (int32_t) c->floatValue();
-                    *it = a.create<SkrCopy>(
-                        f2i->getDst(),
-                        a.create<SkrConst>(a.create<IntConstant>(evaluated))
-                    );
-                }
-            }
+
             it++;
         }
 
         SkrOptimizerUtils::filterNullptrs(instructions);
     }
 
-private:
-    static SkrConst* evaluate(
-        Allocator& a,
-        SkrConst* left,
-        SkrBinary::Operator op,
-        SkrConst* right
-    ) {
-        auto* leftC = left->getConst();
-        auto* rightC = right->getConst();
-        Constant* c = nullptr;
-        if (leftC->isInt()) {
-            c = evaluate(a, leftC->intValue(), op, rightC->intValue());
+    SkrInstruction* processBinary(SkrBinary* it) {
+        auto* left = it->getLeft();
+        auto* right = it->getRight();
+        if (left->isConst() && right->isConst()) {
+            return skrf.copy(
+                it->getDst(),
+                evaluate(left->toSkrConst(), it->getOperator(), right->toSkrConst())
+            );
         }
-        else if (leftC->isFloat()) {
-            c = evaluate(a, leftC->floatValue(), op, rightC->floatValue());
-        }
-        return a.create<SkrConst>(c);
+        return it;
     }
 
-    static IntConstant* evaluate(
-        Allocator& a,
-        int32_t left,
-        SkrBinary::Operator op,
-        int32_t right
-    ) {
+    SkrInstruction* processBranch(SkrBranch* it) {
+        auto* left = it->getLeft();
+        auto* right = it->getRight();
+        if (left->isConst() && right->isConst()) {
+            return evaluate(it);
+        }
+        else if (left->isVar() && *left == *right) {
+            return it->getOperator() == SkrBranch::Operator::Equals
+                ? skrf.jump(it->getLabel())
+                : nullptr;
+        }
+        return it;
+    }
+
+    SkrInstruction* processInt2Float(SkrInt2Float* it) {
+        if (it->getSrc()->isConst()) {
+            auto* constant = it->getSrc()->toSkrConst()->getConst();
+            return skrf.copy(
+                it->getDst(),
+                skrf.constant((float) constant->intValue())
+            );
+        }
+        return it;
+    }
+
+    SkrInstruction* processFloat2Int(SkrFloat2Int* it) {
+        if (it->getSrc()->isConst()) {
+            auto* constant = it->getSrc()->toSkrConst()->getConst();
+            return skrf.copy(
+                it->getDst(),
+                skrf.constant((int32_t) constant->floatValue())
+            );
+        }
+        return it;
+    }
+
+    SkrConst* evaluate(SkrConst* left, SkrBinary::Operator op, SkrConst* right) {
+        auto* leftC = left->getConst();
+        auto* rightC = right->getConst();
+        if (leftC->isInt()) {
+            return evaluate(leftC->intValue(), op, rightC->intValue());
+        }
+        else if (leftC->isFloat()) {
+            return evaluate(leftC->floatValue(), op, rightC->floatValue());
+        }
+        sparkError("ConstantFolding", "Unsupported binary operator: %d", op);
+        return nullptr;
+    }
+
+    SkrConst* evaluate(int32_t left, SkrBinary::Operator op, int32_t right) {
         int32_t res = 0;
         switch (op) {
         case SkrBinary::Operator::Plus:
@@ -147,22 +169,27 @@ private:
             sparkError("SkrOptimizer", "Unsupported binary operator: %d", op);
         }
 
-        return a.create<IntConstant>(res);
+        return skrf.constant(res);
     }
 
-    static FloatConstant*
-    evaluate(Allocator& a, float left, SkrBinary::Operator op, float right) {
-        float res = 0;
+    SkrConst* evaluate(float left, SkrBinary::Operator op, float right) {
+        float result = 0;
         switch (op) {
-        case SkrBinary::Operator::Plus: res = left + right; break;
+        case SkrBinary::Operator::Plus:
+            result = left + right;
+            break;
 
-        case SkrBinary::Operator::Minus: res = left - right; break;
+        case SkrBinary::Operator::Minus:
+            result = left - right;
+            break;
 
-        case SkrBinary::Operator::Mul: res = left * right; break;
+        case SkrBinary::Operator::Mul:
+            result = left * right;
+            break;
 
         case SkrBinary::Operator::Div:
             if (right != 0) {
-                res = left / right;
+                result = left / right;
             }
             else {
                 // todo: replace with normal exception
@@ -170,56 +197,66 @@ private:
             }
             break;
 
-        case SkrBinary::Operator::Rem: res = fmodf(left, right); break;
+        case SkrBinary::Operator::Rem:
+            result = fmodf(left, right);
+            break;
 
-        case SkrBinary::Operator::Equals: res = left == right; break;
+        case SkrBinary::Operator::Equals:
+            result = left == right;
+            break;
 
-        case SkrBinary::Operator::NotEquals: res = left != right; break;
+        case SkrBinary::Operator::NotEquals:
+            result = left != right;
+            break;
 
-        case SkrBinary::Operator::LessThan: res = left < right; break;
+        case SkrBinary::Operator::LessThan:
+            result = left < right;
+            break;
 
-        case SkrBinary::Operator::LessOrEqual: res = left <= right; break;
+        case SkrBinary::Operator::LessOrEqual:
+            result = left <= right;
+            break;
 
-        case SkrBinary::Operator::GreaterThan: res = left > right; break;
+        case SkrBinary::Operator::GreaterThan:
+            result = left > right;
+            break;
 
-        case SkrBinary::Operator::GreaterOrEqual: res = left >= right; break;
+        case SkrBinary::Operator::GreaterOrEqual:
+            result = left >= right;
+            break;
 
         default:
             sparkError("SkrOptimizer", "Unsupported binary operator: %d", op);
         }
 
-        return a.create<FloatConstant>(res);
+        return skrf.constant(result);
     }
 
-    static SkrInstruction* evaluateConst(Allocator& a, SkrBranch* branch) {
+    SkrInstruction* evaluate(SkrBranch* branch) {
         auto* left = branch->getLeft()->toSkrConst()->getConst();
         auto* right = branch->getRight()->toSkrConst()->getConst();
 
-        bool res;
+        bool result;
         if (left->isInt()) {
-            res = evaluate(a, left->intValue(), branch->getOperator(), right->intValue());
+            result = evaluate(left->intValue(), branch->getOperator(), right->intValue());
         }
         else if (left->isFloat()) {
-            res = evaluate(a, left->floatValue(), branch->getOperator(), right->floatValue());
+            result = evaluate(left->floatValue(), branch->getOperator(), right->floatValue());
         }
         else {
-            sparkError(
-                "ConstantFolding",
-                "Unknown type for comparison: %d",
-                left->type->kind
-            );
+            sparkError("ConstantFolding", "Unknown type for comparison: %d", left->type->kind);
             return nullptr;
         }
 
-        if (res) {
-            return a.create<SkrJump>(branch->getLabel());
+        if (result) {
+            return skrf.jump(branch->getLabel());
         }
         else {
             return nullptr;
         }
     }
 
-    static bool evaluate(Allocator& a, int32_t left, SkrBranch::Operator op, int32_t right) {
+    bool evaluate(int32_t left, SkrBranch::Operator op, int32_t right) {
         switch (op) {
         case SkrBranch::Operator::Equals: return left == right;
         case SkrBranch::Operator::NotEquals: return left != right;
@@ -233,7 +270,7 @@ private:
         }
     }
 
-    static bool evaluate(Allocator& a, float left, SkrBranch::Operator op, float right) {
+    bool evaluate(float left, SkrBranch::Operator op, float right) {
         switch (op) {
         case SkrBranch::Operator::Equals: return left == right;
         case SkrBranch::Operator::NotEquals: return left != right;
@@ -246,4 +283,6 @@ private:
             return false;
         }
     }
+
+    SkrFactory& skrf;
 };
