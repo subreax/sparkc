@@ -4,6 +4,7 @@
 #include <iostream>
 #include <sparkc/common/cfg/CfGraph.h>
 #include <sparkc/symbol/SymbolTable.h>
+#include "FileUtils.h"
 
 class SkrCfgMermaidPrinter {
 public:
@@ -16,7 +17,7 @@ public:
         const SymbolTable& table,
         const std::string& outFile
     ) {
-        std::filesystem::create_directory("cfg");
+        FileUtils::createDirectories("cfg");
         std::ofstream astOut("cfg/" + outFile);
         astOut << "```mermaid\n";
         astOut << "---\n"

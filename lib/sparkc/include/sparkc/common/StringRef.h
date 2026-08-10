@@ -73,7 +73,15 @@ public:
         return true;
     }
 
+    bool operator==(const char* other) const {
+        return *this == StringRef::cstr(other);
+    }
+
     bool operator!=(const StringRef& other) const {
+        return !(*this == other);
+    }
+
+    bool operator!=(const char* other) const {
         return !(*this == other);
     }
 

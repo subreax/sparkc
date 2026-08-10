@@ -16,11 +16,12 @@ static SparkPools* pools = nullptr;
 static uint8_t* outBin = nullptr;
 static size_t outCap = 0;
 
-static SparkDebugCallback nullDebugCallback;
-static SparkDebugCallback* debugCallback = &nullDebugCallback;
+static SparkStageCallback nullStageCallback;
+static SparkStageCallback* stageCallback = &nullStageCallback;
 
 static SparkRuntime runtime;
 static SkrOptimizerConfig skrOptimizerConfig;
+static SparkBuildStage finalBuildStage;
 
 static std::vector<SparkCompiler::OnInitCallback> initCallbacks;
 
@@ -35,11 +36,12 @@ void SparkCompiler::init(const SparkCompilerConfig& config) {
     outBin = config.outBin;
     outCap = config.outCap;
     runtime = config.runtime;
-    debugCallback = config.debugCallback;
+    stageCallback = config.stageCallback;
     skrOptimizerConfig.constantFolding = config.optimizations & SPARK_OPT_CONSTANT_FOLDING;
     skrOptimizerConfig.copyPropagation = config.optimizations & SPARK_OPT_COPY_PROPAGATION;
     skrOptimizerConfig.deadCodeElimination = config.optimizations & SPARK_OPT_DEAD_CODE_ELIM;
     skrOptimizerConfig.deadStoreElimination = config.optimizations & SPARK_OPT_DEAD_STORE_ELIM;
+    finalBuildStage = config.finalBuildStage;
 }
 
 void SparkCompiler::destroy() {
@@ -59,7 +61,7 @@ BuildResult SparkCompiler::build(const char* src) {
     LabelGen labelGen(pools->shared);
     RvAssembler assembler(outBin, outCap);
 
-    debugCallback->setSymbolTable(symTable);
+    stageCallback->setSymbolTable(symTable);
     assembler.addExternalLabel(StringRef::cstr(SparkRuntime::divq15FunName), (void*) runtime.divq15);
     {
         SparkInitContextImpl initCtx(idGen, symTable, typeTable, assembler);
@@ -84,49 +86,67 @@ BuildResult SparkCompiler::build(const char* src) {
         rvas.clear();
 
         AstProgItem* astProgItem = frontend.processNextItem();
-        debugCallback->onAstBuild(astProgItem);
+        stageCallback->onAstBuild(astProgItem);
 
         if (astProgItem->kind != AstProgItem::Kind::Function) {
             continue;
         }
 
-        auto* skrFunc = SkrEmitter::emit(
-            (AstFunction*) astProgItem,
-            skrFactory,
-            symTable,
-            typeTable,
-            idGen,
-            labelGen,
-            skrsBuf
-        );
-        debugCallback->onEmitSkrFunc(skrFunc);
+        SkrFunction* skrFunc = nullptr;
+        if (finalBuildStage >= SparkBuildStage::SKR) {
+            auto* astFunc = (AstFunction*) astProgItem;
 
-        skrFunc = SkrOptimizer(
-                      pools->pool2,
-                      skrFunc,
-                      [&](StringRef funName, int iteration, CfGraph<SkrInstruction*>* graph) {
-                          debugCallback->onCfgCreated(funName, iteration, graph);
-                      }
-        ).optimize(skrOptimizerConfig);
-        debugCallback->onOptimizeSkrFunc(skrFunc);
+            skrFunc = SkrEmitter::emit(
+                astFunc,
+                skrFactory,
+                symTable,
+                typeTable,
+                idGen,
+                labelGen,
+                skrsBuf
+            );
+
+            skrFunc = SkrOptimizer(
+                          pools->pool2,
+                          skrFunc,
+                          [&](StringRef funName, int iteration, CfGraph<SkrInstruction*>* graph) {
+                              stageCallback->onCfgCreated(funName, iteration, graph);
+                          }
+            ).optimize(skrOptimizerConfig);
+
+            stageCallback->onEmitSkrFunc(skrFunc);
+        }
 
         pools->pool1.reset();
         StackFrame stackFrame(pools->pool1);
-        Skr2RvaPseudo::emit(skrFunc, pools->pool1, idGen, symTable, symSize, stackFrame, tempRvas);
-        debugCallback->onEmitRva(tempRvas);
 
-        RvaPseudoReplacer::replace(tempRvas, stackFrame, symSize);
-        debugCallback->onReplaceRvaPseudo(tempRvas);
+        if (finalBuildStage >= SparkBuildStage::RVA_Initial) {
+            Skr2RvaPseudo::emit(skrFunc, pools->pool1, idGen, symTable, symSize, stackFrame, tempRvas);
+            stageCallback->onEmitRva(tempRvas);
+        }
 
-        pools->pool2.reset();
-        RvaFixer::fix(tempRvas, rvas, pools->pool2);
-        debugCallback->onFixRva(rvas);
+        if (finalBuildStage >= SparkBuildStage::RVA_Replaced) {
+            RvaPseudoReplacer::replace(tempRvas, stackFrame, symSize);
+            stageCallback->onReplaceRvaPseudo(tempRvas);
+        }
 
-        assembler.compile(rvas);
+        if (finalBuildStage >= SparkBuildStage::RVA_Fixed) {
+            pools->pool2.reset();
+            RvaFixer::fix(tempRvas, rvas, pools->pool2);
+            stageCallback->onFixRva(rvas);
+        }
+
+        if (finalBuildStage == SparkBuildStage::Bin) {
+            assembler.compile(rvas);
+        }
     }
 
     assembler.link();
-    return buildResult(symTable, assembler);
+    auto res = buildResult(symTable, assembler);
+    if (finalBuildStage == SparkBuildStage::Bin) {
+        stageCallback->onBinary(res);
+    }
+    return res;
 }
 
 PoolsMemoryStats SparkCompiler::getMemoryUsage() {

@@ -20,20 +20,22 @@ static void printError(const ParseException& e, const string& source);
 static string getLine(const string& src, int lineNo);
 static void printMemUsage(const char* name, MemoryStats stats);
 
-class DebugCallback : public SparkDebugCallback {
+class StageCallback : public SparkStageCallback {
 public:
-    DebugCallback(const CliOptions& options)
+    StageCallback(const CliOptions& options)
         : options(options) { }
 
     void onAstBuild(AstProgItem* item) override {
-        if (!options.printAst) {
+        if (options.finalBuildStage != SparkBuildStage::AST) {
             return;
         }
 
-        cout << "== ast ==" << endl;
         AstPrinter(cout).print(item);
-        cout << endl
-             << endl;
+        cout << endl;
+
+        if (options.astMermaidOutDirPath.empty()) {
+            return;
+        }
 
         std::string outFileName;
         if (item->kind == AstProgItem::Kind::Function) {
@@ -45,64 +47,62 @@ public:
         else {
             outFileName = "unknown";
         }
-        std::ofstream astOut(outFileName + ".md");
+
+        auto outFilePath = options.astMermaidOutDirPath + "/" + outFileName + ".md";
+        FileUtils::createDirectories(outFilePath);
+        std::ofstream astOut(outFilePath);
         AstMermaidPrinter::print(astOut, item);
     }
 
     void onEmitSkrFunc(SkrFunction* skrFunc) override {
-        if (!options.printSkr) {
+        if (options.finalBuildStage != SparkBuildStage::SKR) {
             return;
         }
 
-        cout << "== skr ==" << endl;
-        cout << SkrPrinter::toString(getSymbolTable(), options.colored, skrFunc) << endl;
+        cout << SkrPrinter::toString(getSymbolTable(), options.colored, skrFunc);
     }
 
     void onCfgCreated(StringRef funName, int iteration, CfGraph<SkrInstruction*>* graph) override {
-        SkrCfgMermaidPrinter::saveToFile(
-            *graph,
-            getSymbolTable(),
-            funName.toString() + "." + std::to_string(iteration) + ".md"
-        );
-    }
-
-    void onOptimizeSkrFunc(SkrFunction* skrFunc) override {
-        if (!options.printSkrOpt) {
+        if (options.finalBuildStage != SparkBuildStage::SKR) {
             return;
         }
 
-        cout << "== skr optimized ==" << endl;
-        cout << SkrPrinter::toString(getSymbolTable(), options.colored, skrFunc) << endl;
+        if (options.cfgOutDirPath.empty()) {
+            return;
+        }
+
+        auto filePath = options.cfgOutDirPath
+            + "/"
+            + funName.toString()
+            + "." + std::to_string(iteration) + ".md";
+        SkrCfgMermaidPrinter::saveToFile(*graph, getSymbolTable(), filePath);
     }
 
     void onEmitRva(const std::vector<RvaInstruction*>& rva) override {
-        if (!options.printRvaBase) {
+        if (options.finalBuildStage != SparkBuildStage::RVA_Initial) {
             return;
         }
 
-        cout << "== rva ==" << endl;
         RvaPrinter::print(cout, rva);
-        cout << endl;
     }
 
     void onReplaceRvaPseudo(const std::vector<RvaInstruction*>& rva) override {
-        if (!options.printRvaRepl) {
+        if (options.finalBuildStage != SparkBuildStage::RVA_Replaced) {
             return;
         }
 
-        cout << "== rva pseudo replaced ==" << endl;
         RvaPrinter::print(cout, rva);
-        cout << endl;
     }
 
     void onFixRva(const std::vector<RvaInstruction*>& rva) override {
-        if (!options.printRvaFix) {
+        if (options.finalBuildStage != SparkBuildStage::RVA_Fixed) {
             return;
         }
 
-        cout << "== rva fixed ==" << endl;
         RvaPrinter::print(cout, rva);
-        cout << endl;
+    }
+
+    void onBinary(const BuildResult& res) override {
     }
 
 private:
@@ -114,31 +114,35 @@ int32_t divq15(int32_t a, int32_t b) {
 }
 
 int main(int argc, const char** argv) {
-    auto cliOptions = Cli::parse(argc, argv);
-    if (cliOptions.srcPath == nullptr) {
-        cout << "Specify source file to compile" << endl;
+    CliOptions cliOptions;
+
+    try {
+        cliOptions = Cli::parse(argc, argv);
+    } catch (std::exception& ex) {
+        std::cerr << ex.what() << std::endl;
         return 1;
     }
 
     int fakeFun;
 
-    uint8_t binary[1024];
-    const char* srcPath = cliOptions.srcPath;
     string source;
-    if (!FileUtils::readFile(srcPath, source)) {
-        std::cout << "Failed to open file " << srcPath << endl;
+    if (!FileUtils::readFile(cliOptions.srcPath, source)) {
+        std::cout << "Failed to open file " << cliOptions.srcPath << endl;
         return 1;
     }
 
-    DebugCallback debugCallback(cliOptions);
+    StageCallback stageCallback(cliOptions);
+
+    uint8_t binary[1024];
 
     SparkCompilerConfig config;
-    config.poolSize = 4096 * 3;
     config.outBin = binary;
     config.outCap = sizeof(binary);
-    config.debugCallback = &debugCallback;
-    config.optimizations = SPARK_OPT_ALL;
+    config.poolSize = 4096 * 3;
+    config.optimizations = cliOptions.optimizations;
     config.runtime.divq15 = divq15;
+    config.finalBuildStage = cliOptions.finalBuildStage;
+    config.stageCallback = &stageCallback;
     SparkCompiler::init(config);
 
     SparkCompiler::addOnInitCallback([&fakeFun](SparkInitContext& ctx) {
@@ -158,20 +162,17 @@ int main(int argc, const char** argv) {
         return 1;
     }
 
-    if (cliOptions.printMem) {
-        cout << "== memory stats ==" << endl;
-        auto memoryUsage = SparkCompiler::getMemoryUsage();
-        printMemUsage("pool1", memoryUsage.pool1);
-        printMemUsage("pool2", memoryUsage.pool2);
-        printMemUsage("shared", memoryUsage.shared);
-        printMemUsage("bin", MemoryStats(buildResult.getBinarySize(), sizeof(binary)));
-    }
+    if (cliOptions.finalBuildStage == SparkBuildStage::Bin) {
+        if (cliOptions.printMemoryUsage) {
+            auto memoryUsage = SparkCompiler::getMemoryUsage();
+            printMemUsage("pool1", memoryUsage.pool1);
+            printMemUsage("pool2", memoryUsage.pool2);
+            printMemUsage("shared", memoryUsage.shared);
+            printMemUsage("bin", MemoryStats(buildResult.getBinarySize(), sizeof(binary)));
+        }
 
-    MemUtils::dump(
-        binary,
-        buildResult.getBinarySize(),
-        FileUtils::changeExtension(FileUtils::getFileName(srcPath), "bin")
-    );
+        MemUtils::dump(binary, buildResult.getBinarySize(), cliOptions.binaryOutFilePath);
+    }
     return 0;
 }
 

@@ -5,18 +5,19 @@
 #include "sparkc/skr/SkrFunction.h"
 #include "sparkc/common/cfg/CfGraph.h"
 #include "sparkc/backend/rv/instr/RvaInstruction.h"
+#include "sparkc/BuildResult.h"
 
-class SparkDebugCallback {
+class SparkStageCallback {
 public:
-    virtual ~SparkDebugCallback() = default;
+    virtual ~SparkStageCallback() = default;
 
     virtual void onAstBuild(AstProgItem* item) { }
     virtual void onEmitSkrFunc(SkrFunction* skrFunc) { }
     virtual void onCfgCreated(StringRef funName, int iteration, CfGraph<SkrInstruction*>* graph) { }
-    virtual void onOptimizeSkrFunc(SkrFunction* skrFunc) { }
     virtual void onEmitRva(const std::vector<RvaInstruction*>& rva) { }
     virtual void onReplaceRvaPseudo(const std::vector<RvaInstruction*>& rva) { }
     virtual void onFixRva(const std::vector<RvaInstruction*>& rva) { }
+    virtual void onBinary(const BuildResult& buildResult) { }
 
     SymbolTable& getSymbolTable() {
         return *symTable;

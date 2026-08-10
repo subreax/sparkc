@@ -1,16 +1,18 @@
 #pragma once
-#include <cstring>
+#include <lyra/lyra.hpp>
+#include "sparkc/SparkBuildStage.h"
+#include "sparkc/SparkOptimization.h"
+#include "sparkc/frontend/lexer/Lexer.h"
 
 struct CliOptions {
-    const char* srcPath;
-    bool printAst = false;
-    bool printSkr = false;
-    bool printSkrOpt = false;
-    bool printRvaBase = false;
-    bool printRvaRepl = false;
-    bool printRvaFix = false;
+    std::string srcPath;
+    SparkBuildStage finalBuildStage = SparkBuildStage::Bin;
+    std::string astMermaidOutDirPath;
+    std::string cfgOutDirPath;
+    std::string binaryOutFilePath = "a.bin";
+    uint32_t optimizations = 0;
+    bool printMemoryUsage = false;
     bool colored = false;
-    bool printMem = false;
 };
 
 class Cli {
@@ -24,41 +26,130 @@ public:
     }
 
     CliOptions parse() {
-        bool printAll = contains("--print-all");
-        bool printSkrAll = printAll || contains("--print-skr-all");
-        bool printRvaAll = printAll || contains("--print-rva-all");
-
         CliOptions options;
-        options.srcPath = findSrcPath();
-        options.printAst = printAll || contains("--print-ast");
-        options.printSkr = printSkrAll || contains("--print-skr");
-        options.printSkrOpt = printSkrAll || contains("--print-skr-opt");
-        options.printRvaBase = printRvaAll || contains("--print-rva-base");
-        options.printRvaRepl = printRvaAll || contains("--print-rva-repl");
-        options.printRvaFix = printRvaAll || contains("--print-rva-fix");
-        options.colored = contains("--colored");
-        options.printMem = printAll || contains("--print-mem");
+
+        std::string finalBuildStageStr;
+        std::string optimizationsStr;
+        bool printHelp = false;
+
+        // clang-format off
+        auto cli = lyra::cli()
+            | lyra::opt(options.srcPath, "src")
+                ["--src"]
+                ("Source file")
+
+            | lyra::opt(finalBuildStageStr, "stage")
+                ["--emit"]
+                ("Final build stage")
+                .choices("ast", "ast-mermaid", "skr", "rva-initial", "rva-replaced", "rva-fixed", "bin")
+                
+            | lyra::opt(options.astMermaidOutDirPath, "path")
+                ["--ast-mermaid-out"]
+                ("AST output directory written in mermaid syntax")
+
+            | lyra::opt(options.cfgOutDirPath, "path")
+                ["--cfg-mermaid-out"]
+                ("Control flow graph output directory written in mermaid syntax")
+
+            | lyra::opt(optimizationsStr, "types")
+                ["--optimize"]
+                ("Comma-separated optimizations (const-folding, dce, copy-prop, dse, or all)")
+
+            | lyra::opt(options.colored)
+                ["--colored"]
+                ("Color output")
+            
+            | lyra::opt(options.binaryOutFilePath, "filename")
+                ["-o"]["--output"]
+                ("Binary output file name")
+
+            | lyra::opt(options.printMemoryUsage)
+                ["-m"]["--mem-usage"]
+                ("Print memory usage")
+
+            | lyra::opt(printHelp)
+                ["-h"]["--help"]
+                ("Print help")
+            ;
+        // clang-format on
+
+        auto result = cli.parse({ argc, argv });
+        if (!result) {
+            throw std::runtime_error(result.message());
+        }
+
+        if (printHelp) {
+            std::cout << cli << std::endl;
+            exit(0);
+            return options;
+        }
+
+        if (options.srcPath.empty()) {
+            throw std::runtime_error("Specify source file to compile");
+        }
+
+        options.finalBuildStage = parseCompilationResult(finalBuildStageStr);
+        options.optimizations = parseSelectedOptimizations(optimizationsStr);
         return options;
     }
 
 private:
-    bool contains(const char* arg) const {
-        for (int i = 1; i < argc; i++) {
-            if (strncmp(argv[i], arg, 32) == 0) {
-                return true;
-            }
+    SparkBuildStage parseCompilationResult(const std::string& str) const {
+        if (str == "ast") {
+            return SparkBuildStage::AST;
         }
-        return false;
+        if (str == "skr") {
+            return SparkBuildStage::SKR;
+        }
+        if (str == "rva-initial") {
+            return SparkBuildStage::RVA_Initial;
+        }
+        if (str == "rva-replaced") {
+            return SparkBuildStage::RVA_Replaced;
+        }
+        if (str == "rva-fixed") {
+            return SparkBuildStage::RVA_Fixed;
+        }
+        return SparkBuildStage::Bin;
     }
 
-    const char* findSrcPath() const {
-        for (int i = 1; i < argc; i++) {
-            const char* arg = argv[i];
-            if (arg[0] != '-') {
-                return arg;
+    uint32_t parseSelectedOptimizations(const std::string& str) const {
+        uint32_t optimizations = 0;
+
+        int pos = 0;
+        while (pos < str.length()) {
+            auto token = readUntil(str, ',', pos);
+            if (token == "const-folding") {
+                optimizations |= SPARK_OPT_CONSTANT_FOLDING;
             }
+            else if (token == "dce") {
+                optimizations |= SPARK_OPT_DEAD_CODE_ELIM;
+            }
+            else if (token == "copy-prop") {
+                optimizations |= SPARK_OPT_COPY_PROPAGATION;
+            }
+            else if (token == "dse") {
+                optimizations |= SPARK_OPT_DEAD_STORE_ELIM;
+            }
+            else if (token == "all") {
+                optimizations = SPARK_OPT_ALL;
+            }
+            else {
+                throw std::runtime_error("Unknown optimization: " + token);
+            }
+
+            pos += token.length() + 1;
         }
-        return nullptr;
+
+        return optimizations;
+    }
+
+    static std::string readUntil(const std::string& str, char end, int from = 0) {
+        auto endPos = str.find(end, from);
+        if (endPos == std::string::npos) {
+            return str.substr(from);
+        }
+        return str.substr(from, endPos - from);
     }
 
     const int argc;

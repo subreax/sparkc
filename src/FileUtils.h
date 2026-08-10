@@ -3,6 +3,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <filesystem>
 
 class FileUtils {
 public:
@@ -29,6 +30,24 @@ public:
         }
 
         return path.substr(0, dot) + "." + newExt;
+    }
+
+    static bool createDirectories(const std::string& path) {
+        auto dir = std::filesystem::path(path).parent_path();
+
+        if (dir.empty()) {
+            return true;
+        }
+
+        std::error_code ec;
+        std::filesystem::create_directories(dir, ec);
+
+        if (ec) {
+            std::cerr << "Failed to create directories: " << ec.message() << std::endl;
+            return false;
+        }
+
+        return true;
     }
 
 private:
