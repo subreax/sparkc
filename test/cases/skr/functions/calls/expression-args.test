@@ -1,0 +1,25 @@
+#cli
+--emit skr
+
+#src
+fun add(a: int, b: int): int {
+    return a + b;
+}
+
+fun main(x: int): int {
+    return add(x + 1, x * 2) * 3;
+}
+
+#expect
+fun add(a.0: int, b.1: int): int
+    retval.2 = int a.0 + b.1
+    jmp .ret_0
+    .ret_0:
+
+fun main(x.3: int): int
+    main.5 = int x.3 + 1
+    main.6 = int x.3 * 2
+    r_add.7 = int add(main.5, main.6)
+    retval.4 = int r_add.7 * 3
+    jmp .ret_1
+    .ret_1:

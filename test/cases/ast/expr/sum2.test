@@ -1,0 +1,32 @@
+#cli
+--emit ast
+
+#src
+fun main(): int {
+    return 1 + 2;
+}
+
+#expect
+AstFunction(
+  name: 'main',
+  returnType: 'int',
+  params: [],
+  body: AstBlock(
+    items: [
+      AstReturnStatement(
+        exp: AstBinaryExp(
+          type: 'int',
+          op: '+',
+          left: AstConstantExp(
+            type: 'int',
+            value: '1'
+          ),
+          right: AstConstantExp(
+            type: 'int',
+            value: '2'
+          )
+        )
+      )
+    ]
+  )
+)

@@ -1,0 +1,54 @@
+#cli
+--emit ast
+
+#src
+fun min(a: int, b: int): int {
+    if (a > b) return b;
+    else return a;
+}
+
+#expect
+AstFunction(
+  name: 'min',
+  returnType: 'int',
+  params: [
+    AstFunParam(
+      type: 'int',
+      name: 'a.0'
+    ),
+    AstFunParam(
+      type: 'int',
+      name: 'b.1'
+    )
+  ],
+  body: AstBlock(
+    items: [
+      AstIfStatement(
+        cond: AstBinaryExp(
+          type: 'int',
+          op: '>',
+          left: AstVar(
+            type: 'int',
+            id: 'a.0'
+          ),
+          right: AstVar(
+            type: 'int',
+            id: 'b.1'
+          )
+        ),
+        true: AstReturnStatement(
+          exp: AstVar(
+            type: 'int',
+            id: 'b.1'
+          )
+        ),
+        false: AstReturnStatement(
+          exp: AstVar(
+            type: 'int',
+            id: 'a.0'
+          )
+        )
+      )
+    ]
+  )
+)

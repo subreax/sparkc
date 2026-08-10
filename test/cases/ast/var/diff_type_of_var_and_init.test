@@ -1,0 +1,36 @@
+#cli
+--emit ast
+
+#src
+fun main(): int {
+    var a: int = 5.7f;
+    return a;
+}
+
+#expect
+AstFunction(
+  name: 'main',
+  returnType: 'int',
+  params: [],
+  body: AstBlock(
+    items: [
+      AstVarDeclaration(
+        type: 'int',
+        name: 'a.0',
+        init: AstCast(
+          type: 'int',
+          exp: AstConstantExp(
+            type: 'float',
+            value: '5.7'
+          )
+        )
+      ),
+      AstReturnStatement(
+        exp: AstVar(
+          type: 'int',
+          id: 'a.0'
+        )
+      )
+    ]
+  )
+)

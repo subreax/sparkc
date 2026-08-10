@@ -1,0 +1,7 @@
+#cli
+--emit ast
+
+#src
+struct wrong(a: int, a: int);
+
+#expect_failure

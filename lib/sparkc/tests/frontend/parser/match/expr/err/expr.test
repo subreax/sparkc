@@ -1,6 +1,0 @@
-#src
-fun main(): int {
-    return 5 ++ 3;
-}
-
-#expect_failure

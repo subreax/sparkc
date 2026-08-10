@@ -6,6 +6,7 @@
 
 struct CliOptions {
     std::string srcPath;
+    std::string sourceCode;
     SparkBuildStage finalBuildStage = SparkBuildStage::Bin;
     std::string astMermaidOutDirPath;
     std::string cfgOutDirPath;
@@ -37,6 +38,10 @@ public:
             | lyra::opt(options.srcPath, "src")
                 ["--src"]
                 ("Source file")
+
+            | lyra::opt(options.sourceCode, "code")
+                ["--code"]
+                ("Source code")
 
             | lyra::opt(finalBuildStageStr, "stage")
                 ["--emit"]
@@ -84,8 +89,12 @@ public:
             return options;
         }
 
-        if (options.srcPath.empty()) {
-            throw std::runtime_error("Specify source file to compile");
+        if (!options.srcPath.empty() && !options.sourceCode.empty()) {
+            throw std::runtime_error("Specify either --src or --code, not both");
+        }
+
+        if (options.srcPath.empty() && options.sourceCode.empty()) {
+            throw std::runtime_error("Specify source code with --src or --code");
         }
 
         options.finalBuildStage = parseCompilationResult(finalBuildStageStr);

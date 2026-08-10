@@ -1,0 +1,14 @@
+#cli
+--emit skr
+
+#src
+fun main(): int {
+    return 2 + 3 * 4;
+}
+
+#expect
+fun main(): int
+    main.1 = int 3 * 4
+    retval.0 = int 2 + main.1
+    jmp .ret_0
+    .ret_0:

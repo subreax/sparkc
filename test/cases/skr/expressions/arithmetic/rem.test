@@ -1,0 +1,13 @@
+#cli
+--emit skr
+
+#src
+fun main(): int {
+    return 13 % 5;
+}
+
+#expect
+fun main(): int
+    retval.0 = int 13 % 5
+    jmp .ret_0
+    .ret_0:

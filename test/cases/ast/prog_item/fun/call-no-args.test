@@ -1,0 +1,44 @@
+#cli
+--emit ast
+
+#src
+fun testFn(): int {
+    return 5;
+}
+
+fun main(): int {
+    return testFn();
+}
+
+#expect
+AstFunction(
+  name: 'testFn',
+  returnType: 'int',
+  params: [],
+  body: AstBlock(
+    items: [
+      AstReturnStatement(
+        exp: AstConstantExp(
+          type: 'int',
+          value: '5'
+        )
+      )
+    ]
+  )
+)
+AstFunction(
+  name: 'main',
+  returnType: 'int',
+  params: [],
+  body: AstBlock(
+    items: [
+      AstReturnStatement(
+        exp: AstFunCall(
+          type: 'int',
+          funName: 'testFn',
+          args: []
+        )
+      )
+    ]
+  )
+)

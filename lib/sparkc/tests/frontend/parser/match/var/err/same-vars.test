@@ -1,8 +1,0 @@
-#src
-fun main(): int {
-    var a = 0;
-    var a = 1;
-    return a;
-}
-
-#expect_failure

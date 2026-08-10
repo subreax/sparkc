@@ -1,0 +1,19 @@
+#cli
+--emit skr
+
+#src
+fun main(): int {
+    var a = 4;
+    var b = 3;
+    var c = a >= b;
+    return 0;
+}
+
+#expect
+fun main(): int
+    copy a.0 = int 4
+    copy b.1 = int 3
+    c.2 = int a.0 >= b.1
+    copy retval.3 = int 0
+    jmp .ret_0
+    .ret_0:

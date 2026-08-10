@@ -1,0 +1,13 @@
+#cli
+--emit ast
+
+#src
+fun main(): int {
+    var x = 5;
+    if (x > 5) 
+        return 0;
+    }
+    return 4;
+}
+
+#expect_failure

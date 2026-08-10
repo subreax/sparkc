@@ -1,0 +1,13 @@
+#cli
+--emit ast
+
+#src
+fun sameName(a: int): int {
+    return 0;
+}
+
+fun sameName(a: int): int {
+    return 0;
+}
+
+#expect_failure

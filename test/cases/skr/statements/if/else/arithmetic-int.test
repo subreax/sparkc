@@ -1,0 +1,28 @@
+#cli
+--emit skr
+
+#src
+fun min(a: int, b: int): int {
+    var result = 0;
+    if (a <= b) {
+        result = a + b * 3;
+    } else {
+        result = b * a - 5;
+    }
+    return result;
+}
+
+#expect
+fun min(a.0: int, b.1: int): int
+    copy result.2 = int 0
+    jmp .false_1 if int a.0 > b.1
+    min.4 = int b.1 * 3
+    result.2 = int a.0 + min.4
+    jmp .end_2
+    .false_1:
+    min.5 = int b.1 * a.0
+    result.2 = int min.5 - 5
+    .end_2:
+    copy retval.3 = int result.2
+    jmp .ret_0
+    .ret_0:

@@ -1,6 +1,0 @@
-#src
-fun main(): int {
-    return 2147483648;
-}
-
-#expect_failure

@@ -1,0 +1,8 @@
+#cli
+--emit ast
+
+#src
+fun main() {
+}
+
+#expect_failure

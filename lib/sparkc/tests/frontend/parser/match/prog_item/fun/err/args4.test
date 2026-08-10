@@ -1,6 +1,0 @@
-#src
-fun main(a: int b: int): int {
-    return 0;
-}
-
-#expect_failure

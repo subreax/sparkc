@@ -126,9 +126,14 @@ int main(int argc, const char** argv) {
     int fakeFun;
 
     string source;
-    if (!FileUtils::readFile(cliOptions.srcPath, source)) {
-        std::cout << "Failed to open file " << cliOptions.srcPath << endl;
-        return 1;
+    if (!cliOptions.sourceCode.empty()) {
+        source = cliOptions.sourceCode;
+    }
+    else {
+        if (!FileUtils::readFile(cliOptions.srcPath, source)) {
+            std::cout << "Failed to open file " << cliOptions.srcPath << endl;
+            return 1;
+        }
     }
 
     StageCallback stageCallback(cliOptions);

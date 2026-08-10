@@ -1,0 +1,17 @@
+#cli
+--emit skr
+
+#src
+fun main(a: int, b: float): int {
+    var f: float = a;
+    var i: int = b;
+    return i;
+}
+
+#expect
+fun main(a.0: int, b.1: float): int
+    f.2 = toFloat(a.0)
+    i.3 = toInt(b.1)
+    copy retval.4 = int i.3
+    jmp .ret_0
+    .ret_0:

@@ -1,0 +1,22 @@
+#cli
+--emit skr
+
+#src
+struct pair(a: int, b: int);
+
+fun main(): int {
+    var p = pair(1, 2);
+    p.b = 5;
+    return p.a + p.b;
+}
+
+#expect
+fun main(): int
+    copy 0(p.0) = int 1
+    copy 4(p.0) = int 2
+    copy 4(p.0) = int 5
+    copy field.2 = int 0(p.0)
+    copy field.3 = int 4(p.0)
+    retval.1 = int field.2 + field.3
+    jmp .ret_0
+    .ret_0:

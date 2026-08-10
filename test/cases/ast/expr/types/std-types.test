@@ -1,0 +1,33 @@
+#cli
+--emit ast
+
+#src
+fun test(a: int, b: float): float {
+    return 0.0;
+}
+
+#expect
+AstFunction(
+  name: 'test',
+  returnType: 'float',
+  params: [
+    AstFunParam(
+      type: 'int',
+      name: 'a.0'
+    ),
+    AstFunParam(
+      type: 'float',
+      name: 'b.1'
+    )
+  ],
+  body: AstBlock(
+    items: [
+      AstReturnStatement(
+        exp: AstConstantExp(
+          type: 'float',
+          value: '0'
+        )
+      )
+    ]
+  )
+)

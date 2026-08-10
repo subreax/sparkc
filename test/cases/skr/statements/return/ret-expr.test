@@ -1,0 +1,18 @@
+#cli
+--emit skr
+
+#src
+fun main(): int {
+    var a = 5;
+    var b = 8;
+    return a + b * 2;
+}
+
+#expect
+fun main(): int
+    copy a.0 = int 5
+    copy b.1 = int 8
+    main.3 = int b.1 * 2
+    retval.2 = int a.0 + main.3
+    jmp .ret_0
+    .ret_0:

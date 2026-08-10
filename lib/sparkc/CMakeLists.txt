@@ -57,20 +57,12 @@ target_sources(tests
   PRIVATE 
     tests/common/alloc/test_linearalloc.cpp
     
-    tests/frontend/parser/ParserTest.cpp
-
-    tests/skr/SkrTest.cpp
-
     tests/backend/rv/test_rv32base.cpp
     tests/backend/rv/RvaMovTest.cpp
-
-    tests/utils/MatchTestLoader.cpp
-
-    tests/main.cpp
 )
 target_include_directories(tests PRIVATE
   src/
   tests/
 )
 
-target_link_libraries(tests PRIVATE sparkc Catch2::Catch2)
+target_link_libraries(tests PRIVATE sparkc Catch2::Catch2WithMain)

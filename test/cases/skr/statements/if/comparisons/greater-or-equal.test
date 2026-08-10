@@ -1,0 +1,20 @@
+#cli
+--emit skr
+
+#src
+fun main(a: int, b: int): int {
+    if (a >= b) {
+        return 1;
+    }
+    return 0;
+}
+
+#expect
+fun main(a.0: int, b.1: int): int
+    jmp .false_1 if int a.0 < b.1
+    copy retval.2 = int 1
+    jmp .ret_0
+    .false_1:
+    copy retval.2 = int 0
+    jmp .ret_0
+    .ret_0:

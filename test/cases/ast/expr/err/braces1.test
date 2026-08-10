@@ -1,0 +1,9 @@
+#cli
+--emit ast
+
+#src
+fun main(): int {
+    return 5 * (;
+}
+
+#expect_failure

@@ -1,0 +1,10 @@
+#cli
+--emit ast
+
+#src
+fun main(): int {
+    var a: float = .f;
+    return 0;
+}
+
+#expect_failure

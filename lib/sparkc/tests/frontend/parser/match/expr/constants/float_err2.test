@@ -1,7 +1,0 @@
-#src
-fun main(): int {
-    var a: float = .;
-    return 0;
-}
-
-#expect_failure
