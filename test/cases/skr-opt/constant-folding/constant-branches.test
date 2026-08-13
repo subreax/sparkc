@@ -1,0 +1,35 @@
+#cli
+--emit skr --optimize const-folding
+
+#src
+fun onTrue(): int {
+    if (1 < 2) {
+        return 1;
+    }
+    return 0;
+}
+
+fun onFalse(): int {
+    if (2 < 1) {
+        return 1;
+    }
+    return 0;
+}
+
+#expect
+fun onTrue(): int
+    copy retval.0 = int 1
+    jmp .ret_0
+    .false_1:
+    copy retval.0 = int 0
+    jmp .ret_0
+    .ret_0:
+
+fun onFalse(): int
+    jmp .false_3
+    copy retval.1 = int 1
+    jmp .ret_2
+    .false_3:
+    copy retval.1 = int 0
+    jmp .ret_2
+    .ret_2:

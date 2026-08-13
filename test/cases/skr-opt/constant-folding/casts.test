@@ -1,0 +1,22 @@
+#cli
+--emit skr --optimize const-folding
+
+#src
+fun toInt(): int {
+    return 7.9;
+}
+
+fun toFloat(): float {
+    return 7;
+}
+
+#expect
+fun toInt(): int
+    copy retval.0 = int 7
+    jmp .ret_0
+    .ret_0:
+
+fun toFloat(): float
+    copy retval.1 = float 7
+    jmp .ret_1
+    .ret_1:

@@ -134,6 +134,7 @@ void TypeChecker::typeCheck(AstVar* var) {
     var->type = type;
 }
 
+// todo: logic operators should return always int, but now it's a common type of operands
 void TypeChecker::typeCheck(AstBinaryExp* bin) {
     typeCheck(bin->getLeft());
     typeCheck(bin->getRight());

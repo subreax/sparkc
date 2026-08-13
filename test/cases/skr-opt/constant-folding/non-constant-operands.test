@@ -1,0 +1,13 @@
+#cli
+--emit skr --optimize const-folding
+
+#src
+fun main(value: int): int {
+    return value + 2;
+}
+
+#expect
+fun main(value.0: int): int
+    retval.1 = int value.0 + 2
+    jmp .ret_0
+    .ret_0:

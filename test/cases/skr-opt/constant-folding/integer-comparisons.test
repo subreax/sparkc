@@ -1,0 +1,25 @@
+#cli
+--emit skr --optimize const-folding
+
+#src
+fun main(): int {
+    var equal = 2 == 2;
+    var notEqual = 2 != 2;
+    var less = 2 < 3;
+    var lessOrEqual = 2 <= 2;
+    var greater = 3 > 2;
+    var greaterOrEqual = 2 >= 3;
+    return equal;
+}
+
+#expect
+fun main(): int
+    copy equal.0 = int 1
+    copy notEqual.1 = int 0
+    copy less.2 = int 1
+    copy lessOrEqual.3 = int 1
+    copy greater.4 = int 1
+    copy greaterOrEqual.5 = int 0
+    copy retval.6 = int equal.0
+    jmp .ret_0
+    .ret_0:

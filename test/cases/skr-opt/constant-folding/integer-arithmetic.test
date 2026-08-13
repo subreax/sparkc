@@ -1,0 +1,23 @@
+#cli
+--emit skr --optimize const-folding
+
+#src
+fun main(): int {
+    var sum = 7 + 5;
+    var difference = 7 - 5;
+    var product = 7 * 5;
+    var quotient = 7 / 2;
+    var remainder = 7 % 3;
+    return sum;
+}
+
+#expect
+fun main(): int
+    copy sum.0 = int 12
+    copy difference.1 = int 2
+    copy product.2 = int 35
+    copy quotient.3 = int 3
+    copy remainder.4 = int 1
+    copy retval.5 = int sum.0
+    jmp .ret_0
+    .ret_0:

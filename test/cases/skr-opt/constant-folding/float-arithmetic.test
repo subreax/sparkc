@@ -1,0 +1,23 @@
+#cli
+--emit skr --optimize const-folding
+
+#src
+fun main(): float {
+    var sum = 1.5 + 2.25;
+    var difference = 7.5 - 2.25;
+    var product = 1.5 * 2.0;
+    var quotient = 7.5 / 2.0;
+    var remainder = 7.5 % 2.0;
+    return sum;
+}
+
+#expect
+fun main(): float
+    copy sum.0 = float 3.75
+    copy difference.1 = float 5.25
+    copy product.2 = float 3
+    copy quotient.3 = float 3.75
+    copy remainder.4 = float 1.5
+    copy retval.5 = float sum.0
+    jmp .ret_0
+    .ret_0:
