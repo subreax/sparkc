@@ -1,0 +1,17 @@
+#cli
+--emit skr --optimize copy-prop
+
+#src
+fun main(value: int): int {
+    var a = value;
+    var b = a;
+    return b + a;
+}
+
+#expect
+fun main(value.0: int): int
+    copy a.1 = int value.0
+    copy b.2 = int value.0
+    retval.3 = int value.0 + value.0
+    jmp .ret_0
+    .ret_0:

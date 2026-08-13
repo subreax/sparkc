@@ -1,0 +1,26 @@
+#cli
+--emit skr --optimize copy-prop
+
+#src
+struct color(r: float, g: float, b: float, a: float);
+
+fun pixel(): color {
+    var g = 0.5;
+    var b = 0.0;
+    var c1 = color(1.0, g, b, 1.0);
+    var c2 = c1;
+    return c2;
+}
+
+#expect
+fun pixel(): color
+    copy g.0 = float 0.5
+    copy b.1 = float 0
+    copy 0(c1.2) = float 1
+    copy 4(c1.2) = float 0.5
+    copy 8(c1.2) = float 0
+    copy 12(c1.2) = float 1
+    copy c2.3 = color c1.2
+    copy retval.4 = color c1.2
+    jmp .ret_0
+    .ret_0:

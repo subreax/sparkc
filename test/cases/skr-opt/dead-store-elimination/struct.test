@@ -1,0 +1,21 @@
+#cli
+--emit skr --optimize dse
+
+#src
+struct color(r: float, g: float, b: float, a: float);
+
+fun pixel(x: float): color {
+    var delme = color(1.0, 1.0, 1.0, 1.0);
+    var tmp = delme.g;
+    return color(1.0, 0.2, 0.3, 1.0);
+}
+
+
+#expect
+fun pixel(x.0: float): color
+    copy 0(retval.3) = float 1
+    copy 4(retval.3) = float 0.2
+    copy 8(retval.3) = float 0.3
+    copy 12(retval.3) = float 1
+    jmp .ret_0
+    .ret_0:

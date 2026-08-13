@@ -1,0 +1,14 @@
+#cli
+--emit skr --optimize all
+
+#src
+fun main(value: int): int {
+    var a = value;
+    var b = a;
+    var unused = 1 + 2;
+    return b + 3 * 4;
+}
+
+#expect
+fun main(value.0: int): int
+    retval.4 = int value.0 + 12

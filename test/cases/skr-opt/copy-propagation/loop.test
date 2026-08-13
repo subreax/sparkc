@@ -1,0 +1,33 @@
+#cli
+--emit skr --optimize copy-prop
+
+#src
+fun pixel(arg: int): int {
+    var y = 3;
+    var i = 0;
+    var incr = 2;
+    var sum = 0;
+    while (i < arg) {
+        sum = sum + y;
+        y = 5;
+        i = i + incr;
+    }
+    return sum;
+}
+
+#expect
+fun pixel(arg.0: int): int
+    copy y.1 = int 3
+    copy i.2 = int 0
+    copy incr.3 = int 2
+    copy sum.4 = int 0
+    .start_1:
+    jmp .end_2 if int i.2 >= arg.0
+    sum.4 = int sum.4 + y.1
+    copy y.1 = int 5
+    i.2 = int i.2 + 2
+    jmp .start_1
+    .end_2:
+    copy retval.5 = int sum.4
+    jmp .ret_0
+    .ret_0:

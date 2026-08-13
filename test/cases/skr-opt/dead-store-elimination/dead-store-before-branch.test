@@ -1,0 +1,25 @@
+#cli
+--emit skr --optimize dse
+
+#src
+fun main(cond: int, value: int): int {
+    var unused = value + 1;
+    if (cond) {
+        var thenValue = value + 2;
+        return thenValue;
+    }
+    var elseValue = value + 3;
+    return elseValue;
+}
+
+#expect
+fun main(cond.0: int, value.1: int): int
+    jmp .false_1 if int cond.0 == 0
+    thenValue.3 = int value.1 + 2
+    copy retval.5 = int thenValue.3
+    jmp .ret_0
+    .false_1:
+    elseValue.4 = int value.1 + 3
+    copy retval.5 = int elseValue.4
+    jmp .ret_0
+    .ret_0:

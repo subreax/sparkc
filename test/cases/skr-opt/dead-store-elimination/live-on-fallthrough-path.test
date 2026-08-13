@@ -1,0 +1,21 @@
+#cli
+--emit skr --optimize dse
+
+#src
+fun main(cond: int, value: int): int {
+    var result = value + 1;
+    if (cond) {
+        result = value + 2;
+    }
+    return result;
+}
+
+#expect
+fun main(cond.0: int, value.1: int): int
+    result.2 = int value.1 + 1
+    jmp .false_1 if int cond.0 == 0
+    result.2 = int value.1 + 2
+    .false_1:
+    copy retval.3 = int result.2
+    jmp .ret_0
+    .ret_0:

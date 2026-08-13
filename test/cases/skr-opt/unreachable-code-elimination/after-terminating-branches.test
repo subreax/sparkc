@@ -1,0 +1,22 @@
+#cli
+--emit skr --optimize dce
+
+#src
+fun main(value: int): int {
+    if (value) {
+        return 1;
+    }
+    else {
+        return 2;
+    }
+    return 3;
+}
+
+#expect
+fun main(value.0: int): int
+    jmp .false_1 if int value.0 == 0
+    copy retval.1 = int 1
+    jmp .ret_0
+    .false_1:
+    copy retval.1 = int 2
+    .ret_0:
