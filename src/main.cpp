@@ -62,7 +62,7 @@ public:
         cout << SkrPrinter::toString(getSymbolTable(), options.colored, skrFunc);
     }
 
-    void onCfgCreated(StringRef funName, int iteration, CfGraph<SkrInstruction*>* graph) override {
+    void onCfgCreated(StringRef funName, int iteration, SkrCfg& graph) override {
         if (options.finalBuildStage != SparkBuildStage::SKR) {
             return;
         }
@@ -75,7 +75,8 @@ public:
             + "/"
             + funName.toString()
             + "." + std::to_string(iteration) + ".md";
-        SkrCfgMermaidPrinter::saveToFile(*graph, getSymbolTable(), filePath);
+        FileUtils::createDirectories(filePath);
+        SkrCfgMermaidPrinter::saveToFile(graph, getSymbolTable(), filePath);
     }
 
     void onEmitRva(const std::vector<RvaInstruction*>& rva) override {

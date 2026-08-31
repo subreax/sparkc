@@ -109,7 +109,7 @@ BuildResult SparkCompiler::build(const char* src) {
             skrFunc = SkrOptimizer(
                           pools->pool2,
                           skrFunc,
-                          [&](StringRef funName, int iteration, CfGraph<SkrInstruction*>* graph) {
+                          [&](StringRef funName, int iteration, SkrCfg& graph) {
                               stageCallback->onCfgCreated(funName, iteration, graph);
                           }
             ).optimize(skrOptimizerConfig);

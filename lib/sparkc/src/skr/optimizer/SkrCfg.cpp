@@ -1,15 +1,15 @@
 #include "sparkc/common/StringRef.h"
 #include "sparkc/common/cfg/CfgBlock.h"
 #include "sparkc/skr/instr/everything.h"
-using namespace cfg;
 
+namespace cfg {
 template <>
-bool cfg::isLabel(SkrInstruction* ptr) {
-    return ptr->kind == SkrInstruction::Kind::Label;
+bool isLabel(SkrInstruction* const& skr) {
+    return skr->kind == SkrInstruction::Kind::Label;
 }
 
 template <>
-StringRef cfg::getLabel(SkrInstruction* ptr) {
+StringRef getLabel(SkrInstruction* const& ptr) {
     switch (ptr->kind) {
     case SkrInstruction::Kind::Label: return ((SkrLabel*) ptr)->getLabel();
     case SkrInstruction::Kind::Jump: return ((SkrJump*) ptr)->getLabel();
@@ -19,11 +19,12 @@ StringRef cfg::getLabel(SkrInstruction* ptr) {
 }
 
 template <>
-bool cfg::isJump(SkrInstruction* ptr) {
+bool isJump(SkrInstruction* const& ptr) {
     return ptr->kind == SkrInstruction::Kind::Jump;
 }
 
 template <>
-bool cfg::isBranch(SkrInstruction* ptr) {
+bool isBranch(SkrInstruction* const& ptr) {
     return ptr->kind == SkrInstruction::Kind::Branch;
 }
+} // namespace cfg

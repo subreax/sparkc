@@ -1,11 +1,11 @@
 #pragma once
-#include "sparkc/common/cfg/CfGraph.h"
-#include "sparkc/skr/instr/everything.h"
 #include <unordered_set>
+#include "sparkc/skr/instr/everything.h"
+#include "sparkc/common/cfg/CFG.h"
 
 class UnreachableCodeElimination {
 public:
-    UnreachableCodeElimination(CfGraph<SkrInstruction*>* graph)
+    UnreachableCodeElimination(SkrCfg& graph)
         : graph(graph) { }
 
     void run() {
@@ -16,77 +16,81 @@ public:
 
 private:
     void disconnectUnreachableBlocks() {
-        std::unordered_set<int> visited;
-        auto& blocks = graph->getBlocks();
-        traverse(blocks.front(), visited);
+        BitArray visited(graph.getSize());
+        traverse(0, visited);
 
-        for (auto* block : blocks) {
-            if (!contains(visited, block)) {
-                graph->disconnect(block);
+        for (size_t i = 0; i < graph.getSize(); i++) {
+            if (!visited[i]) {
+                graph.disconnect(i);
             }
         }
     }
 
     void removeUselessJumps() {
-        const auto& blocks = graph->getBlocks();
-        if (blocks.empty()) {
+        if (graph.isEmpty()) {
             return;
         }
 
-        for (size_t i = 0; i < blocks.size() - 1; i++) {
-            auto* curr = blocks[i];
-            auto* next = blocks[i + 1];
+        for (size_t currIdx = 0; currIdx < graph.getSize() - 1; currIdx++) {
+            auto& curr = graph[currIdx];
+            size_t nextIdx = currIdx + 1;
+            auto& next = graph[nextIdx];
 
-            if (graph->isConnected(curr, next) && curr->hasJump() && next->isLabeled()) {
-                auto jumpLabel = curr->getJumpOrBranchLabel();
-                auto blockLabel = next->getLabel();
-                if (jumpLabel == blockLabel) {
-                    curr->getBody().erase(curr->getBody().end() - 1);
+            if (graph.isConnected(currIdx, nextIdx) && curr.hasJump() && next.isLabeled()) {
+                auto jumpLabel = curr.getJumpOrBranchLabel();
+                auto nextLabel = next.getLabel();
+                if (jumpLabel == nextLabel) {
+                    eraseJump(curr);
                 }
             }
         }
     }
 
     void removeUselessLabels() {
-        const auto& blocks = graph->getBlocks();
-        if (blocks.empty()) {
+        if (graph.isEmpty()) {
             return;
         }
 
-        for (size_t i = 0; i < blocks.size() - 1; i++) {
-            auto* curr = blocks[i];
-            auto* next = blocks[i + 1];
+        for (size_t currIdx = 0; currIdx < graph.getSize() - 1; currIdx++) {
+            auto& curr = graph[currIdx];
+            size_t nextIdx = currIdx + 1;
+            auto& next = graph[nextIdx];
 
-            if (graph->isConnected(curr, next) && next->isLabeled() && graph->countPrecedessors(next) == 1) {
-                next->getBody().erase(next->getBody().begin());
+            if (graph.isConnected(currIdx, nextIdx) && next.isLabeled() && hasSinglePredecessor(nextIdx)) {
+                eraseLabel(next);
             }
         }
     }
 
-    void traverse(
-        const CfgBlock<SkrInstruction*>* block,
-        std::unordered_set<int>& visited
-    ) {
-        if (contains(visited, block)) {
+    void traverse(size_t block, BitArray& visited) {
+        if (visited[block]) {
             return;
         }
 
-        visited.emplace(block->getIdx());
+        visited.set(block);
 
-        auto it = graph->successorsIterator(block);
-        auto end = graph->sEnd();
-        while (it != end) {
-            traverse(*it, visited);
-            ++it;
+        auto it = graph.successors(block);
+        while (it.hasNext()) {
+            traverse(it.nextIdx(), visited);
         }
     }
 
-    static bool contains(
-        const std::unordered_set<int>& s,
-        const CfgBlock<SkrInstruction*>* block
-    ) {
-        return s.find(block->getIdx()) != s.end();
+    bool hasSinglePredecessor(size_t blockIdx) const {
+        auto it = graph.predecessors(blockIdx);
+        if (!it.hasNext()) {
+            return false;
+        }
+        it.next();
+        return !it.hasNext();
     }
 
-    CfGraph<SkrInstruction*>* graph;
+    void eraseLabel(SkrCfgBlock& block) {
+        block.eraseFirstInstruction();
+    }
+
+    void eraseJump(SkrCfgBlock& block) {
+        block.eraseLastInstruction();
+    }
+
+    SkrCfg& graph;
 };

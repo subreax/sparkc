@@ -1,101 +1,81 @@
 #pragma once
-#include "CfGraph.h"
-#include <unordered_set>
 #include <vector>
+#include "CFG.h"
 
 template <typename I>
 class CfgBuilder {
 public:
-    CfGraph<I*>* build_delGraphWhenDone(const std::vector<I*>& body) {
-        std::vector<CfgBlock<I*>*> nodes;
-        readBlocks(body, nodes);
-        graph = new CfGraph<I*>(nodes);
-        addEdges();
+    static CFG<I> build(const std::vector<I>& instructions) {
+        CFG<I> graph(readBlocks(instructions));
+        addEdges(graph);
         return graph;
     }
 
-    CfGraph<I*>& getGraph() {
-        if (graph == nullptr) {
-            sparkError("CfgBuilder", "Graph is not ready");
-        }
-        return *graph;
-    }
-
 private:
-    static void readBlocks(const std::vector<I*>& body, std::vector<CfgBlock<I*>*>& nodes) {
-        int blockIdx = 0;
-        nodes.emplace_back(new CfgBlock<I*>(blockIdx++));
+    static std::vector<CfgBlock<I>> readBlocks(const std::vector<I>& instructions) {
+        std::vector<CfgBlock<I>> blocks;
 
-        std::vector<I*> block;
-        for (auto* instr : body) {
+        int blockIdx = 0;
+        blocks.emplace_back(blockIdx++); // start block
+
+        std::vector<I> block;
+        for (const auto& instr : instructions) {
             if (!block.empty() && cfg::isLabel(instr)) {
-                nodes.emplace_back(new CfgBlock<I*>(blockIdx++, block));
+                blocks.emplace_back(blockIdx++, block);
                 block.clear();
             }
 
             block.emplace_back(instr);
+
             if (cfg::isJump(instr) || cfg::isBranch(instr)) {
-                nodes.emplace_back(new CfgBlock<I*>(blockIdx++, block));
+                blocks.emplace_back(blockIdx++, block);
                 block.clear();
             }
         }
 
         if (!block.empty()) {
-            nodes.emplace_back(new CfgBlock<I*>(blockIdx++, block));
+            blocks.emplace_back(blockIdx++, block);
         }
 
-        nodes.emplace_back(new CfgBlock<I*>(blockIdx++));
+        blocks.emplace_back(blockIdx++); // end block
+        return blocks;
     }
 
-    void addEdges() {
-        const auto& blocks = graph->getBlocks();
-        std::unordered_set<int> visited;
+    static void addEdges(CFG<I>& graph) {
+        for (size_t i = 0; i < graph.getSize() - 1; i++) {
+            CfgBlock<I>& block = graph[i];
+            auto blockIdx = i;
 
-        for (size_t i = 0; i < blocks.size() - 1; i++) {
-            CfgBlock<SkrInstruction*>* block = blocks[i];
-            if (isVisited(visited, block)) {
-                continue;
+            if (block.hasJump()) {
+                auto jumpLabel = block.getJumpOrBranchLabel();
+                auto nextNodeIdx = findBlockIdxByLabel(graph, jumpLabel);
+                graph.connect(blockIdx, nextNodeIdx);
             }
-
-            visited.emplace(block->getIdx());
-
-            if (block->hasJump()) {
-                auto jumpLabel = block->getJumpOrBranchLabel();
-                auto* nextNode = findBlockByLabel(jumpLabel);
-                graph->connect(block, nextNode);
-            }
-            else if (block->hasBranch()) {
-                auto jumpLabel = block->getJumpOrBranchLabel();
-                auto* jumpNode = findBlockByLabel(jumpLabel);
-                graph->connect(block, jumpNode);
-                graph->connect(block, blocks[i + 1]);
+            else if (block.hasBranch()) {
+                auto jumpLabel = block.getJumpOrBranchLabel();
+                auto jumpNodeIdx = findBlockIdxByLabel(graph, jumpLabel);
+                graph.connect(blockIdx, jumpNodeIdx);
+                graph.connect(blockIdx, i + 1);
             }
             else {
-                graph->connect(block, blocks[i + 1]);
+                graph.connect(blockIdx, i + 1);
             }
         }
     }
 
-    CfgBlock<I*>* findBlockByLabel(StringRef label) {
-        const auto& nodes = graph->getBlocks();
-        for (auto* node : nodes) {
-            if (node->isEmpty() || !node->isLabeled()) {
+    static size_t findBlockIdxByLabel(const CFG<I>& graph, StringRef label) {
+        for (const auto& block : graph.getNodes()) {
+            if (block.isEmpty() || !block.isLabeled()) {
                 continue;
             }
 
-            StringRef nodeLabel = node->getLabel();
-            if (label == nodeLabel) {
-                return node;
+            StringRef blockLabel = block.getLabel();
+            if (label == blockLabel) {
+                return block.getIdx();
             }
         }
 
-        sparkError("CfgBuilder", "Failed to find block by label: %s", label);
-        return nullptr;
+        sparkError("CfgBuilder", "Failed to find block with label '%s'", label);
+        return -1;
     }
-
-    static bool isVisited(const std::unordered_set<int>& visited, const CfgBlock<I*>* block) {
-        return visited.find(block->getIdx()) != visited.end();
-    }
-
-    CfGraph<I*>* graph = nullptr;
 };

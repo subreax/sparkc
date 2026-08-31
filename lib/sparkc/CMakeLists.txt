@@ -40,8 +40,8 @@ set(SPARKC_SRC
   src/skr/instr/SkrBinary.cpp
   src/skr/instr/SkrBranch.cpp
   src/skr/value/SkrValue.cpp
-  src/skr/optimizer/SkrCfgOverloadings.cpp
-  src/skr/optimizer/copyprop/CopyPropagation.cpp
+  src/skr/optimizer/SkrCfg.cpp
+  # src/skr/optimizer/copyprop/CopyPropagation.cpp
   src/symbol/SymbolTable.cpp
   src/symbol/SymbolType.cpp
   src/type/TypeTable.cpp
@@ -56,6 +56,7 @@ add_executable(tests)
 target_sources(tests 
   PRIVATE 
     tests/common/alloc/test_linearalloc.cpp
+    tests/common/cfg/GraphTest.cpp
     
     tests/backend/rv/test_rv32base.cpp
     tests/backend/rv/RvaMovTest.cpp

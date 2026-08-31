@@ -13,12 +13,12 @@ public:
         , table(table) { }
 
     static void saveToFile(
-        CfGraph<SkrInstruction*>& graph,
+        const SkrCfg& graph,
         const SymbolTable& table,
         const std::string& outFile
     ) {
-        FileUtils::createDirectories("cfg");
-        std::ofstream astOut("cfg/" + outFile);
+        FileUtils::createDirectories(outFile);
+        std::ofstream astOut(outFile);
         astOut << "```mermaid\n";
         astOut << "---\n"
                   "config:\n"
@@ -34,27 +34,26 @@ public:
         astOut.close();
     }
 
-    void print(CfGraph<SkrInstruction*>& graph) {
-        auto& blocks = graph.getBlocks();
-        declareBegin(blocks.front()->getIdx());
+    void print(const SkrCfg& graph) {
+        const auto& blocks = graph.getNodes();
+        declareBegin(blocks.front().getIdx());
         for (size_t i = 1; i < blocks.size() - 1; i++) {
-            auto* node = blocks[i];
-            declare(node->getIdx(), node->getBody());
+            const auto& node = blocks[i];
+            declare(node.getIdx(), node.getBody());
         }
-        declareEnd(blocks.back()->getIdx());
+        declareEnd(blocks.back().getIdx());
 
         addConnections(graph);
     }
 
 private:
-    void addConnections(const CfGraph<SkrInstruction*>& graph) {
-        const auto& blocks = graph.getBlocks();
-        for (auto* block : blocks) {
-            auto it = graph.successorsIterator(block);
-            auto end = graph.sEnd();
-            while (it != end) {
-                connect(graph, block, *it);
-                ++it;
+    void addConnections(const SkrCfg& graph) {
+        const auto& blocks = graph.getNodes();
+        for (const auto& block : blocks) {
+            auto it = graph.successors(block.getIdx());
+            while (it.hasNext()) {
+                const auto& nextBlock = it.nextNode();
+                connect(graph, block, nextBlock);
             }
         }
     }
@@ -64,7 +63,7 @@ private:
         if (!body.empty()) {
             for (auto* instr : body) {
                 if (instr->kind == SkrInstruction::Kind::Label) {
-                    out << "**" << SkrPrinter::toString(table, false, instr) << "**\n";
+                    out << SkrPrinter::toString(table, false, instr) << "\n";
                 }
                 else {
                     out << SkrPrinter::toString(table, false, instr);
@@ -80,11 +79,11 @@ private:
     void declareEnd(int id) { out << "id" << id << "(\"#" << id << " end\")\n"; }
 
     void connect(
-        const CfGraph<SkrInstruction*>& graph,
-        const CfgBlock<SkrInstruction*>* n1,
-        const CfgBlock<SkrInstruction*>* n2
+        const SkrCfg& graph,
+        const SkrCfgBlock& n1,
+        const SkrCfgBlock& n2
     ) {
-        out << "id" << n1->getIdx() << " --> " << "id" << n2->getIdx() << "\n";
+        out << "id" << n1.getIdx() << " --> " << "id" << n2.getIdx() << "\n";
     }
 
     std::ostream& out;

@@ -4,26 +4,28 @@
 
 namespace cfg {
 template <typename I>
-bool isLabel(I* ptr);
+bool isLabel(const I& instr);
 
 // return empty string if instruction doesn't have labels or jumps
 template <typename I>
-StringRef getLabel(I* ptr);
+StringRef getLabel(const I& instr);
 
 template <typename I>
-bool isJump(I* ptr);
+bool isJump(const I& instr);
 
 template <typename I>
-bool isBranch(I* ptr);
+bool isBranch(const I& instr);
 }; // namespace cfg
 
 template <typename I>
 class CfgBlock {
 public:
-    CfgBlock(int idx)
+    CfgBlock() = default;
+
+    CfgBlock(size_t idx)
         : idx(idx) { }
 
-    CfgBlock(int idx, const std::vector<I>& body)
+    CfgBlock(size_t idx, const std::vector<I>& body)
         : idx(idx)
         , body(body) { }
 
@@ -42,15 +44,23 @@ public:
         return body[idx];
     }
 
-    int getIdx() const { return idx; }
+    size_t getIdx() const { return idx; }
 
-    bool isEmpty() { return body.empty(); }
-    bool isNotEmpty() { return !isEmpty(); }
+    bool isEmpty() const { return body.empty(); }
+    bool isNotEmpty() const { return !isEmpty(); }
 
-    void copyTo(std::vector<I>& out) {
-        for (I& instr : body) {
+    void copyTo(std::vector<I>& out) const {
+        for (const I& instr : body) {
             out.emplace_back(instr);
         }
+    }
+
+    void eraseLastInstruction() {
+        body.erase(body.end() - 1);
+    }
+
+    void eraseFirstInstruction() {
+        body.erase(body.begin());
     }
 
     bool isLabeled() const {
@@ -83,5 +93,5 @@ public:
 
 private:
     std::vector<I> body;
-    const int idx;
+    const size_t idx = -1;
 };
