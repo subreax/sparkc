@@ -3,46 +3,42 @@
 #include "ReachingCopiesAnalysis.h"
 
 CopyPropagation::CopyPropagation(
-    CfGraph<SkrInstruction*>* graph,
-    Allocator& allocator
+    SkrFactory& skrf,
+    SkrCfg& graph
 )
-    : graph(graph)
-    , allocator(allocator) { }
+    : skrf(skrf)
+    , graph(graph) { }
 
 void CopyPropagation::run() {
     ReachingCopiesAnalysis rca(graph);
     rca.run();
 
-    const auto blocksCount = graph->getBlocks().size();
-    for (size_t i = 1; i < blocksCount - 1; i++) {
-        auto* block = getBlock(i);
-        auto* annotated = rca.getAnnotated(i);
+    for (size_t i = 1; i < graph.getSize() - 1; i++) {
+        auto& block = graph[i];
+        auto& annotated = rca.getAnnotated(i);
 
-        auto& body = block->getBody();
+        auto& body = block.getBody();
         const auto instrCount = body.size();
         for (size_t instrIdx = 0; instrIdx < instrCount; instrIdx++) {
             body[instrIdx] = rewriteInstruction(block, annotated, instrIdx);
-            if (shouldBeRemoved(body[instrIdx])) {
-                body[instrIdx] = nullptr;
-            }
         }
         SkrOptimizerUtils::filterNullptrs(body);
     }
 }
 
 SkrInstruction* CopyPropagation::rewriteInstruction(
-    CfgBlock<SkrInstruction*>* block,
-    RCABlock* annotated,
+    SkrCfgBlock& block,
+    RCABlock& annotated,
     size_t instrIdx
 ) {
-    auto* instr = block->getBody()[instrIdx];
-    const auto& copies = annotated->instrCopies[instrIdx];
+    auto* instr = block[instrIdx];
+    const auto& copies = annotated.instructionAnnotations[instrIdx];
     if (instr->kind == SkrInstruction::Kind::Binary) {
         auto* it = (SkrBinary*) instr;
         auto* left = replace(it->getLeft(), copies);
         auto* right = replace(it->getRight(), copies);
         if (left != it->getLeft() || right != it->getRight()) {
-            return allocator.create<SkrBinary>(it->getDst(), left, it->getOperator(), right);
+            return skrf.binary(it->getDst(), left, it->getOperator(), right);
         }
     }
     else if (instr->kind == SkrInstruction::Kind::Copy) {
@@ -52,17 +48,17 @@ SkrInstruction* CopyPropagation::rewriteInstruction(
             return nullptr;
         }
         if (from != it->getFrom()) {
-            return allocator.create<SkrCopy>(it->getTo(), from);
+            return skrf.copy(it->getTo(), from);
         }
     }
     else if (instr->kind == SkrInstruction::Kind::CopyToOffset) {
         // CopyToOffset  4(color) = x
-        // CopyToOffset  4(color) = 2
+        // CopyToOffset  4(color) = replaced
 
         auto* it = (SkrCopyToOffset*) instr;
         auto* from = replace(it->getFrom(), copies);
         if (*from != *it->getFrom()) {
-            return allocator.create<SkrCopyToOffset>(it->getTo(), it->getToOffset(), from);
+            return skrf.copyToOffset(it->getTo(), it->getToOffset(), from);
         }
     }
     else if (instr->kind == SkrInstruction::Kind::CopyFromOffset) {
@@ -70,84 +66,66 @@ SkrInstruction* CopyPropagation::rewriteInstruction(
         // CopyFromOffset   x = 4(replaced)
 
         auto* it = (SkrCopyFromOffset*) instr;
-        auto* from = replace(it->getFrom(), copies);
+        if (!it->getFrom()->isVar()) {
+            sparkError("CopyPropagation", "Wrong 'from' type, expected var");
+        }
+
+        auto* from = (SkrVar*) replace(it->getFrom(), copies);
         if (*from != *it->getFrom()) {
-            return allocator.create<SkrCopyFromOffset>(
-                it->getTo(),
-                from,
-                it->getFromOffset()
-            );
+            return skrf.copyFromOffset(it->getTo(), from, it->getFromOffset());
         }
     }
     else if (instr->kind == SkrInstruction::Kind::FunCall) {
         auto* it = (SkrFunCall*) instr;
 
-        std::vector<SkrValue*> newArgs;
-        replace(it->getArgs(), copies, newArgs);
+        std::vector<SkrValue*> newArgs = replaceArgs(it->getArgs(), copies);
         if (it->getArgs() != newArgs) {
-            return allocator.create<SkrFunCall>(
-                it->getName(),
-                BoundArray<SkrValue*>::fromVector(newArgs, allocator),
-                it->getRetVar()
-            );
+            return skrf.funCall(it->getName(), newArgs, it->getRetVar());
+        }
+    }
+    else if (instr->kind == SkrInstruction::Kind::Float2Int) {
+        auto* it = (SkrFloat2Int*) instr;
+        auto* src = replace(it->getSrc(), copies);
+        if (*src != *it->getSrc()) {
+            return skrf.float2Int(it->getDst(), src);
+        }
+    }
+    else if (instr->kind == SkrInstruction::Kind::Int2Float) {
+        auto* it = (SkrInt2Float*) instr;
+        auto* src = replace(it->getSrc(), copies);
+        if (*src != *it->getSrc()) {
+            return skrf.int2Float(it->getDst(), src);
         }
     }
 
     return instr;
 }
 
-void CopyPropagation::replace(
-    const BoundArray<SkrValue*>& values,
-    const std::vector<SkrCopy*>& copies,
-    std::vector<SkrValue*>& out
+std::vector<SkrValue*> CopyPropagation::replaceArgs(
+    const BoundArray<SkrValue*>& args,
+    const ReachingCopies& copies
 ) {
-    out.reserve(values.size());
-    for (size_t i = 0; i < values.size(); i++) {
-        out.emplace_back(replace(values[i], copies));
+    std::vector<SkrValue*> newArgs;
+    newArgs.reserve(args.size());
+    for (size_t i = 0; i < args.size(); i++) {
+        newArgs.emplace_back(replace(args[i], copies));
     }
+    return newArgs;
 }
 
 SkrValue* CopyPropagation::replace(
     SkrValue* value,
-    const std::vector<SkrCopy*>& copies
+    const ReachingCopies& copies
 ) {
     if (value->isConst()) {
         return value;
     }
 
-    auto* var = value->toSkrVar();
-    auto* copy = findCopyByDst(copies, var);
+    auto* copy = copies.findByDst(value);
     if (copy != nullptr) {
         return copy->getFrom();
     }
     else {
         return value;
     }
-}
-
-bool CopyPropagation::shouldBeRemoved(SkrInstruction* skr) {
-    if (skr->kind == SkrInstruction::Kind::Copy) {
-        auto* it = (SkrCopy*) skr;
-        return *it->getFrom() == *it->getTo();
-    }
-    return false;
-}
-
-CfgBlock<SkrInstruction*>* CopyPropagation::getBlock(int idx) {
-    return graph->getBlock(idx);
-}
-const CfgBlock<SkrInstruction*>* CopyPropagation::getBlock(int idx) const {
-    return graph->getBlock(idx);
-}
-
-SkrCopy* CopyPropagation::findCopyByDst(
-    const std::vector<SkrCopy*>& copies,
-    SkrVar* var
-) {
-    for (auto* c : copies) {
-        if (*c->getTo() == *var) {
-            return c;
-        }
-    }
-    return nullptr;
 }

@@ -2,7 +2,7 @@
 #include "sparkc/skr/SkrPrinter.h"
 #include <fstream>
 #include <iostream>
-#include <sparkc/common/cfg/CfGraph.h>
+#include <sparkc/skr/optimizer/SkrCfg.h>
 #include <sparkc/symbol/SymbolTable.h>
 #include "FileUtils.h"
 

@@ -2,7 +2,7 @@
 #include <functional>
 #include "ConstantFolding.h"
 #include "UnreachableCodeElimination.h"
-// #include "copyprop/CopyPropagation.h"
+#include "copyprop/CopyPropagation.h"
 // #include "dselim/DeadStoreElimination.h"
 #include "sparkc/common/alloc/LinearAllocator.h"
 #include "sparkc/common/cfg/CfgBuilder.h"
@@ -11,6 +11,7 @@
 #include "sparkc/skr/instr/everything.h"
 #include "sparkc/skr/optimizer/SkrCfg.h"
 #include "sparkc/skr/optimizer/SkrOptimizerConfig.h"
+#include "sparkc/common/cfg/CfgUtils.h"
 
 class SkrOptimizer {
 public:
@@ -50,7 +51,7 @@ public:
                 UnreachableCodeElimination(graph).run();
             }
             if (config.copyPropagation) {
-                // CopyPropagation(graph, a1).run();
+                CopyPropagation(skrf, graph).run();
             }
             if (config.deadStoreElimination) {
                 // DeadStoreElimination(graph, rawFunc->getRetVar()).run();
@@ -59,7 +60,7 @@ public:
             onCfgCreatedListener(rawFunc->getName(), i, graph);
 
             optimized.clear();
-            graphToPlain(graph, optimized);
+            CfgUtils::graphToPlain(graph, optimized);
 
             if (raw == optimized) {
                 break;
@@ -68,25 +69,16 @@ public:
             raw = optimized;
         }
 
-        auto bodyBa = BoundArray<SkrInstruction*>::fromVector(raw, a1);
-        return a1.create<SkrFunction>(
+        return skrf.function(
             rawFunc->getName(),
             rawFunc->getParams(),
-            bodyBa,
+            BoundArray<SkrInstruction*>::fromVector(raw, a1),
             rawFunc->getRetVar()
         );
     }
 
 private:
     static void nullListener(StringRef funName, int iteration, SkrCfg& graph) { }
-
-    static void graphToPlain(SkrCfg& cfg, std::vector<SkrInstruction*>& out) {
-        for (size_t i = 0; i < cfg.getSize(); i++) {
-            if (cfg.hasAnyConnections(i)) {
-                cfg[i].copyTo(out);
-            }
-        }
-    }
 
     std::vector<SkrInstruction*> raw;
     SkrFunction* rawFunc;

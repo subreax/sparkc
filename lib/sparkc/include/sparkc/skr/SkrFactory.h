@@ -23,6 +23,15 @@ public:
         );
     }
 
+    SkrFunction* function(
+        StringRef name,
+        const BoundArray<SkrVar*>& params,
+        const BoundArray<SkrInstruction*>& instructions,
+        const SkrVar* retVar
+    ) {
+        return allocator.create<SkrFunction>(name, params, instructions, retVar);
+    }
+
     SkrVar* var(StringRef id) {
         return allocator.create<SkrVar>(id);
     }

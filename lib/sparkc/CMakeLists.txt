@@ -41,7 +41,7 @@ set(SPARKC_SRC
   src/skr/instr/SkrBranch.cpp
   src/skr/value/SkrValue.cpp
   src/skr/optimizer/SkrCfg.cpp
-  # src/skr/optimizer/copyprop/CopyPropagation.cpp
+  src/skr/optimizer/copyprop/CopyPropagation.cpp
   src/symbol/SymbolTable.cpp
   src/symbol/SymbolType.cpp
   src/type/TypeTable.cpp

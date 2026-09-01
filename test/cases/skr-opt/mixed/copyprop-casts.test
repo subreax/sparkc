@@ -1,0 +1,18 @@
+#cli
+--emit skr --optimize const-folding,copy-prop
+
+#src
+fun main(arg: int): int {
+    var x: int = 0.0f;
+    var y: float = x + 5;
+    return y;
+}
+
+#expect
+fun main(arg.0: int): int
+    copy x.1 = int 0
+    copy main.4 = int 5
+    copy y.2 = float 5
+    copy retval.3 = int 5
+    jmp .ret_0
+    .ret_0:

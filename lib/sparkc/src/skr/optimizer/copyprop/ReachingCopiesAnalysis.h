@@ -2,80 +2,97 @@
 #include "../Uniqueue.h"
 #include "RCABlock.h"
 #include "ReachingCopies.h"
-#include "sparkc/common/cfg/CfGraph.h"
+#include "sparkc/skr/optimizer/SkrCfg.h"
 #include "sparkc/skr/instr/everything.h"
+#include "sparkc/common/cfg/CfgUtils.h"
 
 class ReachingCopiesAnalysis {
 public:
-    ReachingCopiesAnalysis(CfGraph<SkrInstruction*>* graph)
+    ReachingCopiesAnalysis(SkrCfg& graph)
         : graph(graph)
-        , annotatedBlocks(graph->getBlocks().size()) { }
+        , annotatedBlocks(graph.getSize()) { }
 
     void run() {
-        std::vector<SkrCopy*> allCopies;
-        getAllCopies(allCopies);
+        const ReachingCopies identity = getAllCopies();
 
         Uniqueue<size_t> pendingBlocks;
-
         for (size_t i = 1; i < annotatedBlocks.size() - 1; i++) {
-            auto* ab = getAnnotated(i);
-            ab->blockCopies = allCopies;
+            auto& ab = getAnnotated(i);
+            ab.blockAnnotation = identity;
             pendingBlocks.add(i);
         }
 
-        std::vector<SkrCopy*> incomingCopies;
-        while (pendingBlocks.isNotEmpty()) {
-            size_t blockIdx = pendingBlocks.peek();
-            pendingBlocks.pop();
-            RCABlock* annotation = getAnnotated(blockIdx);
-            incomingCopies.clear();
+        ReachingCopies incomingCopies;
+        incomingCopies.reserve(identity.size());
+        RCABlock oldAnnotation;
 
-            RCABlock oldAnnotation = *annotation;
-            meet(blockIdx, allCopies, incomingCopies);
+        size_t i;
+        for (i = 0; i < MAX_ITERATIONS && pendingBlocks.isNotEmpty(); i++) {
+            size_t blockIdx = getNext(pendingBlocks);
+            RCABlock& annotation = getAnnotated(blockIdx);
+
+            oldAnnotation = annotation;
+            meet(blockIdx, identity, incomingCopies);
             transfer(blockIdx, incomingCopies);
-            if (*annotation != oldAnnotation) {
+            if (annotation != oldAnnotation) {
                 addAllSuccessors(blockIdx, pendingBlocks);
             }
+
+            incomingCopies.clear();
+        }
+
+        if (i == MAX_ITERATIONS) {
+            sparkError("ReachingCopiesAnalysis", "Analysis was stuck in loop");
         }
     }
 
-    RCABlock* getAnnotated(size_t idx) { return &annotatedBlocks[idx]; }
+    RCABlock& getAnnotated(size_t idx) {
+        return annotatedBlocks[idx];
+    }
 
     const RCABlock* getAnnotated(size_t idx) const {
         return &annotatedBlocks[idx];
     }
 
-    const std::vector<RCABlock>& getResult() const { return annotatedBlocks; }
+    const std::vector<RCABlock>& getResult() const {
+        return annotatedBlocks;
+    }
 
 private:
     void meet(
         size_t blockIdx,
-        const std::vector<SkrCopy*>& allCopies,
-        std::vector<SkrCopy*>& out
+        const ReachingCopies& identity,
+        ReachingCopies& out
     ) {
-        out = allCopies;
-        auto it = graph->precedessorsIterator(blockIdx);
-        auto end = graph->pEnd();
-        while (it != end) {
-            CfgBlock<SkrInstruction*>* predecessor = *it;
-            size_t predIdx = predecessor->getIdx();
-            ReachingCopiesUtils::intersect(out, getAnnotated(predIdx)->blockCopies);
-            ++it;
+        out = identity;
+        auto it = graph.predecessors(blockIdx);
+        while (it.hasNext()) {
+            auto [predIdx, predecessor] = it.next();
+            if (!CfgUtils::isBeginBlock(graph, predIdx)) {
+                out.intersect(getAnnotated(predIdx).blockAnnotation);
+            }
+            else {
+                out.clear();
+                return;
+            }
         }
     }
 
-    void
-    transfer(size_t blockIdx, const std::vector<SkrCopy*>& incomingCopies) {
+    void transfer(size_t blockIdx, const ReachingCopies& incomingCopies) {
         ReachingCopies currentCopies(incomingCopies);
-        auto* block = graph->getBlock(blockIdx);
-        auto* annotated = getAnnotated(blockIdx);
-        annotated->clear();
+        auto& block = graph[blockIdx];
+        auto& annotated = getAnnotated(blockIdx);
+        annotated.clear();
 
-        for (auto* instr : block->getBody()) {
-            annotated->addInstrCopies(currentCopies);
+        for (auto* instr : block.getBody()) {
+            annotated.addInstructionAnnotation(currentCopies);
 
             if (instr->kind == SkrInstruction::Kind::Copy) {
                 auto* copyInstr = (SkrCopy*) instr;
+                if (currentCopies.contains(copyInstr->getFrom(), copyInstr->getTo())) {
+                    continue;
+                }
+
                 currentCopies.kill(copyInstr->getTo());
                 currentCopies.add(copyInstr);
             }
@@ -110,40 +127,45 @@ private:
                 sparkError("ReachingCopiesAnalysis", "Store is not implemented");
             }
         }
-        annotated->blockCopies = currentCopies.getCopies();
+        annotated.setBlockAnnotation(currentCopies);
     }
 
-    void getAllCopies(std::vector<SkrCopy*>& out) {
-        const auto& blocks = graph->getBlocks();
-        for (auto* block : blocks) {
-            getAllCopies(block, out);
+    ReachingCopies getAllCopies() {
+        const auto& blocks = graph.getNodes();
+        ReachingCopies result;
+        for (auto& block : blocks) {
+            getAllCopies(block, result);
         }
+        return result;
     }
 
-    void
-    getAllCopies(CfgBlock<SkrInstruction*>* block, std::vector<SkrCopy*>& out) {
-        for (auto* skr : block->getBody()) {
+    void getAllCopies(const SkrCfgBlock& block, ReachingCopies& out) {
+        for (auto* skr : block.getBody()) {
             if (skr->kind == SkrInstruction::Kind::Copy) {
                 auto* skrCopy = (SkrCopy*) skr;
-                if (!ReachingCopiesUtils::contains(out, skrCopy)) {
-                    out.emplace_back(skrCopy);
-                }
+                out.add(skrCopy);
             }
         }
     }
 
     void addAllSuccessors(size_t blockIdx, Uniqueue<size_t>& dst) {
-        auto it = graph->successorsIterator(blockIdx);
-        auto end = graph->sEnd();
-        while (it != end) {
-            size_t successorIdx = (*it)->getIdx();
-            if (!graph->isEndBlock(successorIdx)) {
+        auto it = graph.successors(blockIdx);
+        while (it.hasNext()) {
+            auto [successorIdx, block] = it.next();
+            if (!CfgUtils::isEndBlock(graph, successorIdx)) {
                 dst.add(successorIdx);
             }
-            ++it;
         }
     }
 
-    CfGraph<SkrInstruction*>* graph;
+    size_t getNext(Uniqueue<size_t>& uniqueue) const {
+        auto elem = uniqueue.peek();
+        uniqueue.pop();
+        return elem;
+    }
+
+    static constexpr size_t MAX_ITERATIONS = 300;
+
+    SkrCfg& graph;
     std::vector<RCABlock> annotatedBlocks;
 };

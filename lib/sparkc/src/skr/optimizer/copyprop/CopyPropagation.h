@@ -1,39 +1,34 @@
 #pragma once
-#include "sparkc/common/cfg/CfGraph.h"
-#include "sparkc/skr/instr/SkrCopy.h"
 #include <vector>
+#include "sparkc/skr/optimizer/SkrCfg.h"
+#include "sparkc/skr/instr/SkrCopy.h"
+#include "sparkc/skr/SkrFactory.h"
+#include "ReachingCopies.h"
 
 class CopyPropagation {
 public:
-    CopyPropagation(CfGraph<SkrInstruction*>* graph, Allocator& allocator);
+    CopyPropagation(SkrFactory& skrf, SkrCfg& graph);
     void run();
 
 private:
     SkrInstruction* rewriteInstruction(
         SkrInstruction* instr,
-        const std::vector<SkrCopy*>& reachingCopies
+        const ReachingCopies& reachingCopies
     );
 
     SkrInstruction* rewriteInstruction(
-        CfgBlock<SkrInstruction*>* block,
-        class RCABlock* annotated,
+        SkrCfgBlock& block,
+        class RCABlock& annotated,
         size_t instrIdx
     );
 
-    void replace(
-        const BoundArray<SkrValue*>& values,
-        const std::vector<SkrCopy*>& copies,
-        std::vector<SkrValue*>& out
+    std::vector<SkrValue*> replaceArgs(
+        const BoundArray<SkrValue*>& args,
+        const ReachingCopies& copies
     );
 
-    static SkrValue* replace(SkrValue* value, const std::vector<SkrCopy*>& copies);
-    static bool shouldBeRemoved(SkrInstruction* skr);
+    static SkrValue* replace(SkrValue* value, const ReachingCopies& copies);
 
-    CfgBlock<SkrInstruction*>* getBlock(int idx);
-    const CfgBlock<SkrInstruction*>* getBlock(int idx) const;
-
-    static SkrCopy* findCopyByDst(const std::vector<SkrCopy*>& copies, SkrVar* var);
-
-    CfGraph<SkrInstruction*>* graph;
-    Allocator& allocator;
+    SkrFactory& skrf;
+    SkrCfg& graph;
 };

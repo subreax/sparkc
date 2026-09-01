@@ -1,0 +1,20 @@
+#cli
+--emit skr --optimize const-folding,dce
+
+#src
+fun main(): int {
+    var result = 0;
+    if (0 == 0) {
+        result = 1;
+    }
+    else {
+        result = 2;
+    }
+    return result;
+}
+
+#expect
+fun main(): int
+    copy result.0 = int 0
+    copy result.0 = int 1
+    copy retval.1 = int result.0

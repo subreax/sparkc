@@ -10,8 +10,10 @@ public:
 
     void run() {
         disconnectUnreachableBlocks();
-        removeUselessJumps();
-        removeUselessLabels();
+
+        auto aliveBlocks = getAliveBlocks();
+        removeUselessJumps(aliveBlocks);
+        removeUselessLabels(aliveBlocks);
     }
 
 private:
@@ -26,12 +28,13 @@ private:
         }
     }
 
-    void removeUselessJumps() {
-        if (graph.isEmpty()) {
+    void removeUselessJumps(const std::vector<size_t>& aliveBlocks) {
+        if (aliveBlocks.empty()) {
             return;
         }
 
-        for (size_t currIdx = 0; currIdx < graph.getSize() - 1; currIdx++) {
+        for (size_t i = 0; i < aliveBlocks.size() - 1; i++) {
+            size_t currIdx = aliveBlocks[i];
             auto& curr = graph[currIdx];
             size_t nextIdx = currIdx + 1;
             auto& next = graph[nextIdx];
@@ -46,12 +49,13 @@ private:
         }
     }
 
-    void removeUselessLabels() {
-        if (graph.isEmpty()) {
+    void removeUselessLabels(const std::vector<size_t>& aliveBlocks) {
+        if (aliveBlocks.empty()) {
             return;
         }
 
-        for (size_t currIdx = 0; currIdx < graph.getSize() - 1; currIdx++) {
+        for (size_t i = 0; i < aliveBlocks.size() - 1; i++) {
+            size_t currIdx = aliveBlocks[i];
             auto& curr = graph[currIdx];
             size_t nextIdx = currIdx + 1;
             auto& next = graph[nextIdx];
@@ -90,6 +94,17 @@ private:
 
     void eraseJump(SkrCfgBlock& block) {
         block.eraseLastInstruction();
+    }
+
+    std::vector<size_t> getAliveBlocks() const {
+        std::vector<size_t> aliveBlocks;
+        aliveBlocks.reserve(graph.getSize());
+        for (size_t i = 0; i < graph.getSize(); i++) {
+            if (graph.hasAnyConnections(i)) {
+                aliveBlocks.emplace_back(i);
+            }
+        }
+        return aliveBlocks;
     }
 
     SkrCfg& graph;

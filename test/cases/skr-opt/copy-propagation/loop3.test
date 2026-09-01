@@ -1,0 +1,27 @@
+#cli
+--emit skr --optimize copy-prop
+
+#src
+fun main(arg: int): int {
+    var x = 0;
+    var incr = 0;
+    while (x < 10) {
+        x = x + incr;
+        incr = 2;
+    }
+    return x + incr;
+}
+
+#expect
+fun main(arg.0: int): int
+    copy x.1 = int 0
+    copy incr.2 = int 0
+    .start_1:
+    jmp .end_2 if int x.1 >= 10
+    x.1 = int x.1 + incr.2
+    copy incr.2 = int 2
+    jmp .start_1
+    .end_2:
+    retval.3 = int x.1 + incr.2
+    jmp .ret_0
+    .ret_0:
