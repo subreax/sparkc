@@ -16,8 +16,7 @@ fun min(a: float, b: float): float {
 #expect
 fun min(a.0: float, b.1: float): float
     copy result.2 = float 0
-    min.4 = float a.0 > b.1
-    jmp .false_1 if float min.4 == 0
+    jmp .false_1 if float a.0 <= b.1
     copy result.2 = float b.1
     jmp .end_2
     .false_1:

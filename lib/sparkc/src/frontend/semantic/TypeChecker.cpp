@@ -4,6 +4,24 @@
 #include "sparkc/symbol/SymbolTable.h"
 #include "sparkc/type/TypeTable.h"
 
+static bool isArithOp(AstBinaryExp::Operator op) {
+    switch (op) {
+    case AstBinaryExp::Operator::Plus:
+    case AstBinaryExp::Operator::Minus:
+    case AstBinaryExp::Operator::Mul:
+    case AstBinaryExp::Operator::Div:
+    case AstBinaryExp::Operator::Rem:
+        return true;
+
+    default:
+        return false;
+    }
+}
+
+static bool isLogicalOp(AstBinaryExp::Operator op) {
+    return !isArithOp(op);
+}
+
 TypeChecker::TypeChecker(
     AstFactory& astFactory,
     SymbolTable& symbolTable,
@@ -134,15 +152,20 @@ void TypeChecker::typeCheck(AstVar* var) {
     var->type = type;
 }
 
-// todo: logic operators should return always int, but now it's a common type of operands
 void TypeChecker::typeCheck(AstBinaryExp* bin) {
     typeCheck(bin->getLeft());
     typeCheck(bin->getRight());
-    auto type = getCommonType(bin->getLeft(), bin->getRight());
 
-    bin->type = type;
-    bin->setLeft(cast(bin->getLeft(), type));
-    bin->setRight(cast(bin->getRight(), type));
+    auto commonType = getCommonType(bin->getLeft(), bin->getRight());
+    if (isArithOp(bin->getOperator())) {
+        bin->type = commonType;
+    }
+    else {
+        bin->type = symbolTable.getTypeFactory().int_();
+    }
+
+    bin->setLeft(cast(bin->getLeft(), commonType));
+    bin->setRight(cast(bin->getRight(), commonType));
 }
 
 void TypeChecker::typeCheck(AstFunCall* call) {

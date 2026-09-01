@@ -14,12 +14,12 @@ fun main(): int {
 
 #expect
 fun main(): int
-    copy equal.0 = float 1
-    copy notEqual.1 = float 0
-    copy less.2 = float 1
-    copy lessOrEqual.3 = float 1
-    copy greater.4 = float 1
-    copy greaterOrEqual.5 = float 0
-    retval.6 = toInt(equal.0)
+    copy equal.0 = int 1
+    copy notEqual.1 = int 0
+    copy less.2 = int 1
+    copy lessOrEqual.3 = int 1
+    copy greater.4 = int 1
+    copy greaterOrEqual.5 = int 0
+    copy retval.6 = int equal.0
     jmp .ret_0
     .ret_0:

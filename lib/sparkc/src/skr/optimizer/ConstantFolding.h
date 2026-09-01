@@ -106,7 +106,13 @@ private:
             return evaluate(leftC->intValue(), op, rightC->intValue());
         }
         else if (leftC->isFloat()) {
-            return evaluate(leftC->floatValue(), op, rightC->floatValue());
+            if (isLogicalOp(op)) {
+                auto result = evaluate(leftC->floatValue(), toBranchOp(op), rightC->floatValue());
+                return skrf.constant(static_cast<int32_t>(result));
+            }
+            else {
+                return evaluate(leftC->floatValue(), op, rightC->floatValue());
+            }
         }
         sparkError("ConstantFolding", "Unsupported binary operator: %d", op);
         return nullptr;
@@ -281,6 +287,50 @@ private:
         default:
             sparkError("ConstantFolding", "Unknown branch operator: %d", op);
             return false;
+        }
+    }
+
+    bool isArithOp(SkrBinary::Operator op) const {
+        switch (op) {
+        case SkrBinary::Operator::Plus:
+        case SkrBinary::Operator::Minus:
+        case SkrBinary::Operator::Mul:
+        case SkrBinary::Operator::Div:
+        case SkrBinary::Operator::Rem:
+            return true;
+
+        default:
+            return false;
+        }
+    }
+
+    bool isLogicalOp(SkrBinary::Operator op) const {
+        return !isArithOp(op);
+    }
+
+    SkrBranch::Operator toBranchOp(SkrBinary::Operator op) const {
+        switch (op) {
+        case SkrBinary::Operator::Equals:
+            return SkrBranch::Operator::Equals;
+
+        case SkrBinary::Operator::NotEquals:
+            return SkrBranch::Operator::NotEquals;
+
+        case SkrBinary::Operator::LessThan:
+            return SkrBranch::Operator::LessThan;
+
+        case SkrBinary::Operator::LessOrEqual:
+            return SkrBranch::Operator::LessOrEqual;
+
+        case SkrBinary::Operator::GreaterThan:
+            return SkrBranch::Operator::GreaterThan;
+
+        case SkrBinary::Operator::GreaterOrEqual:
+            return SkrBranch::Operator::GreaterOrEqual;
+
+        default:
+            sparkError("ConstantFolding", std::string("Can't cast SkrBinary::Operator to SkrBranch::Operator: ") + SkrBinary::operatorStringValue(op));
+            return SkrBranch::Operator::Equals;
         }
     }
 

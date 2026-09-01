@@ -27,7 +27,7 @@ AstFunction(
     items: [
       AstIfStatement(
         cond: AstBinaryExp(
-          type: 'float',
+          type: 'int',
           op: '>',
           left: AstCast(
             type: 'float',

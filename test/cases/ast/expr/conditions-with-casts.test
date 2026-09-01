@@ -2,9 +2,9 @@
 --emit ast
 
 #src
-fun main(): int {
+fun main(): float {
     var a = 4;
-    var b = 3;
+    var b = 3.0f;
     var c = a == b;
     var d = a != b;
     var e = a > b;
@@ -19,7 +19,7 @@ fun main(): int {
 #expect
 AstFunction(
   name: 'main',
-  returnType: 'int',
+  returnType: 'float',
   params: [],
   body: AstBlock(
     items: [
@@ -32,10 +32,10 @@ AstFunction(
         )
       ),
       AstVarDeclaration(
-        type: 'int',
+        type: 'float',
         name: 'b.1',
         init: AstConstantExp(
-          type: 'int',
+          type: 'float',
           value: '3'
         )
       ),
@@ -45,12 +45,15 @@ AstFunction(
         init: AstBinaryExp(
           type: 'int',
           op: '==',
-          left: AstVar(
-            type: 'int',
-            id: 'a.0'
+          left: AstCast(
+            type: 'float',
+            exp: AstVar(
+              type: 'int',
+              id: 'a.0'
+            )
           ),
           right: AstVar(
-            type: 'int',
+            type: 'float',
             id: 'b.1'
           )
         )
@@ -61,12 +64,15 @@ AstFunction(
         init: AstBinaryExp(
           type: 'int',
           op: '!=',
-          left: AstVar(
-            type: 'int',
-            id: 'a.0'
+          left: AstCast(
+            type: 'float',
+            exp: AstVar(
+              type: 'int',
+              id: 'a.0'
+            )
           ),
           right: AstVar(
-            type: 'int',
+            type: 'float',
             id: 'b.1'
           )
         )
@@ -77,12 +83,15 @@ AstFunction(
         init: AstBinaryExp(
           type: 'int',
           op: '>',
-          left: AstVar(
-            type: 'int',
-            id: 'a.0'
+          left: AstCast(
+            type: 'float',
+            exp: AstVar(
+              type: 'int',
+              id: 'a.0'
+            )
           ),
           right: AstVar(
-            type: 'int',
+            type: 'float',
             id: 'b.1'
           )
         )
@@ -93,12 +102,15 @@ AstFunction(
         init: AstBinaryExp(
           type: 'int',
           op: '>=',
-          left: AstVar(
-            type: 'int',
-            id: 'a.0'
+          left: AstCast(
+            type: 'float',
+            exp: AstVar(
+              type: 'int',
+              id: 'a.0'
+            )
           ),
           right: AstVar(
-            type: 'int',
+            type: 'float',
             id: 'b.1'
           )
         )
@@ -109,12 +121,15 @@ AstFunction(
         init: AstBinaryExp(
           type: 'int',
           op: '<',
-          left: AstVar(
-            type: 'int',
-            id: 'a.0'
+          left: AstCast(
+            type: 'float',
+            exp: AstVar(
+              type: 'int',
+              id: 'a.0'
+            )
           ),
           right: AstVar(
-            type: 'int',
+            type: 'float',
             id: 'b.1'
           )
         )
@@ -125,12 +140,15 @@ AstFunction(
         init: AstBinaryExp(
           type: 'int',
           op: '<=',
-          left: AstVar(
-            type: 'int',
-            id: 'a.0'
+          left: AstCast(
+            type: 'float',
+            exp: AstVar(
+              type: 'int',
+              id: 'a.0'
+            )
           ),
           right: AstVar(
-            type: 'int',
+            type: 'float',
             id: 'b.1'
           )
         )
@@ -141,12 +159,15 @@ AstFunction(
         init: AstBinaryExp(
           type: 'int',
           op: 'and',
-          left: AstVar(
-            type: 'int',
-            id: 'a.0'
+          left: AstCast(
+            type: 'float',
+            exp: AstVar(
+              type: 'int',
+              id: 'a.0'
+            )
           ),
           right: AstVar(
-            type: 'int',
+            type: 'float',
             id: 'b.1'
           )
         )
@@ -157,20 +178,26 @@ AstFunction(
         init: AstBinaryExp(
           type: 'int',
           op: 'or',
-          left: AstVar(
-            type: 'int',
-            id: 'a.0'
+          left: AstCast(
+            type: 'float',
+            exp: AstVar(
+              type: 'int',
+              id: 'a.0'
+            )
           ),
           right: AstVar(
-            type: 'int',
+            type: 'float',
             id: 'b.1'
           )
         )
       ),
       AstReturnStatement(
-        exp: AstVar(
-          type: 'int',
-          id: 'j.9'
+        exp: AstCast(
+          type: 'float',
+          exp: AstVar(
+            type: 'int',
+            id: 'j.9'
+          )
         )
       )
     ]
