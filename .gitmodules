@@ -1,0 +1,3 @@
+[submodule "lib/lyra"]
+	path = lib/lyra
+	url = https://github.com/bfgroup/Lyra
