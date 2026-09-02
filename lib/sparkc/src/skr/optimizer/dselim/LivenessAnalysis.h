@@ -2,50 +2,66 @@
 #include "../Uniqueue.h"
 #include "DSEBlock.h"
 #include "VarSet.h"
-#include "sparkc/common/cfg/CfGraph.h"
+#include "sparkc/skr/optimizer/SkrCfg.h"
 #include "sparkc/skr/instr/everything.h"
 
 class LivenessAnalysis {
 public:
-    LivenessAnalysis(const CfGraph<SkrInstruction*>* graph)
+    LivenessAnalysis(const SkrCfg& graph, const SkrVar* retVar)
         : graph(graph)
-        , blocks(graph->getBlocksCount()) { }
+        , annotations(graph.getSize())
+        , retVar(retVar) { }
 
     void run() {
         Uniqueue<size_t> workQueue;
-        for (size_t i = blocks.size() - 1; i > 0; i--) {
+
+        addRetVarToEndBlock();
+
+        // skip end block
+        for (size_t i = annotations.size() - 2; i > 0; i--) {
             workQueue.add(i);
         }
 
+        DSEBlock oldAnnotation;
+        VarSet incoming;
         while (workQueue.isNotEmpty()) {
             size_t idx = workQueue.peek();
             workQueue.pop();
 
-            DSEBlock oldBlock = blocks[idx];
-            VarSet incoming;
+            oldAnnotation = annotations[idx];
+            // incoming.generate(retVar);
             meet(idx, incoming);
             transfer(idx, incoming);
-            if (oldBlock != blocks[idx]) {
+            if (oldAnnotation != annotations[idx]) {
                 addAllPredecessors(idx, workQueue);
             }
+            incoming.clear();
         }
     }
 
-    const DSEBlock& getAnnotation(CfgBlock<SkrInstruction*>* block) const {
-        return blocks[block->getIdx()];
+    const DSEBlock& getAnnotation(size_t blockIdx) const {
+        return annotations[blockIdx];
     }
 
 private:
+    void addRetVarToEndBlock() {
+        VarSet vars;
+        vars.generate(retVar);
+        annotations[graph.getSize() - 1].setBlockVars(vars);
+    }
+
     void transfer(size_t blockIdx, const VarSet& incoming) {
         VarSet vars = incoming;
 
-        auto& annotated = blocks[blockIdx];
+        auto& block = graph[blockIdx];
+        auto& annotated = annotations[blockIdx];
         annotated.clear();
+        annotated.resize(block.getBody().size());
 
-        const auto& body = getBlock(blockIdx)->getBody();
+        const auto& body = block.getBody();
         for (int i = body.size() - 1; i >= 0; i--) {
             auto* instr = body[i];
-            annotated.addInstrVars(vars);
+            annotated[i] = vars;
 
             if (instr->kind == SkrInstruction::Kind::Binary) {
                 auto* it = (SkrBinary*) instr;
@@ -93,34 +109,24 @@ private:
         }
 
         annotated.setBlockVars(vars);
-        annotated.reverseInstructions();
     }
 
     void meet(size_t blockIdx, VarSet& outVars) {
-        outVars.clear();
-
-        auto it = graph->successorsIterator(blockIdx);
-        auto end = graph->sEnd();
-        while (it != end) {
-            auto sIdx = (*it)->getIdx();
-            outVars.addAll(blocks[sIdx].getBlockVars());
-            ++it;
+        auto it = graph.successors(blockIdx);
+        while (it.hasNext()) {
+            auto sIdx = it.nextIdx();
+            outVars.addAll(annotations[sIdx].getBlockVars());
         }
-    }
-
-    const CfgBlock<SkrInstruction*>* getBlock(size_t idx) const {
-        return graph->getBlock(idx);
     }
 
     void addAllPredecessors(size_t blockIdx, Uniqueue<size_t>& out) {
-        auto it = graph->precedessorsIterator(blockIdx);
-        auto end = graph->pEnd();
-        while (it != end) {
-            out.add((*it)->getIdx());
-            ++it;
+        auto it = graph.predecessors(blockIdx);
+        while (it.hasNext()) {
+            out.add(it.nextIdx());
         }
     }
 
-    std::vector<DSEBlock> blocks;
-    const CfGraph<SkrInstruction*>* graph;
+    std::vector<DSEBlock> annotations;
+    const SkrCfg& graph;
+    const SkrVar* retVar;
 };

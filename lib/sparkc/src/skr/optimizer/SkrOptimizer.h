@@ -3,7 +3,7 @@
 #include "ConstantFolding.h"
 #include "UnreachableCodeElimination.h"
 #include "copyprop/CopyPropagation.h"
-// #include "dselim/DeadStoreElimination.h"
+#include "dselim/DeadStoreElimination.h"
 #include "sparkc/common/alloc/LinearAllocator.h"
 #include "sparkc/common/cfg/CfgBuilder.h"
 #include "sparkc/skr/SkrFactory.h"
@@ -54,7 +54,7 @@ public:
                 CopyPropagation(skrf, graph).run();
             }
             if (config.deadStoreElimination) {
-                // DeadStoreElimination(graph, rawFunc->getRetVar()).run();
+                DeadStoreElimination(graph, rawFunc->getRetVar()).run();
             }
 
             onCfgCreatedListener(rawFunc->getName(), i, graph);

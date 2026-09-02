@@ -1,0 +1,12 @@
+#cli
+--emit skr --optimize dce
+
+#src
+fun main(): int {
+    return 1;
+    return 2;
+}
+
+#expect
+fun main(): int
+    copy retval.0 = int 1

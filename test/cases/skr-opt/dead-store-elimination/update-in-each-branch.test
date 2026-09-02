@@ -1,0 +1,25 @@
+#cli
+--emit skr --optimize dse
+
+#src
+fun main(cond: int): int {
+    var shared = 5;
+    if (cond) {
+        shared = 10;
+        return shared;
+    }
+    shared = 20;
+    return shared;
+}
+
+#expect
+fun main(cond.0: int): int
+    jmp .false_1 if int cond.0 == 0
+    copy shared.1 = int 10
+    copy retval.2 = int shared.1
+    jmp .ret_0
+    .false_1:
+    copy shared.1 = int 20
+    copy retval.2 = int shared.1
+    jmp .ret_0
+    .ret_0:

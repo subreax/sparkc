@@ -4,8 +4,8 @@
 
 class DSEBlock {
 public:
-    void addInstrVars(const VarSet& vars) {
-        instrVars.emplace_back(vars);
+    void resize(size_t newSize) {
+        instrVars.resize(newSize);
     }
 
     void setBlockVars(const VarSet& vars) {
@@ -20,13 +20,17 @@ public:
         return blockVars;
     }
 
-    void reverseInstructions() {
-        std::reverse(instrVars.begin(), instrVars.end());
-    }
-
     void clear() {
         instrVars.clear();
         blockVars.clear();
+    }
+
+    VarSet& operator[](size_t idx) {
+        return instrVars[idx];
+    }
+
+    const VarSet& operator[](size_t idx) const {
+        return instrVars[idx];
     }
 
     bool operator==(const DSEBlock& other) {
