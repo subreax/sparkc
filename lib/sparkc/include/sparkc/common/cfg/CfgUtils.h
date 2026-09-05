@@ -4,7 +4,7 @@
 class CfgUtils {
 public:
     template <typename I>
-    static bool isBeginBlock(const Graph<I>& graph, size_t idx) {
+    static bool isBeginBlock(const Graph<I>&, size_t idx) {
         return idx == 0;
     }
 

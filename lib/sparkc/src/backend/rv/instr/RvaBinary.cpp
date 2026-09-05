@@ -114,9 +114,8 @@ bool RvaBinary::hasImmSupport(Operator op) {
     case Operator::ShiftLeft:
     case Operator::ShiftRight:
     case Operator::Or: return true;
+    default: return false;
     }
-
-    return false;
 }
 
 RvaBinary::Operator RvaBinary::mapOperator(SkrBinary::Operator op) {

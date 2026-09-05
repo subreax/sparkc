@@ -11,13 +11,13 @@ class SparkStageCallback {
 public:
     virtual ~SparkStageCallback() = default;
 
-    virtual void onAstBuild(AstProgItem* item) { }
-    virtual void onEmitSkrFunc(SkrFunction* skrFunc) { }
-    virtual void onCfgCreated(StringRef funName, int iteration, SkrCfg& graph) { }
-    virtual void onEmitRva(const std::vector<RvaInstruction*>& rva) { }
-    virtual void onReplaceRvaPseudo(const std::vector<RvaInstruction*>& rva) { }
-    virtual void onFixRva(const std::vector<RvaInstruction*>& rva) { }
-    virtual void onBinary(const BuildResult& buildResult) { }
+    virtual void onAstBuild(AstProgItem*) { }
+    virtual void onEmitSkrFunc(SkrFunction*) { }
+    virtual void onCfgCreated(StringRef, int, SkrCfg&) { }
+    virtual void onEmitRva(const std::vector<RvaInstruction*>&) { }
+    virtual void onReplaceRvaPseudo(const std::vector<RvaInstruction*>&) { }
+    virtual void onFixRva(const std::vector<RvaInstruction*>&) { }
+    virtual void onBinary(const BuildResult&) { }
 
     SymbolTable& getSymbolTable() {
         return *symTable;

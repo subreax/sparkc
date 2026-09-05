@@ -82,7 +82,7 @@ private:
             auto* constant = it->getSrc()->toSkrConst()->getConst();
             return skrf.copy(
                 it->getDst(),
-                skrf.constant((float) constant->intValue())
+                skrf.fconst(static_cast<float>(constant->intValue()))
             );
         }
         return it;
@@ -93,7 +93,7 @@ private:
             auto* constant = it->getSrc()->toSkrConst()->getConst();
             return skrf.copy(
                 it->getDst(),
-                skrf.constant((int32_t) constant->floatValue())
+                skrf.iconst(static_cast<int32_t>(constant->floatValue()))
             );
         }
         return it;
@@ -108,7 +108,7 @@ private:
         else if (leftC->isFloat()) {
             if (isLogicalOp(op)) {
                 auto result = evaluate(leftC->floatValue(), toBranchOp(op), rightC->floatValue());
-                return skrf.constant(static_cast<int32_t>(result));
+                return skrf.iconst(static_cast<int32_t>(result));
             }
             else {
                 return evaluate(leftC->floatValue(), op, rightC->floatValue());
@@ -175,7 +175,7 @@ private:
             sparkError("SkrOptimizer", "Unsupported binary operator: %d", op);
         }
 
-        return skrf.constant(res);
+        return skrf.iconst(res);
     }
 
     SkrConst* evaluate(float left, SkrBinary::Operator op, float right) {
@@ -235,7 +235,7 @@ private:
             sparkError("SkrOptimizer", "Unsupported binary operator: %d", op);
         }
 
-        return skrf.constant(result);
+        return skrf.fconst(result);
     }
 
     SkrInstruction* evaluate(SkrBranch* branch) {

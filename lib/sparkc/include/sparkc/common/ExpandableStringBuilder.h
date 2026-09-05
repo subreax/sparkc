@@ -1,4 +1,5 @@
 #pragma once
+#include <cstdint>
 #include "StringRef.h"
 
 class ExpandableStringBuilder {
@@ -20,10 +21,7 @@ public:
         free(_buf);
     }
 
-    ExpandableStringBuilder& append(const char* str) {
-        size_t len = strnlen(str, 2048);
-        return append(str, len);
-    }
+    ExpandableStringBuilder& append(const char* str);
 
     ExpandableStringBuilder& append(StringRef ref) {
         return append(ref.getReference(), ref.getLength());
@@ -33,9 +31,9 @@ public:
         return append(str.c_str(), str.length());
     }
 
-    ExpandableStringBuilder& append(int i) {
+    ExpandableStringBuilder& append(int32_t i) {
         char buf[16];
-        snprintf(buf, sizeof(buf), "%d", i);
+        snprintf(buf, sizeof(buf), "%ld", static_cast<long>(i));
         return append(buf);
     }
 
@@ -94,7 +92,7 @@ inline ExpandableStringBuilder& operator<<(ExpandableStringBuilder& sb, const st
     return sb.append(str);
 }
 
-inline ExpandableStringBuilder& operator<<(ExpandableStringBuilder& sb, int i) {
+inline ExpandableStringBuilder& operator<<(ExpandableStringBuilder& sb, int32_t i) {
     return sb.append(i);
 }
 

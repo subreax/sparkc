@@ -8,8 +8,8 @@
 class LivenessAnalysis {
 public:
     LivenessAnalysis(const SkrCfg& graph, const SkrVar* retVar)
-        : graph(graph)
-        , annotations(graph.getSize())
+        : annotations(graph.getSize())
+        , graph(graph)
         , retVar(retVar) { }
 
     void run() {

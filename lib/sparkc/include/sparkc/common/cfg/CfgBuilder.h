@@ -15,7 +15,7 @@ private:
     static std::vector<CfgBlock<I>> readBlocks(const std::vector<I>& instructions) {
         std::vector<CfgBlock<I>> blocks;
 
-        int blockIdx = 0;
+        size_t blockIdx = 0;
         blocks.emplace_back(blockIdx++); // start block
 
         std::vector<I> block;

@@ -36,7 +36,9 @@ void SparkCompiler::init(const SparkCompilerConfig& config) {
     outBin = config.outBin;
     outCap = config.outCap;
     runtime = config.runtime;
-    stageCallback = config.stageCallback;
+    if (config.stageCallback != nullptr) {
+        stageCallback = config.stageCallback;
+    }
     skrOptimizerConfig.constantFolding = config.optimizations & SPARK_OPT_CONSTANT_FOLDING;
     skrOptimizerConfig.copyPropagation = config.optimizations & SPARK_OPT_COPY_PROPAGATION;
     skrOptimizerConfig.deadCodeElimination = config.optimizations & SPARK_OPT_DEAD_CODE_ELIM;
@@ -170,5 +172,5 @@ static BuildResult buildResult(SymbolTable& symTable, RvAssembler& assembler) {
         }
     }
 
-    return BuildResult(assembler.getSize(), functions);
+    return BuildResult(outBin, assembler.getSize(), functions);
 }

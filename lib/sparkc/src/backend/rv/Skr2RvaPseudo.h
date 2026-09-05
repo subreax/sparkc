@@ -259,7 +259,7 @@ private:
         case SkrValue::Kind::Const: {
             auto* it = (const SkrConst*) value;
             auto* constant = it->getConst();
-            int32_t val;
+            int32_t val = 0;
             if (constant->isInt()) {
                 val = constant->intValue();
             }
@@ -353,7 +353,7 @@ private:
         return symbolTable.get(id)->kind == SymbolType::Kind::Structure;
     }
 
-    int getSize(const SkrValue* val) const {
+    size_t getSize(const SkrValue* val) const {
         if (val->isConst()) {
             return 4;
         }

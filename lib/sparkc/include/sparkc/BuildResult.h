@@ -1,5 +1,6 @@
 #pragma once
 #include <unordered_map>
+#include <optional>
 #include "sparkc/symbol/SymbolType.h"
 
 class BuildResult {
@@ -22,23 +23,33 @@ public:
     };
 
     BuildResult() = default;
-    BuildResult(size_t binarySize, const std::unordered_map<StringRef, Function>& functions)
-        : binarySize(binarySize)
+    BuildResult(void* binary, size_t binarySize, const std::unordered_map<StringRef, Function>& functions)
+        : binary(binary)
+        , binarySize(binarySize)
         , functions(functions) { }
+
+    void* getBinary() {
+        return binary;
+    }
 
     size_t getBinarySize() const {
         return binarySize;
     }
 
-    Function* lookupFunction(StringRef name) {
+    std::optional<Function> lookupFunction(StringRef name) {
         auto it = functions.find(name);
         if (it != functions.end()) {
-            return &it->second;
+            return it->second;
         }
-        return nullptr;
+        return std::nullopt;
+    }
+
+    std::optional<Function> lookupFunction(const char* name) {
+        return lookupFunction(StringRef::cstr(name));
     }
 
 private:
+    void* binary;
     size_t binarySize;
     std::unordered_map<StringRef, Function> functions;
 };

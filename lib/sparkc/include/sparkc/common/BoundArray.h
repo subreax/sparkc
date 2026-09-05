@@ -169,5 +169,5 @@ static bool operator!=(const BoundArray<T>& ba, const std::vector<T>& vec) {
 
 template <typename T>
 static bool operator!=(const std::vector<T>& vec, const BoundArray<T>& ba) {
-    return (!ba == vec);
+    return !(ba == vec);
 }

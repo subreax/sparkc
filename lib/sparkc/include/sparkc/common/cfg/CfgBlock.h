@@ -26,8 +26,8 @@ public:
         : idx(idx) { }
 
     CfgBlock(size_t idx, const std::vector<I>& body)
-        : idx(idx)
-        , body(body) { }
+        : body(body)
+        , idx(idx) {  }
 
     void add(const I& instr) {
         body.emplace_back(instr);

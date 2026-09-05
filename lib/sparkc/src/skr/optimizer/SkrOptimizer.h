@@ -78,7 +78,7 @@ public:
     }
 
 private:
-    static void nullListener(StringRef funName, int iteration, SkrCfg& graph) { }
+    static void nullListener(StringRef, int, SkrCfg&) { }
 
     std::vector<SkrInstruction*> raw;
     SkrFunction* rawFunc;

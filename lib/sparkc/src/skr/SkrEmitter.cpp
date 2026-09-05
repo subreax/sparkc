@@ -181,7 +181,7 @@ void SkrEmitter::emitBranch(AstExp* exp, StringRef label, bool invert) {
         else {
             skrOp = SkrBranch::Operator::NotEquals;
         }
-        auto* branch = skrf.branch(res, skrOp, skrf.constant(0), label);
+        auto* branch = skrf.branch(res, skrOp, skrf.iconst(0), label);
         out += branch;
     }
 }
@@ -308,12 +308,12 @@ SkrExpRes SkrEmitter::emitBinary(AstBinaryExp* exp, SkrVar* dst) {
         emitBranchInverted(exp->getLeft(), falseLabel);
         emitBranchInverted(exp->getRight(), falseLabel);
         // true
-        out += skrf.copy(dst, skrf.constant(1));
+        out += skrf.copy(dst, skrf.iconst(1));
         out += skrf.jump(endLabel);
 
         // false
         out += skrf.label(falseLabel);
-        out += skrf.copy(dst, skrf.constant(0));
+        out += skrf.copy(dst, skrf.iconst(0));
 
         out += skrf.label(endLabel);
         result = dst;
@@ -330,12 +330,12 @@ SkrExpRes SkrEmitter::emitBinary(AstBinaryExp* exp, SkrVar* dst) {
         emitBranch(exp->getLeft(), trueLabel);
         emitBranch(exp->getRight(), trueLabel);
         // false
-        out += skrf.copy(dst, skrf.constant(0));
+        out += skrf.copy(dst, skrf.iconst(0));
         out += skrf.jump(endLabel);
 
         // true
         out += skrf.label(trueLabel);
-        out += skrf.copy(dst, skrf.constant(1));
+        out += skrf.copy(dst, skrf.iconst(1));
 
         out += skrf.label(endLabel);
         result = dst;
@@ -531,7 +531,6 @@ static bool isLogicalBin(AstExp* exp) {
     }
 
     auto* binExp = (AstBinaryExp*) exp;
-    auto op = binExp->getOperator();
     switch (binExp->getOperator()) {
     case AstBinaryExp::Operator::Equals:
     case AstBinaryExp::Operator::NotEquals:

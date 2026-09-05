@@ -55,6 +55,7 @@ private:
         case RvaInstruction::Kind::ReserveOnStack: replace((RvaReserveOnStack*) it); break;
         case RvaInstruction::Kind::BeginTempStack: frame.save(); break;
         case RvaInstruction::Kind::EndTempStack: frame.restore(); break;
+        default: break;
         }
     }
 

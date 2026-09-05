@@ -51,8 +51,8 @@ public:
         , params(params)
         , retType(retType) { }
 
-    BoundArray<SymbolType*> getParams() { return params; }
-    const BoundArray<SymbolType*> getParams() const { return params; }
+    BoundArray<SymbolType*>& getParams() { return params; }
+    const BoundArray<SymbolType*>& getParams() const { return params; }
 
     SymbolType* getReturnType() const { return retType; }
 

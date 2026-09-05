@@ -84,27 +84,26 @@ public:
         return allocator.create<SkrCopyFromOffset>(to, from, offset);
     }
 
-    SkrConst* constant(int32_t value) {
+    SkrConst* iconst(int32_t value) {
         if (value == 0) {
             return SkrConst::getInt0();
         }
         if (value == 1) {
-
             return SkrConst::getInt1();
         }
         return allocator.create<SkrConst>(allocator.create<IntConstant>(value));
     }
 
-    SkrConst* constant(float value) {
+    SkrConst* fconst(float value) {
         return allocator.create<SkrConst>(allocator.create<FloatConstant>(value));
     }
 
     SkrConst* constant(Constant* c) {
         switch (c->type->kind) {
         case SymbolType::Kind::Integer:
-            return constant(c->intValue());
+            return iconst(c->intValue());
         case SymbolType::Kind::Float:
-            return constant(c->floatValue());
+            return fconst(c->floatValue());
         default:
             sparkError("SkrFactory", "Unknown Constant kind: %d", c->type->kind);
             return nullptr;

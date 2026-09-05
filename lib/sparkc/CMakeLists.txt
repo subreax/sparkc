@@ -1,5 +1,15 @@
 add_library(sparkc)
 
+if(MSVC)
+    target_compile_options(sparkc PRIVATE /W4 /options:color)
+else()
+    target_compile_options(sparkc PRIVATE -Wall -Wextra -Wpedantic)
+    target_compile_options(sparkc PRIVATE 
+      $<$<CXX_COMPILER_ID:GNU>:-fdiagnostics-color=always>
+      $<$<CXX_COMPILER_ID:Clang>:-fcolor-diagnostics>
+    )
+endif()
+
 set(SPARKC_SRC
   src/SparkCompiler.cpp
   src/backend/rv/asm/RvAssembler.cpp
@@ -22,6 +32,7 @@ set(SPARKC_SRC
   src/backend/rv/instr/RvaStore.cpp
   src/common/Constant.cpp
   src/common/Error.cpp
+  src/common/ExpandableStringBuilder.cpp
   src/common/StringRef.cpp
   src/frontend/Frontend.cpp
   src/frontend/ast/exp/AstExp.cpp
@@ -50,20 +61,21 @@ set(SPARKC_SRC
 target_sources(sparkc PRIVATE ${SPARKC_SRC})
 target_include_directories(sparkc PUBLIC include/)
 
+if (SPARKC_BUILD_TESTS)
+  find_package(Catch2 3 REQUIRED)
+  add_executable(tests)
+  target_sources(tests 
+    PRIVATE 
+      tests/common/alloc/test_linearalloc.cpp
+      tests/common/cfg/GraphTest.cpp
+      
+      tests/backend/rv/test_rv32base.cpp
+      tests/backend/rv/RvaMovTest.cpp
+  )
+  target_include_directories(tests PRIVATE
+    src/
+    tests/
+  )
 
-find_package(Catch2 3 REQUIRED)
-add_executable(tests)
-target_sources(tests 
-  PRIVATE 
-    tests/common/alloc/test_linearalloc.cpp
-    tests/common/cfg/GraphTest.cpp
-    
-    tests/backend/rv/test_rv32base.cpp
-    tests/backend/rv/RvaMovTest.cpp
-)
-target_include_directories(tests PRIVATE
-  src/
-  tests/
-)
-
-target_link_libraries(tests PRIVATE sparkc Catch2::Catch2WithMain)
+  target_link_libraries(tests PRIVATE sparkc Catch2::Catch2WithMain)
+endif()

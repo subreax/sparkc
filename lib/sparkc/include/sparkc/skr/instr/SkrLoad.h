@@ -6,8 +6,9 @@ public:
     SkrLoad(SkrValue* to, SkrValue* from, int fromOffset)
         : SkrInstruction(Kind::Load)
         , to(to)
+        , from(from) 
         , fromOffset(fromOffset)
-        , from(from) { }
+        { }
 
     SkrValue* getTo() const { return to; }
     int getFromOffset() const { return fromOffset; }

@@ -56,7 +56,6 @@ private:
 
         for (size_t i = 0; i < aliveBlocks.size() - 1; i++) {
             size_t currIdx = aliveBlocks[i];
-            auto& curr = graph[currIdx];
             size_t nextIdx = currIdx + 1;
             auto& next = graph[nextIdx];
 

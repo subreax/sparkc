@@ -28,7 +28,6 @@ public:
         }
 
         size_t idx = bit / 32;
-        size_t bitPos = bit % 32;
         data[idx] = data[idx] | (1 << bit);
     }
 
@@ -38,7 +37,6 @@ public:
         }
 
         size_t idx = bit / 32;
-        size_t bitPos = bit % 32;
         data[idx] = data[idx] & ~(1 << bit);
     }
 

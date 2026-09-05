@@ -29,6 +29,10 @@ public:
         return allocator.create<SymbolStructureType>(tag);
     }
 
+    SymbolStructureType* structure(const char* tag) {
+        return allocator.create<SymbolStructureType>(StringRef::cstr(tag));
+    }
+
 private:
     Allocator& allocator;
 };

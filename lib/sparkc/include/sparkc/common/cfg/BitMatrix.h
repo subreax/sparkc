@@ -4,9 +4,9 @@
 class BitMatrix {
 public:
     BitMatrix(size_t w, size_t h)
-        : w(w)
-        , h(h)
-        , data(w * h) { }
+        : data(w * h) 
+        , w(w)
+        , h(h) { }
 
     BitMatrix(size_t order)
         : BitMatrix(order, order) { }
