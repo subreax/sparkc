@@ -12,7 +12,7 @@ struct CliOptions {
     std::string cfgOutDirPath;
     std::string binaryOutFilePath = "a.bin";
     uint32_t optimizations = 0;
-    bool printMemoryUsage = false;
+    bool printBinInfo = false;
     bool colored = false;
 };
 
@@ -68,9 +68,9 @@ public:
                 ["-o"]["--output"]
                 ("Binary output file name")
 
-            | lyra::opt(options.printMemoryUsage)
-                ["-m"]["--mem-usage"]
-                ("Print memory usage")
+            | lyra::opt(options.printBinInfo)
+                ["--bin-info"]
+                ("Print binary info")
 
             | lyra::opt(printHelp)
                 ["-h"]["--help"]

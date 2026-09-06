@@ -1,5 +1,5 @@
 #include "sparkc/backend/rv/asm/RvListing.h"
-#include "Rv32Base.h"
+#include "Rv32I.h"
 #include "sparkc/common/Error.h"
 #include "sparkc/common/LabelGen.h"
 
@@ -35,19 +35,33 @@ void RvListing::addWithLabel(uint32_t instr, StringRef label) {
 
 void RvListing::link() {
     for (Unresolved& u : unresolved) {
-        uint32_t instr = *(uint32_t*) (out + u.offset);
-        if (Rv32Base::isBType(instr)) {
+        uint32_t instr = get_u32(u.offset);
+        if (Rv32I::isBranch(instr)) {
             // todo: check that imm value fits in the instruction
             instr |= Rv32Base::encodeImmB(calculateOffsetToLabel(u.offset, u.label));
+            write_u32(instr, u.offset);
         }
-        else if (Rv32Base::isJType(instr)) {
+        else if (Rv32I::isJal(instr)) {
             // todo: check that imm value fits in the instruction
             instr |= Rv32Base::encodeImmJ(calculateOffsetToLabel(u.offset, u.label));
+            write_u32(instr, u.offset);
+        }
+        else if (Rv32I::isAuipc(instr) && Rv32I::isJalr(get_u32(u.offset + 4))) {
+            int32_t funOffset = calculateOffsetToLabel(u.offset, u.label);
+            if (Rv32Base::isImm20(funOffset - 4)) {
+                write_u32(Rv32I::nop(), u.offset);
+                write_u32(Rv32I::jal(RvReg::RA, funOffset - 4), u.offset + 4);
+            }
+            else {
+                RvReg rd = Rv32Base::uTypeReadRd(instr);
+                auto split = Rv32Base::splitImm11(funOffset);
+                write_u32(Rv32I::auipc(rd, split.hi), u.offset);
+                write_u32(Rv32I::jalr(RvReg::RA, rd, split.lo), u.offset + 4);
+            }
         }
         else {
             sparkError("RvListing", "Can't link instruction: %08x", instr);
         }
-        write_u32(instr, u.offset);
     }
 }
 
@@ -69,6 +83,18 @@ void RvListing::write_u32(uint32_t instr, int32_t offset) {
     }
     else {
         sparkError("RvListing", "Not enough memory to write compiled program");
+    }
+}
+
+uint32_t& RvListing::get_u32(uint32_t offset) {
+    static uint32_t sNullValue = 0;
+
+    if (offset + 4 <= cap) {
+        return *(uint32_t*) (out + offset);
+    }
+    else {
+        sparkError("RvListing", "get_u32 is out of range");
+        return sNullValue;
     }
 }
 

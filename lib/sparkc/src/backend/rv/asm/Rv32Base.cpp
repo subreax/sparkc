@@ -1,32 +1,14 @@
 #include "Rv32Base.h"
 #include "sparkc/common/Error.h"
+#include "BinUtils.h"
 
-static constexpr uint32_t mask3 = 0b111;
-static constexpr uint32_t mask5 = 0b11111;
-static constexpr uint32_t mask7 = 0b1111111;
-static constexpr uint32_t mask12 = 0b111111111111;
-
-static constexpr uint32_t genMask(int bits) {
-    int mask = 0;
-    while (bits > 0) {
-        mask = (mask << 1) | 1;
-        --bits;
-    }
-    return mask;
-}
+static constexpr uint32_t mask3 = BinUtils::mask<3>();
+static constexpr uint32_t mask5 = BinUtils::mask<5>();
+static constexpr uint32_t mask7 = BinUtils::mask<7>();
+static constexpr uint32_t mask12 = BinUtils::mask<12>();
 
 inline constexpr uint32_t regShl(RvReg reg, int shift) {
     return ((uint32_t) reg) << shift;
-}
-
-template <int to, int from>
-static constexpr uint32_t slice(uint32_t val) {
-    return (val >> from) & genMask(to - from + 1);
-}
-
-template <int pos>
-static constexpr inline uint32_t bit(uint32_t val) {
-    return (val >> pos) & 1;
 }
 
 static void checkImm(int32_t imm, int32_t minVal, int32_t maxVal) {
@@ -94,24 +76,51 @@ uint32_t Rv32Base::jType(uint32_t opcode, RvReg rd) {
 
 uint32_t Rv32Base::encodeImmB(int32_t imm12) {
     checkImm12(imm12);
-    return bit<11>(imm12) << 7
-        | slice<4, 1>(imm12) << 8
-        | slice<10, 5>(imm12) << 25
-        | bit<12>(imm12) << 31;
+    return BinUtils::bit<11>(imm12) << 7
+        | BinUtils::slice<4, 1>(imm12) << 8
+        | BinUtils::slice<10, 5>(imm12) << 25
+        | BinUtils::bit<12>(imm12) << 31;
 }
 
 uint32_t Rv32Base::encodeImmJ(int32_t imm20) {
     checkImm20(imm20);
-    return (slice<19, 12>(imm20) << 12)
-        | (bit<11>(imm20) << 20)
-        | (slice<10, 1>(imm20) << 21)
-        | (bit<20>(imm20) << 31);
+    return (BinUtils::slice<19, 12>(imm20) << 12)
+        | (BinUtils::bit<11>(imm20) << 20)
+        | (BinUtils::slice<10, 1>(imm20) << 21)
+        | (BinUtils::bit<20>(imm20) << 31);
 }
 
-bool Rv32Base::isBType(uint32_t instr) {
-    return (instr & mask7) == 0b1100011;
+uint32_t Rv32Base::encodeImmU(int32_t imm20) {
+    checkImm20(imm20);
+    return imm20 << 12;
 }
 
-bool Rv32Base::isJType(uint32_t instr) {
-    return (instr & mask7) == 0b1101111;
+uint32_t Rv32Base::readOpcode(uint32_t instr) {
+    return instr & mask7;
+}
+
+uint32_t Rv32Base::iTypeReadFunct3(uint32_t instr) {
+    return BinUtils::slice<14, 12>(instr);
+}
+
+RvReg Rv32Base::uTypeReadRd(uint32_t instr) {
+    return static_cast<RvReg>(BinUtils::slice<11, 7>(instr));
+}
+
+bool Rv32Base::isImm11(int32_t imm) {
+    return imm >= -2048 && imm <= 2047;
+}
+
+bool Rv32Base::isImm20(int32_t imm) {
+    return imm >= -1048576 && imm <= 1048575;
+}
+
+Rv32Base::BinSplit Rv32Base::splitImm11(int32_t imm) {
+    BinSplit res;
+    res.hi = BinUtils::hi<12>(imm);
+    res.lo = BinUtils::lo<12>(imm);
+    if (res.lo < 0) {
+        res.hi += 1;
+    }
+    return res;
 }

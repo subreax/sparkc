@@ -177,7 +177,7 @@ void printBranch(std::ostream& os, const RvaBranch* it) {
 
 void printCall(std::ostream& os, const RvaCall* it) {
     printType(os, "call");
-    os << "call " << Colored::label(it->getFunName());
+    os << "call " << Colored::label(it->getFunName()) << " (offsetReg: " << it->getOffsetReg() << ")";
 }
 
 void printGetAddr(std::ostream& os, const RvaGetAddress* it) {

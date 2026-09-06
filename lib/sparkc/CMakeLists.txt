@@ -1,4 +1,5 @@
 add_library(sparkc)
+option(SPARKC_BUILD_TESTS "Build tests" ON)
 
 if(MSVC)
     target_compile_options(sparkc PRIVATE /W4 /options:color)
@@ -71,6 +72,7 @@ if (SPARKC_BUILD_TESTS)
       
       tests/backend/rv/test_rv32base.cpp
       tests/backend/rv/RvaMovTest.cpp
+      tests/backend/rv/ImmSplitTest.cpp
   )
   target_include_directories(tests PRIVATE
     src/

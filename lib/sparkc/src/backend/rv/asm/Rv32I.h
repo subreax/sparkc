@@ -56,31 +56,39 @@ public:
     }
 
     static uint32_t jal(RvReg rd) {
-        return Rv32Base::jType(0b1101111, rd);
+        return Rv32Base::jType(JalOpcode, rd);
+    }
+
+    static uint32_t jal(RvReg rd, uint32_t imm) {
+        return Rv32Base::jType(JalOpcode, rd) | Rv32Base::encodeImmJ(imm);
     }
 
     static uint32_t jalr(RvReg rd, RvReg rs1, int32_t imm11) {
-        return Rv32Base::iType(0b1100111, 0, rd, rs1, imm11);
+        return Rv32Base::iType(JalrOpcode, 0, rd, rs1, imm11);
     }
 
     static uint32_t beq(RvReg rs1, RvReg rs2) {
-        return Rv32Base::bType(0b1100011, 0, rs1, rs2);
+        return Rv32Base::bType(BranchOpcode, 0, rs1, rs2);
     }
 
     static uint32_t bne(RvReg rs1, RvReg rs2) {
-        return Rv32Base::bType(0b1100011, 1, rs1, rs2);
+        return Rv32Base::bType(BranchOpcode, 1, rs1, rs2);
     }
 
     static uint32_t blt(RvReg rs1, RvReg rs2) {
-        return Rv32Base::bType(0b1100011, 0x4, rs1, rs2);
+        return Rv32Base::bType(BranchOpcode, 0x4, rs1, rs2);
     }
 
     static uint32_t bge(RvReg rs1, RvReg rs2) {
-        return Rv32Base::bType(0b1100011, 0x5, rs1, rs2);
+        return Rv32Base::bType(BranchOpcode, 0x5, rs1, rs2);
     }
 
     static uint32_t lui(RvReg rd, int32_t imm) {
         return Rv32Base::uType(0b0110111, rd, imm);
+    }
+
+    static uint32_t auipc(RvReg rd, int32_t imm) {
+        return Rv32Base::uType(AuipcOpcode, rd, imm);
     }
 
     // pseudo
@@ -105,8 +113,35 @@ public:
         return slt(rd, RvReg::ZERO, rs);
     }
 
+    static uint32_t nop() {
+        return addi(RvReg::ZERO, RvReg::ZERO, 0);
+    }
+
     // set greater than
     static uint32_t sgt(RvReg rd, RvReg rs1, RvReg rs2) {
         return slt(rd, rs2, rs1);
     }
+
+    // checkers
+
+    static bool isJal(uint32_t instr) {
+        return Rv32Base::readOpcode(instr) == JalOpcode;
+    }
+
+    static bool isJalr(uint32_t instr) {
+        return Rv32Base::readOpcode(instr) == JalrOpcode && Rv32Base::iTypeReadFunct3(instr) == 0;
+    }
+
+    static bool isAuipc(uint32_t instr) {
+        return Rv32Base::readOpcode(instr) == AuipcOpcode;
+    }
+
+    static bool isBranch(uint32_t instr) {
+        return Rv32Base::readOpcode(instr) == BranchOpcode;
+    }
+
+    static constexpr uint32_t JalOpcode = 0b1101111u;
+    static constexpr uint32_t JalrOpcode = 0b1100111u;
+    static constexpr uint32_t BranchOpcode = 0b1100011u;
+    static constexpr uint32_t AuipcOpcode = 0b0010111u;
 };

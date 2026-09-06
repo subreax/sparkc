@@ -33,6 +33,7 @@ private:
     };
 
     void write_u32(uint32_t instr, int32_t offset);
+    uint32_t& get_u32(uint32_t offset);
 
     int32_t calculateOffsetToLabel(int32_t pc, StringRef label);
 

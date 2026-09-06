@@ -184,7 +184,7 @@ private:
             }
         }
         add<RvaEndTempStack>();
-        add<RvaCall>(func->getName());
+        add<RvaCall>(func->getName(), tempReg->getReg());
 
         if (!retInMem) {
             add<RvaMov>(retVar, getArgReg(0)); // todo: support 4-8 bytes

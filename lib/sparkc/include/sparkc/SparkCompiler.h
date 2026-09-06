@@ -12,8 +12,6 @@
 #include "SparkOptimization.h"
 
 struct SparkCompilerConfig {
-    uint8_t* outBin;
-    size_t outCap;
     size_t poolSize;
     uint32_t optimizations;
     SparkRuntime runtime;
@@ -30,6 +28,6 @@ public:
 
     static void addOnInitCallback(OnInitCallback cbk);
 
-    static BuildResult build(const char* src);
+    static BuildResult build(const char* src, uint8_t* outBin, size_t outCap);
     static PoolsMemoryStats getMemoryUsage();
 };

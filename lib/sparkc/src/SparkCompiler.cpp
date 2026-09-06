@@ -13,8 +13,6 @@
 #include "SparkInitContextImpl.h"
 
 static SparkPools* pools = nullptr;
-static uint8_t* outBin = nullptr;
-static size_t outCap = 0;
 
 static SparkStageCallback nullStageCallback;
 static SparkStageCallback* stageCallback = &nullStageCallback;
@@ -25,7 +23,7 @@ static SparkBuildStage finalBuildStage;
 
 static std::vector<SparkCompiler::OnInitCallback> initCallbacks;
 
-static BuildResult buildResult(SymbolTable& symTable, RvAssembler& assembler);
+static BuildResult buildResult(SymbolTable& symTable, RvAssembler& assembler, uint8_t* outBin);
 
 void SparkCompiler::init(const SparkCompilerConfig& config) {
     if (pools != nullptr) {
@@ -33,8 +31,6 @@ void SparkCompiler::init(const SparkCompilerConfig& config) {
     }
 
     pools = new SparkPools(config.poolSize);
-    outBin = config.outBin;
-    outCap = config.outCap;
     runtime = config.runtime;
     if (config.stageCallback != nullptr) {
         stageCallback = config.stageCallback;
@@ -47,13 +43,16 @@ void SparkCompiler::init(const SparkCompilerConfig& config) {
 }
 
 void SparkCompiler::destroy() {
+    delete pools;
+    initCallbacks.clear();
+    stageCallback = &nullStageCallback;
 }
 
 void SparkCompiler::addOnInitCallback(OnInitCallback cbk) {
     initCallbacks.emplace_back(std::move(cbk));
 }
 
-BuildResult SparkCompiler::build(const char* src) {
+BuildResult SparkCompiler::build(const char* src, uint8_t* outBin, size_t outCap) {
     pools->reset();
 
     SymbolTable symTable(pools->shared);
@@ -144,7 +143,7 @@ BuildResult SparkCompiler::build(const char* src) {
     }
 
     assembler.link();
-    auto res = buildResult(symTable, assembler);
+    auto res = buildResult(symTable, assembler, outBin);
     if (finalBuildStage == SparkBuildStage::Bin) {
         stageCallback->onBinary(res);
     }
@@ -155,16 +154,15 @@ PoolsMemoryStats SparkCompiler::getMemoryUsage() {
     return pools->getMemoryUsage();
 }
 
-static BuildResult buildResult(SymbolTable& symTable, RvAssembler& assembler) {
+static BuildResult buildResult(SymbolTable& symTable, RvAssembler& assembler, uint8_t* outBin) {
     std::unordered_map<StringRef, BuildResult::Function> functions;
 
     auto publicLabels = assembler.getPublicLabels();
     for (const auto& label : publicLabels) {
         auto* type = symTable.get(label.value);
         if (type->kind == SymbolType::Kind::Function) {
-            void* ptr = outBin + label.offset;
             auto fun = BuildResult::Function(
-                ptr,
+                label.offset,
                 label.value,
                 (SymbolFunctionType*) type
             );

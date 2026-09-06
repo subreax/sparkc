@@ -195,7 +195,7 @@ private:
     RvaImm* newImm(int32_t value) { return allocator.create<RvaImm>(value); }
 
     void clone(RvaCall* call) {
-        add(allocator.create<RvaCall>(call->getFunName()));
+        add(allocator.create<RvaCall>(call->getFunName(), call->getOffsetReg()));
     }
 
     void clone(RvaPrologue* pr) {

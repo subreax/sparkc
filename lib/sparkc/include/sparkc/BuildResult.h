@@ -7,17 +7,17 @@ class BuildResult {
 public:
     class Function {
     public:
-        Function(void* ptr, StringRef name, SymbolFunctionType* type)
-            : ptr(ptr)
+        Function(uint32_t offset, StringRef name, SymbolFunctionType* type)
+            : offset(offset)
             , name(name)
             , type(type) { }
 
-        void* getPointer() const { return ptr; }
+        uint32_t getOffset() const { return offset; }
         const StringRef& getName() const { return name; }
         SymbolFunctionType* getType() const { return type; }
 
     private:
-        void* ptr;
+        uint32_t offset;
         StringRef name;
         SymbolFunctionType* type;
     };
@@ -46,6 +46,10 @@ public:
 
     std::optional<Function> lookupFunction(const char* name) {
         return lookupFunction(StringRef::cstr(name));
+    }
+
+    const std::unordered_map<StringRef, Function>& getFunctions() const {
+        return functions;
     }
 
 private:

@@ -110,7 +110,7 @@ private:
     CliOptions options;
 };
 
-int32_t divq15(int32_t a, int32_t b) {
+static int32_t divq15(int32_t a, int32_t b) {
     return (int64_t(a) << 15) / b;
 }
 
@@ -142,8 +142,6 @@ int main(int argc, const char** argv) {
     uint8_t binary[1024];
 
     SparkCompilerConfig config;
-    config.outBin = binary;
-    config.outCap = sizeof(binary);
     config.poolSize = 4096 * 3;
     config.optimizations = cliOptions.optimizations;
     config.runtime.divq15 = divq15;
@@ -162,14 +160,21 @@ int main(int argc, const char** argv) {
 
     BuildResult buildResult;
     try {
-        buildResult = SparkCompiler::build(source.c_str());
+        buildResult = SparkCompiler::build(source.c_str(), binary, sizeof(binary));
     } catch (const ParseException& ex) {
         printError(ex, source);
         return 1;
     }
 
     if (cliOptions.finalBuildStage == SparkBuildStage::Bin) {
-        if (cliOptions.printMemoryUsage) {
+        if (cliOptions.printBinInfo) {
+            std::cout << "~ functions ~\n";
+            for (auto [name, func] : buildResult.getFunctions()) {
+                std::cout << name.toString() << ": " << func.getOffset() << "\n";
+            }
+            std::cout << std::endl;
+
+            std::cout << "~ mem usage ~" << std::endl;
             auto memoryUsage = SparkCompiler::getMemoryUsage();
             printMemUsage("pool1", memoryUsage.pool1);
             printMemUsage("pool2", memoryUsage.pool2);
