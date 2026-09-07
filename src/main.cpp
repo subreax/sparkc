@@ -110,8 +110,18 @@ private:
     CliOptions options;
 };
 
+struct Color {
+    int32_t r;
+    int32_t g;
+    int32_t b;
+};
+
 static int32_t divq15(int32_t a, int32_t b) {
     return (int64_t(a) << 15) / b;
+}
+
+static Color mix(const Color& a, const Color& b, int32_t val) {
+    return { a.r + b.r, a.g + b.g, a.b + b.b };
 }
 
 int main(int argc, const char** argv) {
@@ -149,12 +159,28 @@ int main(int argc, const char** argv) {
     config.stageCallback = &stageCallback;
     SparkCompiler::init(config);
 
-    SparkCompiler::addOnInitCallback([&fakeFun](SparkInitContext& ctx) {
+    SparkCompiler::addOnInitCallback([&](SparkInitContext& ctx) {
+        auto* color_ = ctx.types().structure("color");
+        // clang-format off
+        ctx.addStruct("color", {
+            { "r", ctx.types().float_() },
+            { "g", ctx.types().float_() },
+            { "b", ctx.types().float_() },
+        });
+        // clang-format on
+
         ctx.bindFunction(
             (void*) &fakeFun,
             "sumi32",
             ctx.types().int_(),
             { ctx.types().int_(), ctx.types().int_() }
+        );
+
+        ctx.bindFunction(
+            (void*) &mix,
+            "mix",
+            color_,
+            { color_, color_, ctx.types().float_() }
         );
     });
 

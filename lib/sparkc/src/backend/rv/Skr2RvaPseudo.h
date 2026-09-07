@@ -168,7 +168,7 @@ private:
 
         add<RvaBeginTempStack>();
         for (auto* arg : skrArgs) {
-            size_t argSz = getSize(arg);
+            size_t argSz = isReplacedToPtr(arg) ? 4 : getSize(arg);
             if (argSz > 8) {
                 // placeArgOnStack(arg, argSz, argIdx);
                 passArgByRef(arg, argIdx);
@@ -464,11 +464,11 @@ private:
         replacedToPtr.emplace(var->getId());
     }
 
-    bool isReplacedToPtr(const SkrValue* val) {
+    bool isReplacedToPtr(const SkrValue* val) const {
         return val->isVar() && isReplacedToPtr(val->toSkrVar());
     }
 
-    bool isReplacedToPtr(const SkrVar* var) {
+    bool isReplacedToPtr(const SkrVar* var) const {
         return replacedToPtr.find(var->getId()) != replacedToPtr.end();
     }
 
