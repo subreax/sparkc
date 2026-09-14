@@ -6,7 +6,7 @@
 
 class RvAssembler {
 public:
-    RvAssembler(uint8_t* out, size_t cap);
+    RvAssembler(MemBlockRef outBin);
 
     RvAssembler(const RvAssembler&) = delete;
     RvAssembler& operator=(const RvAssembler&) = delete;

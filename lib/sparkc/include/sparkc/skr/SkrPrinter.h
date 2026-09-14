@@ -1,5 +1,6 @@
 #pragma once
 #include "sparkc/skr/SkrFunction.h"
+#include "sparkc/skr/SkrStaticVar.h"
 #include "sparkc/skr/instr/everything.h"
 #include "sparkc/symbol/SymbolTable.h"
 #include "sparkc/common/ExpandableStringBuilder.h"
@@ -10,9 +11,9 @@ public:
         : symbolTable(symbolTable)
         , isColored(isColored) { }
 
-    static std::string toString(const SymbolTable& symbolTable, bool colored, SkrFunction* func) {
+    static std::string toString(const SymbolTable& symbolTable, bool colored, SkrProgItem* item) {
         return SkrPrinter(symbolTable, colored)
-            .append(func)
+            .append(item)
             .toString();
     }
 
@@ -22,6 +23,8 @@ public:
         return printer.sb.toString();
     }
 
+    SkrPrinter& append(SkrProgItem* item);
+    SkrPrinter& append(SkrStaticVar* staticVar);
     SkrPrinter& append(SkrFunction* func);
 
     std::string toString() const {

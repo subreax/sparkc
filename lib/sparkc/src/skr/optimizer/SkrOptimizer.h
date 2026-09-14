@@ -12,6 +12,7 @@
 #include "sparkc/skr/optimizer/SkrCfg.h"
 #include "sparkc/skr/optimizer/SkrOptimizerConfig.h"
 #include "sparkc/common/cfg/CfgUtils.h"
+#include "sparkc/symbol/SymbolTable.h"
 
 class SkrOptimizer {
 public:
@@ -19,21 +20,22 @@ public:
     static constexpr size_t MAX_ITERATIONS = 50;
 
     SkrOptimizer(
-        Allocator& a1,
+        SymbolTable& symTable,
+        SkrFactory& skrf,
         SkrFunction* rawFunc,
         OnCfgGraphCreatedListener onGraphCreated = nullListener
     )
-        : raw(rawFunc->getInstructions().toVector())
+        : symTable(symTable)
+        , initial(rawFunc->getInstructions().toVector())
         , rawFunc(rawFunc)
-        , a1(a1)
+        , skrf(skrf)
         , onCfgCreatedListener(onGraphCreated) { }
 
     SkrFunction* optimize(const SkrOptimizerConfig& config) {
-        std::vector<SkrInstruction*> optimized = raw;
-        SkrFactory skrf(a1);
+        std::vector<SkrInstruction*> optimized = initial;
 
         {
-            SkrCfg graph = CfgBuilder<SkrInstruction*>::build(raw);
+            SkrCfg graph = CfgBuilder<SkrInstruction*>::build(initial);
             onCfgCreatedListener(rawFunc->getName(), -1, graph);
         }
 
@@ -51,10 +53,10 @@ public:
                 UnreachableCodeElimination(graph).run();
             }
             if (config.copyPropagation) {
-                CopyPropagation(skrf, graph).run();
+                CopyPropagation(symTable, skrf, graph).run();
             }
             if (config.deadStoreElimination) {
-                DeadStoreElimination(graph, rawFunc->getRetVar()).run();
+                DeadStoreElimination(symTable, graph, rawFunc->getRetVar()).run();
             }
 
             onCfgCreatedListener(rawFunc->getName(), i, graph);
@@ -62,17 +64,17 @@ public:
             optimized.clear();
             CfgUtils::graphToPlain(graph, optimized);
 
-            if (raw == optimized) {
+            if (initial == optimized) {
                 break;
             }
 
-            raw = optimized;
+            initial = optimized;
         }
 
         return skrf.function(
             rawFunc->getName(),
             rawFunc->getParams(),
-            BoundArray<SkrInstruction*>::fromVector(raw, a1),
+            skrf.copyInstructions(optimized),
             rawFunc->getRetVar()
         );
     }
@@ -80,8 +82,9 @@ public:
 private:
     static void nullListener(StringRef, int, SkrCfg&) { }
 
-    std::vector<SkrInstruction*> raw;
+    SymbolTable& symTable;
+    std::vector<SkrInstruction*> initial;
     SkrFunction* rawFunc;
-    Allocator& a1;
+    SkrFactory& skrf;
     OnCfgGraphCreatedListener onCfgCreatedListener = nullListener;
 };

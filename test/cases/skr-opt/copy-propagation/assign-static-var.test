@@ -1,0 +1,21 @@
+#cli
+--emit skr --optimize copy-prop
+
+#src
+var t: float;
+
+fun update(dt: float): int {
+    t = 2.0f;
+    t = t + dt;
+    return 0;
+}
+
+#expect
+staticvar t: float
+
+fun update(dt.0: float): int
+    copy t = float 2
+    t = float 2 + dt.0
+    copy retval.1 = int 0
+    jmp .ret_0
+    .ret_0:

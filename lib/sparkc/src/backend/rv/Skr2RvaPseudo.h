@@ -6,6 +6,7 @@
 #include "sparkc/common/alloc/Allocator.h"
 #include "sparkc/size/SymbolSize.h"
 #include "sparkc/skr/SkrFunction.h"
+#include "sparkc/skr/SkrStaticVar.h"
 #include "sparkc/skr/instr/everything.h"
 #include "sparkc/symbol/SymbolTable.h"
 #include "sparkc/SparkRuntime.h"
@@ -15,7 +16,7 @@
 class Skr2RvaPseudo {
 public:
     static void emit(
-        SkrFunction* func,
+        SkrProgItem* item,
         Allocator& allocator,
         IdentifierGen& idGen,
         SymbolTable& table,
@@ -23,7 +24,16 @@ public:
         StackFrame& frame,
         std::vector<RvaInstruction*>& buf
     ) {
-        Skr2RvaPseudo(allocator, idGen, table, ss, frame, buf).emit(func);
+        Skr2RvaPseudo emitter(allocator, idGen, table, ss, frame, buf);
+        if (item->kind == SkrProgItem::Kind::Function) {
+            emitter.emit((SkrFunction*) item);
+        }
+        else if (item->kind == SkrProgItem::Kind::Var) {
+            emitter.emit((SkrStaticVar*) item);
+        }
+        else {
+            sparkError("Skr2RvaPseudo", "Unknown SkrProgItem::Kind: %d", item->kind);
+        }
     }
 
 private:
@@ -42,6 +52,10 @@ private:
         , frame(frame)
         , out(out)
         , tempReg(newRegister(RvReg::T6)) { }
+
+    void emit(SkrStaticVar* var) {
+        add<RvaDataAlloc>(var->getId(), symbolSize.get(var->getId()));
+    }
 
     void emit(SkrFunction* func) {
         _retInMem = getSize(func->getRetVar()) > 8;
@@ -92,7 +106,7 @@ private:
     }
 
     void emitBinary(SkrBinary* it) {
-        auto dstType = symbolTable.get(it->getDst()->getId())->kind;
+        auto dstType = symbolTable.get(it->getDst()->getId()).getType()->kind;
         auto op = it->getOperator();
         if (dstType == SymbolType::Kind::Float && op == SkrBinary::Operator::Mul) {
             add<RvaBinary>(
@@ -193,7 +207,7 @@ private:
 
     void placeArgOnStack(const SkrValue* skrArg, size_t sz, int regIdx) {
         StringRef argId = idGen.unique("arg");
-        symbolTable.declareVar(argId, getType(skrArg));
+        symbolTable.declareVar(argId, getType(skrArg), false);
         SkrVar* arg = allocator.create<SkrVar>(argId);
 
         copy(arg, 0, skrArg, 0);
@@ -276,6 +290,13 @@ private:
             if (!isReplacedToPtr(it) && isStructure(it)) {
                 return allocator.create<RvaPseudoMem>(it->getId(), offsetIfMem);
             }
+            /* Not actually pseudo */
+            else if (isStatic(it)) {
+                if (offsetIfMem != 0) {
+                    sparkError("Skr2RvaPseudo", "Offset for static variables is not implemented");
+                }
+                return allocator.create<RvaData>(it->getId());
+            }
             else {
                 return allocator.create<RvaPseudoReg>(it->getId());
             }
@@ -292,10 +313,6 @@ private:
 
     inline RvaRegister* newRegister(RvReg reg) {
         return RvaRegister::get(reg);
-    }
-
-    inline RvaPseudoReg* newPseudo(const char* name) {
-        return allocator.create<RvaPseudoReg>(idGen.unique(name));
     }
 
     inline RvaPseudoMem* newPseudoMem(StringRef id, int offset) {
@@ -350,7 +367,11 @@ private:
     }
 
     bool isStructure(StringRef id) const {
-        return symbolTable.get(id)->kind == SymbolType::Kind::Structure;
+        return symbolTable.get(id).getType()->kind == SymbolType::Kind::Structure;
+    }
+
+    bool isStatic(const SkrVar* var) const {
+        return symbolTable.get(var->getId()).isStatic();
     }
 
     size_t getSize(const SkrValue* val) const {
@@ -477,7 +498,7 @@ private:
             return val->toSkrConst()->getConst()->type;
         }
         else if (val->isVar()) {
-            return symbolTable.get(val->toSkrVar()->getId());
+            return symbolTable.get(val->toSkrVar()->getId()).getType();
         }
         sparkError("Skr2RvaPseudo", "Unknown SkrVar kind: %d", val->kind);
         return nullptr;

@@ -79,7 +79,10 @@ private:
     }
 
     std::string toMermaid(AstProgItem* item) {
-        if (item->kind == AstProgItem::Kind::Function) {
+        if (item->kind == AstProgItem::Kind::Variable) {
+            return toMermaid((AstStaticVariable*) item);
+        }
+        else if (item->kind == AstProgItem::Kind::Function) {
             return toMermaid((AstFunction*) item);
         }
         else if (item->kind == AstProgItem::Kind::Struct) {
@@ -88,6 +91,18 @@ private:
 
         sparkError("AstMermaidPrinter", "Unknown AstProgItem: %d", item->kind);
         return "";
+    }
+
+    std::string toMermaid(AstStaticVariable* var) {
+        auto node = Node(
+            *this,
+            "var decl",
+            { "name", var->getName().toString(), "type", type2string(var->getType()) }
+        );
+        if (var->getInitializer() != nullptr) {
+            connect(node, toMermaid(var->getInitializer()));
+        }
+        return node.id;
     }
 
     std::string toMermaid(AstStruct* st) {

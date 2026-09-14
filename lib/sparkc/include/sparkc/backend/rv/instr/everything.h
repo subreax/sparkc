@@ -11,6 +11,9 @@
 #include "RvaBranch.h"
 #include "RvaCall.h"
 #include "RvaGetAddress.h"
+#include "RvaDataAlloc.h"
+#include "RvaDLoad.h"
+#include "RvaDStore.h"
 
 #include "RvaBeginTempStack.h"
 #include "RvaEndTempStack.h"

@@ -5,46 +5,50 @@
 class VarSet {
 public:
     void generate(const SkrVar* var) {
-        auto it = find(var);
-        if (it == vars.end()) {
-            vars.emplace_back(var);
-        }
+        generate(var->getId());
     }
 
     void generateIfVar(const SkrValue* value) {
         if (value->isVar()) {
-            generate(value->toSkrVar());
+            generate(value->toSkrVar()->getId());
+        }
+    }
+
+    void generate(StringRef id) {
+        auto it = find(id);
+        if (it == varIds.end()) {
+            varIds.emplace_back(id);
         }
     }
 
     void kill(const SkrVar* var) {
         auto it = find(var);
-        if (it != vars.end()) {
-            vars.erase(it);
+        if (it != varIds.end()) {
+            varIds.erase(it);
         }
     }
 
-    const std::vector<const SkrVar*>& getVars() const {
-        return vars;
+    const std::vector<StringRef>& getVars() const {
+        return varIds;
     }
 
     void addAll(const VarSet& other) {
-        for (auto* var : other.vars) {
+        for (auto var : other.varIds) {
             generate(var);
         }
     }
 
     void clear() {
-        vars.clear();
+        varIds.clear();
     }
 
     bool operator==(const VarSet& other) const {
-        if (vars.size() != other.vars.size()) {
+        if (varIds.size() != other.varIds.size()) {
             return false;
         }
 
-        for (size_t i = 0; i < vars.size(); i++) {
-            if (*vars[i] != *other.vars[i]) {
+        for (size_t i = 0; i < varIds.size(); i++) {
+            if (varIds[i] != other.varIds[i]) {
                 return false;
             }
         }
@@ -56,7 +60,7 @@ public:
     }
 
     bool contains(const SkrVar* var) const {
-        return find(var) != vars.end();
+        return find(var->getId()) != varIds.end();
     }
 
     bool contains(const SkrValue* value) const {
@@ -67,11 +71,11 @@ public:
     }
 
 private:
-    std::vector<const SkrVar*>::const_iterator find(const SkrVar* var) const {
-        auto it = vars.begin();
-        auto end = vars.end();
+    std::vector<StringRef>::const_iterator find(StringRef id) const {
+        auto it = varIds.begin();
+        auto end = varIds.end();
         while (it != end) {
-            if (**it == *var) {
+            if (*it == id) {
                 break;
             }
             ++it;
@@ -79,5 +83,9 @@ private:
         return it;
     }
 
-    std::vector<const SkrVar*> vars;
+    std::vector<StringRef>::const_iterator find(const SkrVar* var) const {
+        return find(var->getId());
+    }
+
+    std::vector<StringRef> varIds;
 };

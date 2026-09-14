@@ -1,5 +1,6 @@
 #pragma once
 #include "AstProgram.h"
+#include "AstStaticVariable.h"
 #include "AstFunction.h"
 #include "AstStruct.h"
 #include "AstBlock.h"

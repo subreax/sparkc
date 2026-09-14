@@ -33,6 +33,10 @@ public:
         );
     }
 
+    StringRef copy(const char* id) {
+        return copy(StringRef::cstr(id));
+    }
+
     StringRef copy(StringRef ref) {
         auto len = std::min(ref.getLength(), sizeof(nameBuf));
         return FixedStringBuilder(allocator.allocate(len))

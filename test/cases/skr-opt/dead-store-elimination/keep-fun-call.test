@@ -1,0 +1,26 @@
+#cli
+--emit skr --optimize dse
+
+
+#src
+fun f1(): int {
+    return 0;
+}
+
+fun main(): int {
+    f1();
+    return 0;
+}
+
+
+#expect
+fun f1(): int
+    copy retval.0 = int 0
+    jmp .ret_0
+    .ret_0:
+
+fun main(): int
+    r_f1.2 = int f1()
+    copy retval.1 = int 0
+    jmp .ret_1
+    .ret_1:

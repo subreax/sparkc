@@ -3,13 +3,14 @@
 #include "sparkc/common/Error.h"
 #include "sparkc/common/LabelGen.h"
 
-RvListing::RvListing(uint8_t* out, size_t cap)
-    : out(out)
-    , cap(cap) { }
+RvListing::RvListing(MemBlockRef code)
+    : out(code) {
+    memset(out.mem, 0, out.sz);
+}
 
 void RvListing::add(uint32_t instr) {
-    write_u32(instr, offset);
-    offset += 4;
+    write_u32(instr, codeSz);
+    codeSz += 4;
 }
 
 RvListing& RvListing::operator+=(uint32_t instr) {
@@ -18,19 +19,24 @@ RvListing& RvListing::operator+=(uint32_t instr) {
 }
 
 void RvListing::addLabel(StringRef label) {
-    labels.emplace_back(offset, label);
+    labels.emplace_back(codeSz, label);
 }
 
 void RvListing::addExternalLabel(StringRef label, void* ptr) {
-    size_t offset = ((uint8_t*) ptr) - out; /* todo: is size_t a typo? */
+    size_t offset = ((uint8_t*) ptr) - out.mem; /* todo: is size_t a typo? */
     labels.emplace_back(offset, label);
 }
 
 /* todo: clarify function name. addLabel function adds label to labels, but this adds to unresolved. */
 void RvListing::addWithLabel(uint32_t instr, StringRef label) {
-    write_u32(instr, offset);
-    unresolved.emplace_back(offset, label);
-    offset += 4;
+    write_u32(instr, codeSz);
+    unresolved.emplace_back(codeSz, label);
+    codeSz += 4;
+}
+
+void RvListing::addGlobalVar(StringRef id, size_t sz) {
+    uint32_t offset = allocateData(sz);
+    labels.emplace_back(offset, id);
 }
 
 void RvListing::link() {
@@ -59,13 +65,25 @@ void RvListing::link() {
                 write_u32(Rv32I::jalr(RvReg::RA, rd, split.lo), u.offset + 4);
             }
         }
+        else if (Rv32I::isAuipc(instr) && Rv32I::isLw(get_u32(u.offset + 4))) {
+            int32_t memOffset = calculateOffsetToLabel(u.offset, u.label);
+            auto split = Rv32Base::splitImm11(memOffset);
+            write_u32(Rv32Base::uTypePatchImm(instr, split.hi), u.offset);
+            write_u32(Rv32Base::iTypePatchImm(get_u32(u.offset + 4), split.lo), u.offset + 4);
+        }
+        else if (Rv32I::isAuipc(instr) && Rv32I::isSw(get_u32(u.offset + 4))) {
+            int32_t memOffset = calculateOffsetToLabel(u.offset, u.label);
+            auto split = Rv32Base::splitImm11(memOffset);
+            write_u32(Rv32Base::uTypePatchImm(instr, split.hi), u.offset);
+            write_u32(Rv32Base::sTypePatchImm(get_u32(u.offset + 4), split.lo), u.offset + 4);
+        }
         else {
             sparkError("RvListing", "Can't link instruction: %08x", instr);
         }
     }
 }
 
-size_t RvListing::getSize() const { return offset; }
+size_t RvListing::getSize() const { return codeSz; }
 
 std::vector<Label> RvListing::getPublicLabels() const {
     std::vector<Label> outLabels;
@@ -78,8 +96,8 @@ std::vector<Label> RvListing::getPublicLabels() const {
 }
 
 void RvListing::write_u32(uint32_t instr, int32_t offset) {
-    if (offset + 4 <= cap) {
-        *((uint32_t*) (out + offset)) = instr;
+    if (offset + 4 <= out.sz) {
+        *((uint32_t*) (out.mem + offset)) = instr;
     }
     else {
         sparkError("RvListing", "Not enough memory to write compiled program");
@@ -89,13 +107,22 @@ void RvListing::write_u32(uint32_t instr, int32_t offset) {
 uint32_t& RvListing::get_u32(uint32_t offset) {
     static uint32_t sNullValue = 0;
 
-    if (offset + 4 <= cap) {
-        return *(uint32_t*) (out + offset);
+    if (offset + 4 <= out.sz) {
+        return *(uint32_t*) (out.mem + offset);
     }
     else {
         sparkError("RvListing", "get_u32 is out of range");
         return sNullValue;
     }
+}
+
+uint32_t RvListing::allocateData(size_t sz) {
+    if (codeSz < (dataSz + sz)) {
+        dataSz += sz;
+        return out.sz - dataSz;
+    }
+    sparkError("RvListing", "Not enough memory to allocate " + std::to_string(sz) + " bytes of data");
+    return 0;
 }
 
 int32_t RvListing::calculateOffsetToLabel(int32_t pc, StringRef label) {
@@ -113,5 +140,5 @@ int32_t RvListing::getLabelOffset(StringRef label) {
 }
 
 bool RvListing::isLabelExternal(const Label& label) const {
-    return label.offset < 0 || label.offset >= cap;
+    return label.offset < 0 || label.offset >= out.sz;
 }

@@ -7,15 +7,16 @@
 
 class LivenessAnalysis {
 public:
-    LivenessAnalysis(const SkrCfg& graph, const SkrVar* retVar)
-        : annotations(graph.getSize())
+    LivenessAnalysis(SymbolTable& symTable, const SkrCfg& graph, const SkrVar* retVar)
+        : symTable(symTable)
+        , annotations(graph.getSize())
         , graph(graph)
         , retVar(retVar) { }
 
     void run() {
         Uniqueue<size_t> workQueue;
 
-        addRetVarToEndBlock();
+        addStaticAndRetVarsToEndBlock();
 
         // skip end block
         for (size_t i = annotations.size() - 2; i > 0; i--) {
@@ -44,8 +45,15 @@ public:
     }
 
 private:
-    void addRetVarToEndBlock() {
+    void addStaticAndRetVarsToEndBlock() {
         VarSet vars;
+
+        for (const auto& [name, symbol] : symTable) {
+            if (symbol.isStatic()) {
+                vars.generate(name);
+            }
+        }
+
         vars.generate(retVar);
         annotations[graph.getSize() - 1].setBlockVars(vars);
     }
@@ -126,7 +134,9 @@ private:
         }
     }
 
+    SymbolTable& symTable;
     std::vector<DSEBlock> annotations;
     const SkrCfg& graph;
     const SkrVar* retVar;
+    std::vector<StringRef> staticVars;
 };

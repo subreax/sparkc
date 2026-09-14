@@ -36,6 +36,7 @@ private:
             case RvaInstruction::Kind::Jump: clone((RvaJump*) rva); break;
             case RvaInstruction::Kind::Label: clone((RvaLabel*) rva); break;
             case RvaInstruction::Kind::Ret: add(allocator.create<RvaRet>()); break;
+            case RvaInstruction::Kind::DataAlloc: clone((RvaDataAlloc*) rva); break;
 
             case RvaInstruction::Kind::BeginTempStack:
             case RvaInstruction::Kind::EndTempStack:
@@ -52,11 +53,15 @@ private:
         auto toKind = it->to->kind;
 
         if (toKind == RvaValue::Kind::Register) {
-            if (fromKind == RvaValue::Kind::Register || fromKind == RvaValue::Kind::Imm) {
+            if (fromKind == RvaValue::Kind::Register
+                || fromKind == RvaValue::Kind::Imm) {
                 add(allocator.create<RvaMov>(clone(it->to), clone(it->from)));
             }
             else if (fromKind == RvaValue::Kind::Memory) {
                 add(allocator.create<RvaLoad>(clone(it->to), (RvaMemory*) clone(it->from)));
+            }
+            else if (fromKind == RvaValue::Kind::Data) {
+                add(allocator.create<RvaDLoad>((RvaRegister*) clone(it->to), (RvaData*) clone(it->from), getReg(RvReg::T0)));
             }
             else {
                 sparkError(
@@ -69,6 +74,10 @@ private:
         else if (toKind == RvaValue::Kind::Memory) {
             auto* regFrom = moveToReg(it->from, RvReg::T0);
             add(allocator.create<RvaStore>((RvaMemory*) clone(it->to), regFrom));
+        }
+        else if (toKind == RvaValue::Kind::Data) {
+            auto* regFrom = moveToReg(it->from, RvReg::T0);
+            add(allocator.create<RvaDStore>((RvaData*) clone(it->to), regFrom, getReg(RvReg::T6)));
         }
         else {
             add(allocator.create<RvaMov>(clone(it->to), clone(it->from)));
@@ -149,6 +158,9 @@ private:
         if (initial->kind == RvaValue::Kind::Memory) {
             add(allocator.create<RvaStore>((RvaMemory*) clone(initial), reg));
         }
+        else if (initial->kind == RvaValue::Kind::Data) {
+            add(allocator.create<RvaDStore>((RvaData*) clone(initial), reg, getReg(RvReg::T6)));
+        }
     }
 
     RvaRegister* getRegisterOrNew(RvaValue* v, RvReg reg) {
@@ -188,6 +200,13 @@ private:
             return r;
         }
 
+        if (kind == RvaValue::Kind::Data) {
+            auto* src = (RvaData*) clone(val);
+            auto* dst = getReg(reg);
+            add(allocator.create<RvaDLoad>(dst, src, getReg(RvReg::T6)));
+            return dst;
+        }
+
         sparkError("RvaFixer", "Unknown RvaValue: %d", kind);
         return nullptr;
     }
@@ -214,6 +233,10 @@ private:
         add(allocator.create<RvaLabel>(label->getValue()));
     }
 
+    void clone(RvaDataAlloc* it) {
+        add(allocator.create<RvaDataAlloc>(it->getLabel(), it->getSize()));
+    }
+
     RvaValue* clone(RvaValue* v) {
         switch (v->kind) {
         case RvaValue::Kind::Imm: {
@@ -229,6 +252,10 @@ private:
         case RvaValue::Kind::Memory: {
             auto* mem = (RvaMemory*) v;
             return allocator.create<RvaMemory>(mem->getBase(), mem->getOffset());
+        }
+        case RvaValue::Kind::Data: {
+            auto* it = (RvaData*) v;
+            return allocator.create<RvaData>(it->getLabel());
         }
 
         default:

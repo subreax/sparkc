@@ -4,12 +4,13 @@
 
 class DeadStoreElimination {
 public:
-    DeadStoreElimination(SkrCfg& graph, const SkrVar* retVar)
-        : graph(graph)
+    DeadStoreElimination(SymbolTable& symTable, SkrCfg& graph, const SkrVar* retVar)
+        : symTable(symTable)
+        , graph(graph)
         , retVar(retVar) { }
 
     void run() {
-        LivenessAnalysis la(graph, retVar);
+        LivenessAnalysis la(symTable, graph, retVar);
         la.run();
 
         for (size_t blockIdx = 0; blockIdx < graph.getSize(); blockIdx++) {
@@ -55,14 +56,18 @@ private:
             auto* it = (SkrInt2Float*) instr;
             return !annotation.contains(it->getDst());
         }
-        else if (instr->kind == SkrInstruction::Kind::FunCall) {
+        // never delete function calls because:
+        // 1. they can update static vars
+        // 2. a funtion can be an external function that changes system behaviour
+        /* else if (instr->kind == SkrInstruction::Kind::FunCall) {
             auto* it = (SkrFunCall*) instr;
             return !annotation.contains(it->getRetVar());
-        }
+        } */
 
         return false;
     }
 
+    SymbolTable& symTable;
     SkrCfg& graph;
     const SkrVar* retVar;
 };

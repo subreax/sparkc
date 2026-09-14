@@ -3,6 +3,7 @@
 class AstProgItem {
 public:
     enum class Kind {
+        Variable,
         Function,
         Struct
     };

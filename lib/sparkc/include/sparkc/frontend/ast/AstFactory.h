@@ -15,6 +15,10 @@ public:
 
     // AstProgItems
 
+    AstStaticVariable* staticVar(StringRef name, SymbolType* type, AstExp* initializer) {
+        return allocator.create<AstStaticVariable>(name, type, initializer);
+    }
+
     AstFunction* function(StringRef name, SymbolType* returnType, const std::vector<AstFunParam*>& params, AstBlock* body) {
         auto paramsBA = BoundArray<AstFunParam*>::fromVector(params, allocator);
         return allocator.create<AstFunction>(name, returnType, paramsBA, body);

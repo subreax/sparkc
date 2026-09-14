@@ -9,10 +9,26 @@ static const char* op(SkrBranch::Operator op) {
     return SkrBranch::operatorStringValue(op);
 }
 
+SkrPrinter& SkrPrinter::append(SkrProgItem* item) {
+    if (item->kind == SkrProgItem::Kind::Var) {
+        return append((SkrStaticVar*) item);
+    }
+    else if (item->kind == SkrProgItem::Kind::Function) {
+        return append((SkrFunction*) item);
+    }
+    sparkError("SkrPrinter", "Unknown SkrProgItem");
+    return *this;
+}
+
+SkrPrinter& SkrPrinter::append(SkrStaticVar* staticVar) {
+    sb << "staticvar " << staticVar->getId() << ": " << type(staticVar->getVar()) << "\n\n";
+    return *this;
+}
+
 SkrPrinter& SkrPrinter::append(SkrFunction* func) {
     sb << "fun " << label(func->getName()) << "(";
 
-    auto* funcDecl = (SymbolFunctionType*) symbolTable.get(func->getName());
+    auto* funcDecl = (SymbolFunctionType*) symbolTable.get(func->getName()).getType();
     auto params = func->getParams();
     for (size_t i = 0; i < params.size(); i++) {
         sb << val(params[i]) << ": " << type(params[i]);
@@ -87,12 +103,12 @@ void SkrPrinter::append(const SkrInstruction* skr) {
     else if (kind == SkrInstruction::Kind::Load) {
         auto* it = (SkrLoad*) skr;
         sb << "load "
-           << val(it->getTo()) << " = " << type(it->getTo()) << int32_t{it->getFromOffset()} << "(" << val(it->getFrom()) << ")";
+           << val(it->getTo()) << " = " << type(it->getTo()) << int32_t { it->getFromOffset() } << "(" << val(it->getFrom()) << ")";
     }
     else if (kind == SkrInstruction::Kind::Store) {
         auto* it = (SkrStore*) skr;
         sb << "store "
-           << int32_t{it->getToOffset()} << "(" << val(it->getTo()) << ") = " << type(it->getFrom()) << " " << val(it->getFrom());
+           << int32_t { it->getToOffset() } << "(" << val(it->getTo()) << ") = " << type(it->getFrom()) << " " << val(it->getFrom());
     }
     else if (kind == SkrInstruction::Kind::GetAddr) {
         auto* it = (SkrGetAddr*) skr;
@@ -101,12 +117,12 @@ void SkrPrinter::append(const SkrInstruction* skr) {
     else if (kind == SkrInstruction::Kind::CopyToOffset) {
         auto* it = (SkrCopyToOffset*) skr;
         sb << "copy "
-           << int32_t{it->getToOffset()} << "(" << val(it->getTo()) << ") = " << type(it->getFrom()) << " " << val(it->getFrom());
+           << int32_t { it->getToOffset() } << "(" << val(it->getTo()) << ") = " << type(it->getFrom()) << " " << val(it->getFrom());
     }
     else if (kind == SkrInstruction::Kind::CopyFromOffset) {
         auto* it = (SkrCopyFromOffset*) skr;
         sb << "copy "
-           << val(it->getTo()) << " = " << type(it->getTo()) << " " << int32_t{it->getFromOffset()} << "(" << val(it->getFrom()) << ")";
+           << val(it->getTo()) << " = " << type(it->getTo()) << " " << int32_t { it->getFromOffset() } << "(" << val(it->getFrom()) << ")";
     }
     else {
         sparkError("SkrPrinter", "Unknown skr: %d", kind);
@@ -143,7 +159,7 @@ std::string SkrPrinter::type(const SkrValue* val) const {
     }
     else if (val->isVar()) {
         auto* skrVar = (const SkrVar*) val;
-        return type(symbolTable.get(skrVar->getId()));
+        return type(symbolTable.get(skrVar->getId()).getType());
     }
     sparkError("SkrPrinter2", "Unknown SkrValue kind");
     return "";

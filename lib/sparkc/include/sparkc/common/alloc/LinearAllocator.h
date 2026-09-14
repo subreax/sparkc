@@ -24,6 +24,11 @@ public:
     }
 
     MemBlockRef allocate(size_t blockSz) override {
+        // todo: is it safe?
+        /* if (blockSz == 0) {
+            return MemBlockRef(0, nullptr);
+        } */
+
         if (blockSz <= getFreeSize()) {
             uint8_t* block = ptr;
             ptr += blockSz;

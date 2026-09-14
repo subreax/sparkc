@@ -13,17 +13,26 @@ static std::vector<SkrInstruction*>& operator+=(
     return out;
 }
 
-SkrFunction* SkrEmitter::emit(
-    AstFunction* func,
+SkrProgItem* SkrEmitter::emit(
+    AstProgItem* item,
     SkrFactory& factory,
     SymbolTable& symbolTable,
     TypeTable& typeTable,
     IdentifierGen& idGen,
     LabelGen& labelGen,
-    std::vector<SkrInstruction*>& buf
+    std::vector<SkrInstruction*>& skrsBuf
 ) {
-    return SkrEmitter(factory, idGen, labelGen, symbolTable, typeTable, buf)
-        .emit(func);
+    SkrEmitter emitter(factory, idGen, labelGen, symbolTable, typeTable, skrsBuf);
+
+    switch (item->kind) {
+    case AstProgItem::Kind::Function:
+        return emitter.emit((AstFunction*) item);
+
+    case AstProgItem::Kind::Variable:
+        return emitter.emit((AstStaticVariable*) item);
+
+    default: return nullptr;
+    }
 }
 
 SkrEmitter::SkrEmitter(
@@ -32,7 +41,7 @@ SkrEmitter::SkrEmitter(
     LabelGen& labelGen,
     SymbolTable& symbolTable,
     TypeTable& typeTable,
-    std::vector<SkrInstruction*>& out
+    std::vector<SkrInstruction*>& skrsBuf
 )
     : skrf(factory)
     , symbolTable(symbolTable)
@@ -40,7 +49,17 @@ SkrEmitter::SkrEmitter(
     , typeTable(typeTable)
     , idGen(idGen)
     , labelGen(labelGen)
-    , out(out) { }
+    , body(skrsBuf) { }
+
+SkrStaticVar* SkrEmitter::emit(AstStaticVariable* astVar) {
+    auto* skrVar = skrf.var(astVar->getName());
+
+    if (astVar->getInitializer() != nullptr) {
+        emitAndConvert(astVar->getInitializer(), skrVar);
+    }
+
+    return skrf.staticVar(skrVar, body);
+}
 
 SkrFunction* SkrEmitter::emit(AstFunction* func) {
     funName = func->getName();
@@ -56,12 +75,12 @@ SkrFunction* SkrEmitter::emit(AstFunction* func) {
     funcRetVal = createVar("retval", func->getReturnType());
     retLabel = labelGen.uniquePrivate("ret");
     emit(func->getBlock());
-    out += skrf.label(retLabel);
+    body += skrf.label(retLabel);
 
     return skrf.function(
         func->getName(),
         skrParams,
-        out,
+        body,
         funcRetVal
     );
 }
@@ -116,8 +135,8 @@ void SkrEmitter::emit(AstStatement* st) {
 void SkrEmitter::emit(AstReturnStatement* st) {
     auto* retVal = emitAndConvert(st->getExpression(), funcRetVal);
     if (retVal != funcRetVal)
-        out += skrf.copy(funcRetVal, retVal);
-    out += skrf.jump(retLabel);
+        body += skrf.copy(funcRetVal, retVal);
+    body += skrf.jump(retLabel);
 }
 
 void SkrEmitter::emit(AstExpressionStatement* st) { emit(st->getExpression()); }
@@ -128,23 +147,23 @@ void SkrEmitter::emit(AstIfStatement* st) {
     emit(st->getTrueBranch());
     if (auto* falseBranch = st->getFalseBranch()) {
         auto endLabel = labelGen.uniquePrivate("end");
-        out += skrf.jump(endLabel);
-        out += skrf.label(ifFalseLabel);
+        body += skrf.jump(endLabel);
+        body += skrf.label(ifFalseLabel);
         emit(falseBranch);
-        out += skrf.label(endLabel);
+        body += skrf.label(endLabel);
         return;
     }
-    out += skrf.label(ifFalseLabel);
+    body += skrf.label(ifFalseLabel);
 }
 
 void SkrEmitter::emit(AstWhileStatement* st) {
     auto startLabel = labelGen.uniquePrivate("start");
     auto endLabel = labelGen.uniquePrivate("end");
-    out += skrf.label(startLabel);
+    body += skrf.label(startLabel);
     emitBranchInverted(st->getCondition(), endLabel);
     emit(st->getStatement());
-    out += skrf.jump(startLabel);
-    out += skrf.label(endLabel);
+    body += skrf.jump(startLabel);
+    body += skrf.label(endLabel);
 }
 
 void SkrEmitter::emit(AstCompoundStatement* st) { emit(st->getBlock()); }
@@ -170,7 +189,7 @@ void SkrEmitter::emitBranch(AstExp* exp, StringRef label, bool invert) {
         }
         auto* right = emitAndConvert(binExp->getRight());
         auto* branch = skrf.branch(left, skrOp, right, label);
-        out += branch;
+        body += branch;
     }
     else {
         auto* res = emitAndConvert(exp);
@@ -182,7 +201,7 @@ void SkrEmitter::emitBranch(AstExp* exp, StringRef label, bool invert) {
             skrOp = SkrBranch::Operator::NotEquals;
         }
         auto* branch = skrf.branch(res, skrOp, skrf.iconst(0), label);
-        out += branch;
+        body += branch;
     }
 }
 
@@ -226,7 +245,7 @@ SkrExpRes SkrEmitter::emitConstant(AstConstantExp* exp, SkrVar* dst) {
     if (dst == nullptr) {
         return SkrExpRes::val(constant);
     }
-    out += skrf.copy(dst, constant);
+    body += skrf.copy(dst, constant);
     return SkrExpRes::val(dst);
 }
 
@@ -234,7 +253,7 @@ SkrExpRes SkrEmitter::emitAddrOf(AstAddrOf* exp, SkrVar* dst) {
     SkrExpRes var = emit(exp->getExp());
     if (dst == nullptr)
         dst = createVar("addr", typesf.pointer(getType(var.get())));
-    out += skrf.getAddr(dst, var.get()->toSkrVar());
+    body += skrf.getAddr(dst, var.get()->toSkrVar());
     return SkrExpRes::val(dst);
 }
 
@@ -242,7 +261,7 @@ SkrExpRes SkrEmitter::emitVar(AstVar* exp, SkrVar* dst) {
     auto* var = skrf.var(exp->getId());
     if (dst == nullptr)
         return SkrExpRes::val(var);
-    out += skrf.copy(dst, var);
+    body += skrf.copy(dst, var);
     return SkrExpRes::val(dst);
 }
 
@@ -252,7 +271,7 @@ SkrExpRes SkrEmitter::emitAssignment(AstAssignment* exp) {
         return SkrExpRes::val(emitAndConvert(exp->getExp(), left.get()->toSkrVar()));
     }
     SkrValue* right = emitAndConvert(exp->getExp());
-    out += skrf.copyToOffset(left.getBase(), left.getOffset(), right);
+    body += skrf.copyToOffset(left.getBase(), left.getOffset(), right);
     return SkrExpRes::val(right);
 }
 
@@ -264,10 +283,10 @@ SkrExpRes SkrEmitter::emitCast(AstCast* exp, SkrVar* dst) {
     }
 
     if (getTypeKind(srcVal) == SymbolType::Kind::Integer && targetType->kind == SymbolType::Kind::Float) {
-        out += skrf.int2Float(dst, srcVal);
+        body += skrf.int2Float(dst, srcVal);
     }
     else if (getTypeKind(srcVal) == SymbolType::Kind::Float && targetType->kind == SymbolType::Kind::Integer) {
-        out += skrf.float2Int(dst, srcVal);
+        body += skrf.float2Int(dst, srcVal);
     }
     else {
         sparkError("SkrEmitter", "Failed to cast expression");
@@ -308,14 +327,14 @@ SkrExpRes SkrEmitter::emitBinary(AstBinaryExp* exp, SkrVar* dst) {
         emitBranchInverted(exp->getLeft(), falseLabel);
         emitBranchInverted(exp->getRight(), falseLabel);
         // true
-        out += skrf.copy(dst, skrf.iconst(1));
-        out += skrf.jump(endLabel);
+        body += skrf.copy(dst, skrf.iconst(1));
+        body += skrf.jump(endLabel);
 
         // false
-        out += skrf.label(falseLabel);
-        out += skrf.copy(dst, skrf.iconst(0));
+        body += skrf.label(falseLabel);
+        body += skrf.copy(dst, skrf.iconst(0));
 
-        out += skrf.label(endLabel);
+        body += skrf.label(endLabel);
         result = dst;
         break;
     }
@@ -330,14 +349,14 @@ SkrExpRes SkrEmitter::emitBinary(AstBinaryExp* exp, SkrVar* dst) {
         emitBranch(exp->getLeft(), trueLabel);
         emitBranch(exp->getRight(), trueLabel);
         // false
-        out += skrf.copy(dst, skrf.iconst(0));
-        out += skrf.jump(endLabel);
+        body += skrf.copy(dst, skrf.iconst(0));
+        body += skrf.jump(endLabel);
 
         // true
-        out += skrf.label(trueLabel);
-        out += skrf.copy(dst, skrf.iconst(1));
+        body += skrf.label(trueLabel);
+        body += skrf.copy(dst, skrf.iconst(1));
 
-        out += skrf.label(endLabel);
+        body += skrf.label(endLabel);
         result = dst;
         break;
     }
@@ -348,7 +367,7 @@ SkrExpRes SkrEmitter::emitBinary(AstBinaryExp* exp, SkrVar* dst) {
         if (dst == nullptr) {
             dst = createVar(funName, getType(left));
         }
-        out += skrf.binary(dst, left, op, right);
+        body += skrf.binary(dst, left, op, right);
         result = dst;
     }
     }
@@ -367,7 +386,7 @@ SkrExpRes SkrEmitter::emitFunCall(AstFunCall* call, SkrVar* dst) {
         dst = createVar(call->getFunName(), "r", call->type);
     }
     auto* skrCall = skrf.funCall(call->getFunName(), skrArgs, dst);
-    out += skrCall;
+    body += skrCall;
     return SkrExpRes::val(dst);
 }
 
@@ -384,7 +403,7 @@ SkrExpRes SkrEmitter::emitStructInit(AstStructInit* it, SkrVar* dst) {
         auto* arg = emitAndConvert(args[i]);
         int offset = fields[i].offset;
         auto* instr = skrf.copyToOffset(dst, offset, arg);
-        out += instr;
+        body += instr;
     }
     return SkrExpRes::val(dst);
 }
@@ -400,7 +419,7 @@ SkrValue* SkrEmitter::emitAndConvert(AstExp* exp, SkrVar* dst) {
         if (dst == nullptr) {
             dst = createVar("field", exp->type);
         }
-        out += skrf.copyFromOffset(dst, res.getBase(), res.getOffset());
+        body += skrf.copyFromOffset(dst, res.getBase(), res.getOffset());
         return dst;
 
     default:
@@ -418,7 +437,7 @@ SymbolType* SkrEmitter::getType(SkrValue* value) {
     case SkrValue::Kind::Const:
         return value->toSkrConst()->getConst()->type;
     case SkrValue::Kind::Var:
-        return symbolTable.get(value->toSkrVar()->getId());
+        return symbolTable.get(value->toSkrVar()->getId()).getType();
     default:
         sparkError("SkrEmitter", "Unknown SkrValue kind: %d", value->kind);
         return nullptr;
@@ -452,7 +471,7 @@ StringRef SkrEmitter::getStructTag(SymbolType* type) {
 
 SkrVar* SkrEmitter::createVar(StringRef name, SymbolType* type) {
     auto id = idGen.unique(name);
-    symbolTable.declareVar(id, type);
+    symbolTable.declareVar(id, type, false);
     return skrf.var(id);
 }
 
@@ -462,7 +481,7 @@ SkrVar* SkrEmitter::createVar(const char* name, SymbolType* type) {
 
 SkrVar* SkrEmitter::createVar(StringRef name, const char* suffix, SymbolType* type) {
     auto id = idGen.unique(name, suffix);
-    symbolTable.declareVar(id, type);
+    symbolTable.declareVar(id, type, false);
     return skrf.var(id);
 }
 

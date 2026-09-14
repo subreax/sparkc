@@ -4,7 +4,7 @@
 
 TEST_CASE("Test RvaMov", "[rv-instr]") {
     uint32_t buf[2] = { 0, 0 };
-    RvListing listing((uint8_t*) buf, sizeof(buf));
+    RvListing listing(MemBlockRef(sizeof(buf), (uint8_t*) buf));
     auto* reg = RvaRegister::get(RvReg::T0);
 
     SECTION("Mov 50") {

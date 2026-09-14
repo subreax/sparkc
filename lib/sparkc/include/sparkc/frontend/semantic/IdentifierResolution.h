@@ -19,10 +19,12 @@ public:
 private:
     void addExistingDeclarationsToScope();
 
-    StringRef declareVar(StringRef name, SymbolType* type);
+    StringRef declareAutoVar(StringRef name, SymbolType* type, bool generateUniqueName = true);
+    void declareStaticVar(StringRef name, SymbolType* type);
     void declareFunction(AstFunction* func);
     void declareStruct(AstStruct* it);
 
+    void resolve(AstStaticVariable* it);
     void resolve(AstFunction* it);
     void resolve(AstStruct* it);
     void resolve(AstBlock* block);

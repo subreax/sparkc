@@ -3,6 +3,7 @@
 #include "sparkc/common/printer/TreePrinter.h"
 
 static void print(TreePrinter& p, const AstProgItem* item);
+static void print(TreePrinter& p, const AstStaticVariable* var);
 static void print(TreePrinter& p, const AstStruct* st);
 static void print(TreePrinter& p, const AstFunction* func);
 static void print(TreePrinter& p, const AstBlock* block);
@@ -37,7 +38,10 @@ void AstPrinter::print(const AstProgItem* item) {
 }
 
 void print(TreePrinter& p, const AstProgItem* item) {
-    if (item->kind == AstProgItem::Kind::Function) {
+    if (item->kind == AstProgItem::Kind::Variable) {
+        print(p, (const AstStaticVariable*) item);
+    }
+    else if (item->kind == AstProgItem::Kind::Function) {
         print(p, (const AstFunction*) item);
     }
     else if (item->kind == AstProgItem::Kind::Struct) {
@@ -46,6 +50,17 @@ void print(TreePrinter& p, const AstProgItem* item) {
     else {
         sparkError("AstPrinter", "Unknown AstProgItem: %d", item->kind);
     }
+}
+
+static void print(TreePrinter& p, const AstStaticVariable* var) {
+    p.beginObject("AstStaticVar");
+    p.field("type", type2string(var->getType()));
+    p.field("name", var->getName());
+    if (var->getInitializer() != nullptr) {
+        p.field("init");
+        print(p, var->getInitializer());
+    }
+    p.endObject();
 }
 
 static void print(TreePrinter& p, const AstStruct* st) {

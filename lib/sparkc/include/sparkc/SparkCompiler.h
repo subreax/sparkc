@@ -17,6 +17,7 @@ struct SparkCompilerConfig {
     SparkRuntime runtime;
     SparkBuildStage finalBuildStage;
     SparkStageCallback* stageCallback;
+    const char* initFunName;
 };
 
 class SparkCompiler {

@@ -1,23 +1,15 @@
 #pragma once
 #include "sparkc/SparkInitContext.h"
-#include "sparkc/common/IdentifierGen.h"
-#include "sparkc/symbol/SymbolTable.h"
-#include "sparkc/type/TypeTable.h"
-#include "sparkc/backend/rv/asm/RvAssembler.h"
+#include "SparkBuildContext.h"
 
 class SparkInitContextImpl : public SparkInitContext {
 public:
-    SparkInitContextImpl(
-        IdentifierGen& idGen,
-        SymbolTable& symbolTable,
-        TypeTable& typeTable,
-        RvAssembler& assembler
-    )
-        : SparkInitContext(symbolTable.getTypeFactory())
-        , idGen(idGen)
-        , symbolTable(symbolTable)
-        , typeTable(typeTable)
-        , assembler(assembler) { }
+    SparkInitContextImpl(SparkBuildContext& ctx)
+        : SparkInitContext(ctx.symTable.getTypeFactory())
+        , idGen(ctx.idGen)
+        , symbolTable(ctx.symTable)
+        , typeTable(ctx.typeTable)
+        , assembler(ctx.assembler) { }
 
     void bindFunction(
         void* ptr,

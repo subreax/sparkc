@@ -1,0 +1,32 @@
+#cli
+--emit skr --optimize dse
+
+
+#src
+var t: float;
+
+fun get5(): float {
+    return 5.0f;
+}
+
+fun main(): int {
+    t = 0.0f;
+    t = get5();
+    t = 123.0f;
+    return 0;
+}
+
+#expect
+staticvar t: float
+
+fun get5(): float
+    copy retval.0 = float 5
+    jmp .ret_0
+    .ret_0:
+
+fun main(): int
+    t = float get5()
+    copy t = float 123
+    copy retval.1 = int 0
+    jmp .ret_1
+    .ret_1:

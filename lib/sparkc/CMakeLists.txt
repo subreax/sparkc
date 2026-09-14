@@ -31,11 +31,13 @@ set(SPARKC_SRC
   src/backend/rv/instr/RvaReserveOnStack.cpp
   src/backend/rv/instr/RvaRet.cpp
   src/backend/rv/instr/RvaStore.cpp
+  src/backend/rv/instr/RvaDataAlloc.cpp
+  src/backend/rv/instr/RvaDLoad.cpp
+  src/backend/rv/instr/RvaDStore.cpp
   src/common/Constant.cpp
   src/common/Error.cpp
   src/common/ExpandableStringBuilder.cpp
   src/common/StringRef.cpp
-  src/frontend/Frontend.cpp
   src/frontend/ast/exp/AstExp.cpp
   src/frontend/ast/exp/AstBinaryExp.cpp
   src/frontend/lexer/Lexer.cpp

@@ -1,0 +1,35 @@
+#cli
+--emit skr --optimize dse
+
+
+#src
+var t: float;
+
+fun updateStatic(): int {
+    t = 5.0f;
+    return 0;
+}
+
+fun update(dt: float): int {
+    t = 2.0f;
+    updateStatic();
+    t = t + dt;
+    return 0;
+}
+
+#expect
+staticvar t: float
+
+fun updateStatic(): int
+    copy t = float 5
+    copy retval.0 = int 0
+    jmp .ret_0
+    .ret_0:
+
+fun update(dt.1: float): int
+    copy t = float 2
+    r_updateStatic.3 = int updateStatic()
+    t = float t + dt.1
+    copy retval.2 = int 0
+    jmp .ret_1
+    .ret_1:

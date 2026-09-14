@@ -25,15 +25,32 @@ void IdentifierResolution::addExistingDeclarationsToScope() {
     }
 
     for (const auto& entry : symbolTable) {
-        scope.declareFunc(entry.first);
+        auto type = entry.second.getType()->kind;
+        if (type == SymbolType::Kind::Function) {
+            scope.declareFunc(entry.first);
+        }
+        else {
+            sparkError("IdentifierResolution", "Pre-declaring variables is not supported");
+        }
     }
 }
 
-StringRef IdentifierResolution::declareVar(StringRef name, SymbolType* type) {
-    auto id = idGen.unique(name);
+StringRef IdentifierResolution::declareAutoVar(StringRef name, SymbolType* type, bool generateUniqueName) {
+    StringRef id = StringRef::nullInstance();
+    if (generateUniqueName) {
+        id = idGen.unique(name);
+    }
+    else {
+        id = name;
+    }
     scope.declareVar(name, id);
-    symbolTable.declareVar(id, type);
+    symbolTable.declareVar(id, type, false);
     return id;
+}
+
+void IdentifierResolution::declareStaticVar(StringRef name, SymbolType* type) {
+    scope.declareVar(name, name);
+    symbolTable.declareVar(name, type, true);
 }
 
 void IdentifierResolution::declareFunction(AstFunction* func) {
@@ -58,7 +75,10 @@ void IdentifierResolution::declareStruct(AstStruct* it) {
 }
 
 void IdentifierResolution::resolve(AstProgItem* progItem) {
-    if (progItem->kind == AstProgItem::Kind::Struct) {
+    if (progItem->kind == AstProgItem::Kind::Variable) {
+        resolve((AstStaticVariable*) progItem);
+    }
+    else if (progItem->kind == AstProgItem::Kind::Struct) {
         resolve((AstStruct*) progItem);
     }
     else if (progItem->kind == AstProgItem::Kind::Function) {
@@ -71,11 +91,15 @@ void IdentifierResolution::resolve(AstProgItem* progItem) {
     }
 }
 
+void IdentifierResolution::resolve(AstStaticVariable* it) {
+    declareStaticVar(it->getName(), it->getType());
+}
+
 void IdentifierResolution::resolve(AstFunction* it) {
     scope.open();
 
     for (auto* param : it->getParams()) {
-        param->setId(declareVar(param->getId(), param->getType()));
+        param->setId(declareAutoVar(param->getId(), param->getType()));
     }
 
     resolve(it->getBlock());
@@ -116,7 +140,7 @@ void IdentifierResolution::resolve(AstDeclaration* decl) {
                 resolveExp(varDecl->getInitializer())
             );
         }
-        varDecl->setId(declareVar(varDecl->getId(), varDecl->getType()));
+        varDecl->setId(declareAutoVar(varDecl->getId(), varDecl->getType()));
     }
     else {
         sparkError("IdentifierResolution", "Unknown AstDeclaration: %d", decl->kind);

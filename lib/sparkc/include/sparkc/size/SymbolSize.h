@@ -9,7 +9,7 @@ public:
         , typeTable(typeTable) { }
 
     size_t get(StringRef id) {
-        return get(symbolTable.get(id));
+        return get(symbolTable.get(id).getType());
     }
 
     size_t get(SymbolType* type) {

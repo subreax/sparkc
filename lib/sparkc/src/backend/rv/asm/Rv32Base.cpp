@@ -39,22 +39,19 @@ uint32_t Rv32Base::rType(uint32_t opcode, uint32_t funct3, uint32_t funct7, RvRe
 }
 
 uint32_t Rv32Base::iType(uint32_t opcode, uint32_t funct3, RvReg rd, RvReg rs1, int32_t imm11) {
-    checkImm11(imm11);
     return (opcode & mask7)
         | regShl(rd, 7)
         | ((funct3 & mask3) << 12)
         | regShl(rs1, 15)
-        | (imm11 & mask12) << 20;
+        | encodeImmI(imm11);
 }
 
 uint32_t Rv32Base::sType(uint32_t opcode, uint32_t funct3, RvReg rs1, RvReg rs2, int32_t imm11) {
-    checkImm11(imm11);
     return (opcode & mask7)
-        | ((imm11 & mask5) << 7)
         | ((funct3 & mask3) << 12)
         | regShl(rs1, 15)
         | regShl(rs2, 20)
-        | ((imm11 >> 5) << 25);
+        | encodeImmS(imm11);
 }
 
 uint32_t Rv32Base::bType(uint32_t opcode, uint32_t funct3, RvReg rs1, RvReg rs2) {
@@ -67,11 +64,21 @@ uint32_t Rv32Base::bType(uint32_t opcode, uint32_t funct3, RvReg rs1, RvReg rs2)
 uint32_t Rv32Base::uType(uint32_t opcode, RvReg rd, int32_t imm) {
     return (opcode & mask7)
         | regShl(rd, 7)
-        | imm << 12;
+        | encodeImmU(imm);
 }
 
 uint32_t Rv32Base::jType(uint32_t opcode, RvReg rd) {
     return (opcode & mask7) | regShl(rd, 7);
+}
+
+uint32_t Rv32Base::encodeImmI(int32_t imm11) {
+    checkImm11(imm11);
+    return imm11 << 20;
+}
+
+uint32_t Rv32Base::encodeImmS(int32_t imm11) {
+    checkImm11(imm11);
+    return (BinUtils::slice<4, 0>(imm11) << 7) | (BinUtils::slice<11, 5>(imm11) << 25);
 }
 
 uint32_t Rv32Base::encodeImmB(int32_t imm12) {
@@ -123,4 +130,17 @@ Rv32Base::BinSplit Rv32Base::splitImm11(int32_t imm) {
         res.hi += 1;
     }
     return res;
+}
+
+uint32_t Rv32Base::uTypePatchImm(uint32_t instr, int32_t imm20) {
+    return (instr & ~(BinUtils::mask<20>() << 12)) | encodeImmU(imm20);
+}
+
+uint32_t Rv32Base::iTypePatchImm(uint32_t instr, int32_t imm11) {
+    return (instr & ~(BinUtils::mask<12>() << 20)) | encodeImmI(imm11);
+}
+
+uint32_t Rv32Base::sTypePatchImm(uint32_t instr, int32_t imm11) {
+    return (instr & ~((BinUtils::slice<4, 0>(imm11) << 7) | (BinUtils::slice<11, 5>(imm11) << 25)))
+        | encodeImmS(imm11);
 }

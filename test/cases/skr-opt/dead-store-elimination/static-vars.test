@@ -1,0 +1,21 @@
+#cli
+--emit skr --optimize dse
+
+
+#src
+var t: float;
+
+fun main(): int {
+    t = 0.0f;
+    t = 123.0f;
+    return 0;
+}
+
+#expect
+staticvar t: float
+
+fun main(): int
+    copy t = float 123
+    copy retval.0 = int 0
+    jmp .ret_0
+    .ret_0:

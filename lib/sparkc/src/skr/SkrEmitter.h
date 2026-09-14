@@ -13,14 +13,14 @@
 
 class SkrEmitter {
 public:
-    static SkrFunction* emit(
-        AstFunction* func,
+    static SkrProgItem* emit(
+        AstProgItem* item,
         SkrFactory& factory,
         SymbolTable& symbolTable,
         TypeTable& typeTable,
         IdentifierGen& idGen,
         LabelGen& labelGen,
-        std::vector<SkrInstruction*>& buf
+        std::vector<SkrInstruction*>& skrsBuf
     );
 
 private:
@@ -30,9 +30,10 @@ private:
         LabelGen& labelGen,
         SymbolTable& symbolTable,
         TypeTable& typeTable,
-        std::vector<SkrInstruction*>& out
+        std::vector<SkrInstruction*>& skrsBuf
     );
 
+    SkrStaticVar* emit(AstStaticVariable* var);
     SkrFunction* emit(AstFunction* func);
 
     void emit(const AstBlock* block);
@@ -82,7 +83,7 @@ private:
     TypeTable& typeTable;
     IdentifierGen& idGen;
     LabelGen& labelGen;
-    std::vector<SkrInstruction*>& out;
+    std::vector<SkrInstruction*>& body;
     SkrVar* funcRetVal = nullptr;
     StringRef funName = StringRef::nullInstance();
     StringRef retLabel = StringRef::nullInstance();

@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include "sparkc/symbol/SymbolTable.h"
 #include "sparkc/skr/optimizer/SkrCfg.h"
 #include "sparkc/skr/instr/SkrCopy.h"
 #include "sparkc/skr/SkrFactory.h"
@@ -7,7 +8,7 @@
 
 class CopyPropagation {
 public:
-    CopyPropagation(SkrFactory& skrf, SkrCfg& graph);
+    CopyPropagation(SymbolTable& symTable, SkrFactory& skrf, SkrCfg& graph);
     void run();
 
 private:
@@ -29,6 +30,7 @@ private:
 
     static SkrValue* replace(SkrValue* value, const ReachingCopies& copies);
 
+    SymbolTable& symTable;
     SkrFactory& skrf;
     SkrCfg& graph;
 };

@@ -42,7 +42,7 @@ static constexpr const char* _RVA_BRANCH_OP[] = {
 };
 static constexpr int _RVA_BRANCH_OP_SZ = sizeof(_RVA_BRANCH_OP) / sizeof(const char*);
 
-inline const char* sign(int v) {
+static inline const char* sign(int v) {
     if (v >= 0) {
         return "+";
     }
@@ -51,7 +51,7 @@ inline const char* sign(int v) {
     }
 }
 
-std::ostream& operator<<(std::ostream& os, RvReg reg) {
+static std::ostream& operator<<(std::ostream& os, RvReg reg) {
     if ((int) reg < 32) {
         os << _REG_STR[(int) reg];
     }
@@ -61,7 +61,7 @@ std::ostream& operator<<(std::ostream& os, RvReg reg) {
     return os;
 }
 
-std::ostream& operator<<(std::ostream& os, RvaBinary::Operator op) {
+static std::ostream& operator<<(std::ostream& os, RvaBinary::Operator op) {
     if ((int) op < _RVA_BINARY_OP_SZ) {
         os << _RVA_BINARY_OP[(int) op];
     }
@@ -71,7 +71,7 @@ std::ostream& operator<<(std::ostream& os, RvaBinary::Operator op) {
     return os;
 }
 
-std::ostream& operator<<(std::ostream& os, RvaBranch::Operator op) {
+static std::ostream& operator<<(std::ostream& os, RvaBranch::Operator op) {
     if ((int) op < _RVA_BRANCH_OP_SZ) {
         os << _RVA_BRANCH_OP[(int) op];
     }
@@ -81,7 +81,7 @@ std::ostream& operator<<(std::ostream& os, RvaBranch::Operator op) {
     return os;
 }
 
-std::ostream& operator<<(std::ostream& os, const RvaValue& value) {
+static std::ostream& operator<<(std::ostream& os, const RvaValue& value) {
     switch (value.kind) {
     case RvaValue::Kind::Imm:
         os << ((const RvaImm*) &value)->getValue();
@@ -105,6 +105,11 @@ std::ostream& operator<<(std::ostream& os, const RvaValue& value) {
         os << "[" << it->getBase() << sign(it->getOffset()) << it->getOffset() << "]";
     } break;
 
+    case RvaValue::Kind::Data: {
+        auto* it = (const RvaData*) &value;
+        os << "dm(" << Colored::label(it->getLabel()) << ")";
+    } break;
+
     default:
         sparkError("RvaPrinter", "Unknown RvaValue");
         break;
@@ -112,48 +117,48 @@ std::ostream& operator<<(std::ostream& os, const RvaValue& value) {
     return os;
 }
 
-void printType(std::ostream& os, const char* type) {
+static void printType(std::ostream& os, const char* type) {
     char buf[16];
     snprintf(buf, 16, "%-15s", type);
     os << buf;
 }
 
-void printBinary(std::ostream& os, const RvaBinary* it) {
+static void printBinary(std::ostream& os, const RvaBinary* it) {
     printType(os, "binary");
     os << *it->dst << " = " << *it->left << " " << it->op << " " << *it->right;
 }
 
-void printMove(std::ostream& os, const RvaMov* it) {
+static void printMove(std::ostream& os, const RvaMov* it) {
     printType(os, "move");
     os << *it->to << " = " << *it->from;
 }
 
-void printLabel(std::ostream& os, const RvaLabel* it) {
+static void printLabel(std::ostream& os, const RvaLabel* it) {
     printType(os, "label");
     os << Colored::label(it->getValue()) << ":";
 }
 
-void printJump(std::ostream& os, const RvaJump* it) {
+static void printJump(std::ostream& os, const RvaJump* it) {
     printType(os, "jump");
     os << "jump to " << Colored::label(it->getLabel());
 }
 
-void printLoad(std::ostream& os, const RvaLoad* it) {
+static void printLoad(std::ostream& os, const RvaLoad* it) {
     printType(os, "load");
     os << *it->from << " --> " << *it->to;
 }
 
-void printStore(std::ostream& os, const RvaStore* it) {
+static void printStore(std::ostream& os, const RvaStore* it) {
     printType(os, "store");
     os << *it->from << " --> " << *it->to;
 }
 
-void printRet(std::ostream& os, const RvaRet* it) {
+static void printRet(std::ostream& os, const RvaRet* it) {
     printType(os, "return");
     os << "ret";
 }
 
-void printPrologue(std::ostream& os, const RvaPrologue* it) {
+static void printPrologue(std::ostream& os, const RvaPrologue* it) {
     printType(os, "prologue");
     os << "prologue " << it->getFrameSize();
     if (it->willSaveRa()) {
@@ -161,7 +166,7 @@ void printPrologue(std::ostream& os, const RvaPrologue* it) {
     }
 }
 
-void printEpilogue(std::ostream& os, const RvaEpilogue* it) {
+static void printEpilogue(std::ostream& os, const RvaEpilogue* it) {
     printType(os, "epilogue");
     os << "epilogue " << it->getFrameSize();
     if (it->willLoadRa()) {
@@ -169,30 +174,45 @@ void printEpilogue(std::ostream& os, const RvaEpilogue* it) {
     }
 }
 
-void printBranch(std::ostream& os, const RvaBranch* it) {
+static void printBranch(std::ostream& os, const RvaBranch* it) {
     printType(os, "branch");
     os << "branch to " << Colored::label(it->label) << " if " << *it->left << " " << it->op << " "
        << *it->right;
 }
 
-void printCall(std::ostream& os, const RvaCall* it) {
+static void printCall(std::ostream& os, const RvaCall* it) {
     printType(os, "call");
     os << "call " << Colored::label(it->getFunName()) << " (offsetReg: " << it->getOffsetReg() << ")";
 }
 
-void printGetAddr(std::ostream& os, const RvaGetAddress* it) {
+static void printGetAddr(std::ostream& os, const RvaGetAddress* it) {
     printType(os, "get_addr");
     os << *it->to << " = addrOf(" << *it->of << ")";
 }
 
-void printComment(std::ostream& os, const std::string& comment) {
+static void printComment(std::ostream& os, const std::string& comment) {
     printType(os, "comment");
     os << Colored::comment(comment);
 }
 
-void printAllocateOnStack(std::ostream& os, const RvaReserveOnStack* it) {
+static void printAllocateOnStack(std::ostream& os, const RvaReserveOnStack* it) {
     printType(os, "reserve");
     os << "reserve " << *it->mem;
+}
+
+static void printDataAlloc(std::ostream& os, const RvaDataAlloc* it) {
+    printType(os, "data_alloc");
+    os << Colored::label(it->getLabel()) << " " << it->getSize() << " bytes";
+}
+
+static void printDLoad(std::ostream& os, const RvaDLoad* it) {
+    printType(os, "dload");
+    os << *it->getSrc() << " --> " << *it->getDst() << " (offsetReg: " << *it->getTempOffsetReg() << ")";
+}
+
+static void printDStore(std::ostream& os, const RvaDStore* it) {
+    printType(os, "dstore");
+    os << *it->getSrc() << " --> " << *it->getDst() << " (offsetReg: " << *it->getTempOffsetReg() << ")";
 }
 
 void RvaPrinter::print(std::ostream& os, const std::vector<RvaInstruction*>& instructions) {
@@ -244,6 +264,18 @@ void RvaPrinter::print(std::ostream& os, const std::vector<RvaInstruction*>& ins
 
         case RvaInstruction::Kind::GetAddress:
             printGetAddr(os, (const RvaGetAddress*) instr);
+            break;
+
+        case RvaInstruction::Kind::DataAlloc:
+            printDataAlloc(os, (const RvaDataAlloc*) instr);
+            break;
+
+        case RvaInstruction::Kind::DLoad:
+            printDLoad(os, (const RvaDLoad*) instr);
+            break;
+
+        case RvaInstruction::Kind::DStore:
+            printDStore(os, (const RvaDStore*) instr);
             break;
 
         case RvaInstruction::Kind::BeginTempStack:

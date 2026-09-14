@@ -1,0 +1,11 @@
+#cli
+--emit ast
+
+#src
+var t;
+
+fun main(): int {
+    return 0;
+}
+
+#expect_failure

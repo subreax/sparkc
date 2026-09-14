@@ -38,7 +38,11 @@ void TypeChecker::typeCheck(AstProgram* prog) {
 }
 
 void TypeChecker::typeCheck(AstProgItem* item) {
-    if (item->kind == AstProgItem::Kind::Function) {
+    if (item->kind == AstProgItem::Kind::Variable) {
+        auto* var = (AstStaticVariable*) item;
+        typeCheck(var);
+    }
+    else if (item->kind == AstProgItem::Kind::Function) {
         auto* func = (AstFunction*) item;
         typeCheck(func->getBlock(), func->getReturnType());
     }
@@ -46,6 +50,24 @@ void TypeChecker::typeCheck(AstProgItem* item) {
     }
     else {
         sparkError("TypeChecker", "Unknown AstProgItem: %d", item->kind);
+    }
+}
+
+void TypeChecker::typeCheck(AstStaticVariable* var) {
+    auto* initializer = var->getInitializer();
+
+    if (var->getType() == nullptr) {
+        if (initializer == nullptr) {
+            sparkError("TypeChecker", "Static variable '" + var->getName().toString() + "' doesn't have a type");
+        }
+
+        typeCheck(initializer);
+        var->setType(initializer->type);
+        symbolTable.redeclareVar(var->getName(), var->getType(), true);
+    }
+    else if (initializer != nullptr) {
+        typeCheck(initializer);
+        var->setInitializer(cast(initializer, var->getType()));
     }
 }
 
@@ -84,7 +106,7 @@ void TypeChecker::typeCheck(AstVarDeclaration* var) {
 
         typeCheck(initExp);
         var->setType(initExp->type);
-        symbolTable.redeclareVar(var->getId(), var->getType());
+        symbolTable.redeclareVar(var->getId(), var->getType(), false);
     }
     else if (initExp != nullptr) {
         typeCheck(initExp);
@@ -144,7 +166,7 @@ void TypeChecker::typeCheck(AstExp* exp) {
 }
 
 void TypeChecker::typeCheck(AstVar* var) {
-    auto* type = symbolTable.get(var->getId());
+    auto* type = symbolTable.get(var->getId()).getType();
     if (type->kind == SymbolType::Kind::Function) {
         throw TypeException("Using variable as a function: '" + var->getId().toString() + "'");
     }
@@ -169,7 +191,7 @@ void TypeChecker::typeCheck(AstBinaryExp* bin) {
 }
 
 void TypeChecker::typeCheck(AstFunCall* call) {
-    auto* funType = (SymbolFunctionType*) symbolTable.get(call->getFunName());
+    auto* funType = (SymbolFunctionType*) symbolTable.get(call->getFunName()).getType();
     if (funType->kind != SymbolType::Kind::Function) {
         throw TypeException("Function '" + call->getFunName().toString() + "' doesn't exist");
     }

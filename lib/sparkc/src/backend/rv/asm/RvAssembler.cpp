@@ -1,7 +1,7 @@
 #include "sparkc/backend/rv/asm/RvAssembler.h"
 
-RvAssembler::RvAssembler(uint8_t* out, size_t cap)
-    : listing(out, cap) { }
+RvAssembler::RvAssembler(MemBlockRef outBin)
+    : listing(outBin) { }
 
 void RvAssembler::addExternalLabel(StringRef label, void* ptr) {
     listing.addExternalLabel(label, ptr);

@@ -12,7 +12,7 @@ public:
     virtual ~SparkStageCallback() = default;
 
     virtual void onAstBuild(AstProgItem*) { }
-    virtual void onEmitSkrFunc(SkrFunction*) { }
+    virtual void onEmitSkr(SkrProgItem*) { }
     virtual void onCfgCreated(StringRef, int, SkrCfg&) { }
     virtual void onEmitRva(const std::vector<RvaInstruction*>&) { }
     virtual void onReplaceRvaPseudo(const std::vector<RvaInstruction*>&) { }

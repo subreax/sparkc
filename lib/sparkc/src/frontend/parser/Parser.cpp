@@ -29,6 +29,7 @@ bool Parser::hasNext() const { return current.kind != T_EOF; }
 
 AstProgItem* Parser::parseNextProgItem() {
     switch (current.kind) {
+    case T_VAR_KEYWORD: return parseStaticVar();
     case T_STRUCT_KEYWORD: return parseStruct();
     case T_FUN_KEYWORD: return parseFunction();
     default:
@@ -36,6 +37,26 @@ AstProgItem* Parser::parseNextProgItem() {
     }
 
     return nullptr;
+}
+
+AstStaticVariable* Parser::parseStaticVar() {
+    expect(T_VAR_KEYWORD);
+
+    StringRef varName = expect(T_IDENTIFIER).value;
+    SymbolType* type = nullptr;
+    AstExp* initializer = nullptr;
+
+    if (current.kind == T_COLON) {
+        expect(T_COLON);
+        type = parseType();
+    }
+
+    if (current.kind == T_EQUALS) {
+        takeToken();
+        initializer = parseExpression();
+    }
+    expect(T_SEMICOLON);
+    return astf.staticVar(varName, type, initializer);
 }
 
 AstStruct* Parser::parseStruct() {

@@ -19,9 +19,12 @@ public:
         Branch,
         Call,
         GetAddress,
+        DataAlloc,
+        DLoad,
+        DStore,
         BeginTempStack,
         EndTempStack,
-        ReserveOnStack
+        ReserveOnStack,
     };
 
     RvaInstruction(Kind kind)

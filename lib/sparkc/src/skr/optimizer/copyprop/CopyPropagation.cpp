@@ -3,14 +3,16 @@
 #include "ReachingCopiesAnalysis.h"
 
 CopyPropagation::CopyPropagation(
+    SymbolTable& symTable,
     SkrFactory& skrf,
     SkrCfg& graph
 )
-    : skrf(skrf)
+    : symTable(symTable)
+    , skrf(skrf)
     , graph(graph) { }
 
 void CopyPropagation::run() {
-    ReachingCopiesAnalysis rca(graph);
+    ReachingCopiesAnalysis rca(symTable, graph);
     rca.run();
 
     for (size_t i = 1; i < graph.getSize() - 1; i++) {

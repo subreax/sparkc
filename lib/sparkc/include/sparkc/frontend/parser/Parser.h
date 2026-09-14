@@ -13,6 +13,8 @@ public:
     AstProgItem* parseNextProgItem();
 
 private:
+    AstStaticVariable* parseStaticVar();
+
     AstStruct* parseStruct();
     AstStructField* parseStructField();
 

@@ -54,12 +54,12 @@ public:
         AstMermaidPrinter::print(astOut, item);
     }
 
-    void onEmitSkrFunc(SkrFunction* skrFunc) override {
+    void onEmitSkr(SkrProgItem* progItem) override {
         if (options.finalBuildStage != SparkBuildStage::SKR) {
             return;
         }
 
-        cout << SkrPrinter::toString(getSymbolTable(), options.colored, skrFunc);
+        cout << SkrPrinter::toString(getSymbolTable(), options.colored, progItem);
     }
 
     void onCfgCreated(StringRef funName, int iteration, SkrCfg& graph) override {
@@ -157,17 +157,18 @@ int main(int argc, const char** argv) {
     config.runtime.divq15 = divq15;
     config.finalBuildStage = cliOptions.finalBuildStage;
     config.stageCallback = &stageCallback;
+    config.initFunName = "#init";
     SparkCompiler::init(config);
 
     SparkCompiler::addOnInitCallback([&](SparkInitContext& ctx) {
-        auto* color_ = ctx.types().structure("color");
+        /* auto* color_ = ctx.types().structure("color");
         // clang-format off
         ctx.addStruct("color", {
             { "r", ctx.types().float_() },
             { "g", ctx.types().float_() },
             { "b", ctx.types().float_() },
         });
-        // clang-format on
+        // clang-format on */
 
         ctx.bindFunction(
             (void*) &fakeFun,
@@ -176,12 +177,12 @@ int main(int argc, const char** argv) {
             { ctx.types().int_(), ctx.types().int_() }
         );
 
-        ctx.bindFunction(
+        /* ctx.bindFunction(
             (void*) &mix,
             "mix",
             color_,
             { color_, color_, ctx.types().float_() }
-        );
+        ); */
     });
 
     BuildResult buildResult;
@@ -195,7 +196,7 @@ int main(int argc, const char** argv) {
     if (cliOptions.finalBuildStage == SparkBuildStage::Bin) {
         if (cliOptions.printBinInfo) {
             std::cout << "~ functions ~\n";
-            for (auto [name, func] : buildResult.getFunctions()) {
+            for (const auto& [name, func] : buildResult.getFunctions()) {
                 std::cout << name.toString() << ": " << func.getOffset() << "\n";
             }
             std::cout << std::endl;

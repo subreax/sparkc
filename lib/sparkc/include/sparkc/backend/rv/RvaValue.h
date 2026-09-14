@@ -10,7 +10,8 @@ public:
         PseudoReg,
         PseudoMem,
         Register,
-        Memory
+        Memory,
+        Data
     };
 
     RvaValue(Kind kind)
@@ -122,4 +123,18 @@ public:
 private:
     RvReg base;
     int offset;
+};
+
+class RvaData : public RvaValue {
+public:
+    RvaData(StringRef label)
+        : RvaValue(Kind::Data)
+        , label(label) { }
+
+    StringRef getLabel() const {
+        return label;
+    }
+
+private:
+    StringRef label;
 };

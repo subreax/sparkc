@@ -17,8 +17,8 @@ public:
     virtual void bindFunction(
         void* ptr,
         const char* name,
-        SymbolType* type,
-        std::initializer_list<SymbolType*> params
+        SymbolType* retType,
+        std::initializer_list<SymbolType*> params = { }
     ) = 0;
 
     virtual void addStruct(

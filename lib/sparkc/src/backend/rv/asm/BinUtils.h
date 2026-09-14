@@ -4,9 +4,9 @@
 class BinUtils {
 public:
     template <int bits>
-    static constexpr int32_t mask() {
+    static constexpr uint32_t mask() {
         int count = bits;
-        int mask = 0;
+        uint32_t mask = 0;
         while (count > 0) {
             mask = (mask << 1) | 1;
             count--;

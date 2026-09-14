@@ -15,6 +15,8 @@ uint32_t bType(uint32_t opcode, uint32_t funct3, RvReg rs1, RvReg rs2);
 uint32_t uType(uint32_t opcode, RvReg rd, int32_t imm);
 uint32_t jType(uint32_t opcode, RvReg rd);
 
+uint32_t encodeImmI(int32_t imm11);
+uint32_t encodeImmS(int32_t imm11);
 uint32_t encodeImmB(int32_t imm12);
 uint32_t encodeImmJ(int32_t imm20);
 uint32_t encodeImmU(int32_t imm20);
@@ -29,5 +31,9 @@ bool isImm11(int32_t imm);
 bool isImm20(int32_t imm);
 
 BinSplit splitImm11(int32_t imm);
+
+uint32_t uTypePatchImm(uint32_t instr, int32_t imm20);
+uint32_t iTypePatchImm(uint32_t instr, int32_t imm11);
+uint32_t sTypePatchImm(uint32_t instr, int32_t imm11);
 
 }; // namespace Rv32Base

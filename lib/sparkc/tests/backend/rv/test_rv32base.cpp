@@ -1,5 +1,6 @@
 #include <backend/rv/asm/Rv32Base.h>
 #include <catch2/catch_test_macros.hpp>
+#include <backend/rv/asm/BinUtils.h>
 
 constexpr uint32_t _0101 = 0b01010101010101010101010101010101u;
 constexpr uint32_t _1010 = 0b10101010101010101010101010101010u;
@@ -49,4 +50,18 @@ TEST_CASE("Test core risc-v instructions", "[rv-instr]") {
 
     // 0 1111111111 0 11111111 00000 1111111
     REQUIRE(Rv32Base::jType(0b1111111, RvReg::ZERO) | Rv32Base::encodeImmJ(0b011111111011111111110u) == 0b01111111111011111111000001111111u);
+}
+
+TEST_CASE("Test rv patchers", "[rv-patch]") {
+    SECTION("Case 1") {
+        uint32_t instr = 0b1010'1010'1010'1010'1010'1010'1010'1010;
+        uint32_t mask = BinUtils::mask<20>() << 12;
+        REQUIRE((instr & ~mask) == 0b1010'1010'1010);
+    }
+
+    SECTION("Case 2") {
+        uint32_t instr = 0b1010'1010'1010'1010'1010'1010'1010'1010;
+        instr = Rv32Base::iTypePatchImm(instr, 0b0011'0011'0011);
+        REQUIRE(instr == 0b0011'0011'0011'1010'1010'1010'1010'1010);
+    }
 }

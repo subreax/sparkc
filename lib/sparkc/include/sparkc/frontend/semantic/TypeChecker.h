@@ -17,6 +17,8 @@ public:
     void typeCheck(AstProgItem* item);
 
 private:
+    void typeCheck(AstStaticVariable* var);
+
     void typeCheck(const AstBlock* block, SymbolType* retType);
     void typeCheck(AstBlockItem* item, SymbolType* retType);
 

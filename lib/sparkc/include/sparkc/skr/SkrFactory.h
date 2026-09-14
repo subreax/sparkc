@@ -2,12 +2,23 @@
 #include <vector>
 #include "sparkc/common/alloc/Allocator.h"
 #include "sparkc/skr/SkrFunction.h"
+#include "sparkc/skr/SkrStaticVar.h"
 #include "sparkc/skr/instr/everything.h"
 
 class SkrFactory {
 public:
     SkrFactory(Allocator& allocator)
         : allocator(allocator) { }
+
+    SkrStaticVar* staticVar(
+        SkrVar* var,
+        const std::vector<SkrInstruction*>& initializer
+    ) {
+        return allocator.create<SkrStaticVar>(
+            var,
+            BoundArray<SkrInstruction*>::fromVector(initializer, allocator)
+        );
+    }
 
     SkrFunction* function(
         StringRef name,
@@ -30,6 +41,10 @@ public:
         const SkrVar* retVar
     ) {
         return allocator.create<SkrFunction>(name, params, instructions, retVar);
+    }
+
+    BoundArray<SkrInstruction*> copyInstructions(const std::vector<SkrInstruction*>& instructions) {
+        return BoundArray<SkrInstruction*>::fromVector(instructions, allocator);
     }
 
     SkrVar* var(StringRef id) {

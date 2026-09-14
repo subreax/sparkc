@@ -24,6 +24,22 @@ public:
         }
     }
 
+    void kill(StringRef varId) {
+        for (size_t i = 0; i < copies.size(); i++) {
+            auto* copy = copies[i];
+            if (varId == getVarId(copy->getFrom()) || varId == getVarId(copy->getTo())) {
+                copies.erase(copies.begin() + i);
+                i--;
+            }
+        }
+    }
+
+    void killAll(const std::vector<StringRef>& vars) {
+        for (auto var : vars) {
+            kill(var);
+        }
+    }
+
     bool contains(const SkrValue* dst, const SkrValue* src) const {
         for (auto* copy : copies) {
             if (*dst == *copy->getTo() && *src == *copy->getFrom()) {
@@ -90,5 +106,12 @@ public:
     }
 
 private:
+    StringRef getVarId(SkrValue* value) {
+        if (value->isVar()) {
+            return ((SkrVar*) value)->getId();
+        }
+        return StringRef::nullInstance();
+    }
+
     std::vector<SkrCopy*> copies;
 };

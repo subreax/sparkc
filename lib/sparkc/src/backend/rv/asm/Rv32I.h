@@ -140,8 +140,18 @@ public:
         return Rv32Base::readOpcode(instr) == BranchOpcode;
     }
 
+    static bool isLw(uint32_t instr) {
+        return Rv32Base::readOpcode(instr) == LoadOpcode && Rv32Base::iTypeReadFunct3(instr) == 2;
+    }
+
+    static bool isSw(uint32_t instr) {
+        return Rv32Base::readOpcode(instr) == StoreOpcode && Rv32Base::iTypeReadFunct3(instr) == 2;
+    }
+
     static constexpr uint32_t JalOpcode = 0b1101111u;
     static constexpr uint32_t JalrOpcode = 0b1100111u;
     static constexpr uint32_t BranchOpcode = 0b1100011u;
     static constexpr uint32_t AuipcOpcode = 0b0010111u;
+    static constexpr uint32_t LoadOpcode = 0b0000011u;
+    static constexpr uint32_t StoreOpcode = 0b0100011u;
 };

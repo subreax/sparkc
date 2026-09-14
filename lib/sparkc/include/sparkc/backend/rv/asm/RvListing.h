@@ -1,5 +1,6 @@
 #pragma once
 #include "sparkc/common/StringRef.h"
+#include "sparkc/common/alloc/MemBlockRef.h"
 #include "sparkc/backend/rv/asm/Label.h"
 #include <cstdint>
 #include <cstring>
@@ -7,7 +8,7 @@
 
 class RvListing {
 public:
-    RvListing(uint8_t* out, size_t cap);
+    RvListing(MemBlockRef code);
 
     void add(uint32_t instr);
     RvListing& operator+=(uint32_t instr);
@@ -15,6 +16,8 @@ public:
     void addLabel(StringRef label);
     void addExternalLabel(StringRef label, void* ptr);
     void addWithLabel(uint32_t instr, StringRef label);
+
+    void addGlobalVar(StringRef id, size_t sz);
 
     void link();
 
@@ -35,15 +38,18 @@ private:
     void write_u32(uint32_t instr, int32_t offset);
     uint32_t& get_u32(uint32_t offset);
 
+    uint32_t allocateData(size_t sz);
+
     int32_t calculateOffsetToLabel(int32_t pc, StringRef label);
 
     int32_t getLabelOffset(StringRef label);
 
     bool isLabelExternal(const Label& label) const;
 
-    uint8_t* out;
-    size_t cap;
-    int32_t offset = 0;
+    MemBlockRef out;
+
+    uint32_t codeSz = 0;
+    uint32_t dataSz = 0;
     std::vector<Label> labels;
     std::vector<Unresolved> unresolved;
 };

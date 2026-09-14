@@ -5,12 +5,14 @@
 #include "sparkc/skr/optimizer/SkrCfg.h"
 #include "sparkc/skr/instr/everything.h"
 #include "sparkc/common/cfg/CfgUtils.h"
+#include "sparkc/symbol/SymbolTable.h"
 
 class ReachingCopiesAnalysis {
 public:
-    ReachingCopiesAnalysis(SkrCfg& graph)
+    ReachingCopiesAnalysis(SymbolTable& symTable, SkrCfg& graph)
         : graph(graph)
-        , annotatedBlocks(graph.getSize()) { }
+        , annotatedBlocks(graph.getSize())
+        , staticVars(getStaticVars(symTable)) { }
 
     void run() {
         const ReachingCopies identity = getAllCopies();
@@ -67,7 +69,7 @@ private:
         out = identity;
         auto it = graph.predecessors(blockIdx);
         while (it.hasNext()) {
-            auto [predIdx, predecessor] = it.next();
+            const auto& [predIdx, predecessor] = it.next();
             if (!CfgUtils::isBeginBlock(graph, predIdx)) {
                 out.intersect(getAnnotated(predIdx).blockAnnotation);
             }
@@ -103,6 +105,7 @@ private:
             else if (instr->kind == SkrInstruction::Kind::FunCall) {
                 auto* callInstr = (SkrFunCall*) instr;
                 currentCopies.kill(callInstr->getRetVar());
+                currentCopies.killAll(staticVars);
             }
             else if (instr->kind == SkrInstruction::Kind::Float2Int) {
                 auto* it = (SkrFloat2Int*) instr;
@@ -151,7 +154,7 @@ private:
     void addAllSuccessors(size_t blockIdx, Uniqueue<size_t>& dst) {
         auto it = graph.successors(blockIdx);
         while (it.hasNext()) {
-            auto [successorIdx, block] = it.next();
+            const auto& [successorIdx, block] = it.next();
             if (!CfgUtils::isEndBlock(graph, successorIdx)) {
                 dst.add(successorIdx);
             }
@@ -164,8 +167,19 @@ private:
         return elem;
     }
 
+    static std::vector<StringRef> getStaticVars(SymbolTable& symTable) {
+        std::vector<StringRef> vars;
+        for (const auto& [name, symbol] : symTable) {
+            if (symbol.isStatic()) {
+                vars.emplace_back(name);
+            }
+        }
+        return vars;
+    }
+
     static constexpr size_t MAX_ITERATIONS = 300;
 
     SkrCfg& graph;
     std::vector<RCABlock> annotatedBlocks;
+    std::vector<StringRef> staticVars;
 };
