@@ -1,7 +1,7 @@
 #pragma once
 #include <unordered_map>
-#include <optional>
 #include "sparkc/symbol/SymbolType.h"
+#include "sparkc/symbol/SymbolTypeFactory.h"
 
 class BuildResult {
 public:
@@ -23,12 +23,16 @@ public:
     };
 
     BuildResult() = default;
-    BuildResult(void* binary, size_t binarySize, const std::unordered_map<StringRef, Function>& functions)
+    BuildResult(
+        uint8_t* binary, 
+        size_t binarySize, 
+        const std::unordered_map<StringRef, Function>& functions
+    )
         : binary(binary)
         , binarySize(binarySize)
         , functions(functions) { }
 
-    void* getBinary() {
+    uint8_t* getBinary() {
         return binary;
     }
 
@@ -36,16 +40,13 @@ public:
         return binarySize;
     }
 
-    std::optional<Function> lookupFunction(StringRef name) {
-        auto it = functions.find(name);
-        if (it != functions.end()) {
-            return it->second;
+    template<typename T>
+    T lookupFunction(const char* name, SymbolType* returnType, std::initializer_list<SymbolType*> params) {
+        auto* fun = _lookupFunction(name, returnType, params);
+        if (fun == nullptr) {
+            return nullptr;
         }
-        return std::nullopt;
-    }
-
-    std::optional<Function> lookupFunction(const char* name) {
-        return lookupFunction(StringRef::cstr(name));
+        return reinterpret_cast<T>(binary + fun->getOffset());
     }
 
     const std::unordered_map<StringRef, Function>& getFunctions() const {
@@ -53,7 +54,35 @@ public:
     }
 
 private:
-    void* binary;
+    bool isFunctionMatches(const Function& fun, const char* name, SymbolType* returnType, const std::vector<SymbolType*>& params) {
+        if (fun.getName() != name) {
+            return false;
+        }
+
+        BoundArray<SymbolType*> boundParams(memBlockRefOf(params));
+        SymbolFunctionType fnType(returnType, boundParams);
+        return *fun.getType() == fnType;
+    }
+
+    template<typename T>
+    static MemBlockRef memBlockRefOf(const std::vector<T>& v) {
+        return MemBlockRef(
+            v.size() * sizeof(T), 
+            (uint8_t*) v.data()
+        );
+    }
+
+    const Function* _lookupFunction(const char* name, SymbolType* returnType, std::initializer_list<SymbolType*> params) {
+        std::vector<SymbolType*> paramsV(std::move(params));
+        for (const auto& [funName, fun] : functions) {
+            if (isFunctionMatches(fun, name, returnType, paramsV)) {
+                return &fun;
+            }
+        }
+        return nullptr;
+    }
+
+    uint8_t* binary;
     size_t binarySize;
     std::unordered_map<StringRef, Function> functions;
 };

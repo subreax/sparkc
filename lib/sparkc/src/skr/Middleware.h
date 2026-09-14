@@ -65,7 +65,7 @@ public:
         // function created through skrf, and all the optimizations work with skrf.
         // Probably better to copy instructions from skrfShared to skrf
         auto* initFun = skrf.function(
-            idGen.copy(funName),
+            funName,
             { },
             initFnBody,
             skrf.var(retVarId)

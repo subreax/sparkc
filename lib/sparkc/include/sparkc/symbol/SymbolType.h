@@ -79,8 +79,14 @@ public:
         : SymbolType(Kind::Structure)
         , tag(tag) { }
 
+    SymbolStructureType(const char* tag)
+        : SymbolStructureType(StringRef::cstr(tag)) { }
+
     StringRef getTag() const { return tag; }
 
 private:
     StringRef tag;
 };
+
+bool operator==(const SymbolType& t1, const SymbolType& t2);
+bool operator!=(const SymbolType& t1, const SymbolType& t2);

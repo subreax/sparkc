@@ -1,0 +1,30 @@
+#cli
+--emit skr
+
+
+#src
+var x = 1 + 2 * 3 - 4;
+var y = x * sumi32(10, sumi(20, 50));
+
+fun main(): int {
+    return 0;
+}
+
+
+#expect
+staticvar x: int
+
+staticvar y: int
+
+fun main(): int
+    copy retval.4 = int 0
+    jmp .ret_0
+    .ret_0:
+
+fun #init(): int
+    t.0 = int 2 * 3
+    t.1 = int 1 + t.0
+    x = int t.1 - 4
+    r_sumi32.2 = int sumi32(20, 50)
+    r_sumi32.3 = int sumi32(10, r_sumi32.2)
+    y = int x * r_sumi32.3

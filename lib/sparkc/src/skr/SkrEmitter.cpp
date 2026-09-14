@@ -54,6 +54,7 @@ SkrEmitter::SkrEmitter(
 SkrStaticVar* SkrEmitter::emit(AstStaticVariable* astVar) {
     auto* skrVar = skrf.var(astVar->getName());
 
+    funName = StringRef::cstr("t");
     if (astVar->getInitializer() != nullptr) {
         emitAndConvert(astVar->getInitializer(), skrVar);
     }
