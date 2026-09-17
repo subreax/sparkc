@@ -8,6 +8,8 @@ add_subdirectory(lib/sparkc)
 
 add_executable(spark-compiler
     src/main.cpp 
+    src/printer/ast/AstPrinter.cpp
+    src/printer/skr/SkrPrinter.cpp
     src/printer/rva/RvaPrinter.cpp
 )
 target_include_directories(spark-compiler PRIVATE src/)

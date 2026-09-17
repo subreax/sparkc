@@ -1,7 +1,7 @@
 #pragma once
 #include "SparkRuntimeException.h"
 #include <cstdint>
-#include <sstream>
+#include "sparkc/common/ExpandableStringBuilder.h"
 
 class OutOfBoundsException : public SparkRuntimeException {
 public:
@@ -10,8 +10,8 @@ public:
 
 private:
     static std::string buildMessage(int32_t min, int32_t max, int32_t actual) {
-        std::ostringstream oss;
-        oss << "Index is out of bounds. Range: [" << min << "; " << max << "], actual: " << actual;
-        return oss.str();
+        ExpandableStringBuilder sb;
+        sb << "Index is out of bounds. Range: [" << min << "; " << max << "], actual: " << actual;
+        return sb.toString();
     }
 };

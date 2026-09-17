@@ -48,9 +48,7 @@ set(SPARKC_SRC
   src/frontend/semantic/IdentifierResolution.cpp
   src/frontend/semantic/Scope.cpp
   src/frontend/semantic/TypeChecker.cpp
-  src/frontend/utils/AstPrinter.cpp
   src/skr/SkrEmitter.cpp
-  src/skr/SkrPrinter.cpp
   src/skr/instr/SkrBinary.cpp
   src/skr/instr/SkrBranch.cpp
   src/skr/value/SkrValue.cpp

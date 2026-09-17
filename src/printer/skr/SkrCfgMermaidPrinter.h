@@ -1,9 +1,9 @@
 #pragma once
-#include "sparkc/skr/SkrPrinter.h"
 #include <fstream>
 #include <iostream>
 #include <sparkc/skr/optimizer/SkrCfg.h>
 #include <sparkc/symbol/SymbolTable.h>
+#include "SkrPrinter.h"
 #include "FileUtils.h"
 
 class SkrCfgMermaidPrinter {

@@ -1,5 +1,5 @@
-#include "sparkc/skr/SkrPrinter.h"
-#include "sparkc/common/printer/Colored.h"
+#include "SkrPrinter.h"
+#include "../Colored.h"
 
 static const char* op(SkrBinary::Operator op) {
     return SkrBinary::operatorStringValue(op);

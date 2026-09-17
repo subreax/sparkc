@@ -1,6 +1,5 @@
 #pragma once
 #include "ParseException.h"
-#include <sstream>
 
 class DuplicateDeclarationException : public ParseException {
 public:

@@ -2,18 +2,17 @@
 #include <fstream>
 #include <iostream>
 #include <sparkc/SparkCompiler.h>
-#include <sparkc/frontend/utils/AstPrinter.h>
 #include <sparkc/frontend/parser/except/ParseException.h>
 #include <sstream>
 #include "Cli.h"
-
 #include "FileUtils.h"
 #include "MemUtils.h"
+#include "printer/ast/AstPrinter.h"
 #include "printer/ast/AstMermaidPrinter.h"
-#include "printer/cfg/SkrCfgMermaidPrinter.h"
+#include "printer/skr/SkrPrinter.h"
+#include "printer/skr/SkrCfgMermaidPrinter.h"
 #include "printer/mem/MemUsagePrinter.h"
 #include "printer/rva/RvaPrinter.h"
-#include "sparkc/skr/SkrPrinter.h"
 using namespace std;
 
 static void printError(const ParseException& e, const string& source);

@@ -1,7 +1,6 @@
 #pragma once
 #include "sparkc/common/StringRef.h"
 #include <cstdint>
-#include <iostream>
 
 #define TOKEN_KIND_LIST(X)                  \
     X(T_VAR_KEYWORD, "var")                 \
@@ -80,6 +79,3 @@ struct Token {
 
 const char* TokenKind_toString(TokenKind kind);
 std::string TokenKind_toStdString(TokenKind kind);
-
-std::ostream& operator<<(std::ostream& os, TokenPos pos);
-std::ostream& operator<<(std::ostream& os, TokenKind kind);

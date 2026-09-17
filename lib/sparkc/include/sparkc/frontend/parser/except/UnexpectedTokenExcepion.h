@@ -1,6 +1,6 @@
 #pragma once
 #include "ParseException.h"
-#include <sstream>
+#include "sparkc/common/ExpandableStringBuilder.h"
 
 class UnexpectedTokenException : public ParseException {
 public:
@@ -14,9 +14,9 @@ public:
 
 private:
     static std::string buildErrorMessage(TokenKind expected, const Token& actual) {
-        std::ostringstream oss;
-        oss << "Expected '" << expected << "', but found '" << actual.value.toString() << "' (" << actual.kind << ")";
-        return oss.str();
+        ExpandableStringBuilder sb;
+        sb << "Expected '" << int32_t { expected } << "', but found '" << actual.value.toString() << "' (" << int32_t { actual.kind } << ")";
+        return sb.toString();
     }
 
     TokenKind expected;

@@ -1,6 +1,8 @@
-#include "sparkc/frontend/utils/AstPrinter.h"
+#include "AstPrinter.h"
+#include <iostream>
 #include <sstream>
-#include "sparkc/common/printer/TreePrinter.h"
+#include "../TreePrinter.h"
+#include "TokenPrinter.h"
 
 static void print(TreePrinter& p, const AstProgItem* item);
 static void print(TreePrinter& p, const AstStaticVariable* var);
