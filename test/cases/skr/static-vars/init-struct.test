@@ -1,0 +1,17 @@
+#cli
+--emit skr
+
+
+#src
+struct color(r: float, g: float, b: float);
+
+var c = color(0.1, 0.2, 0.3);
+
+
+#expect
+staticvar c: color
+
+fun #init(): int
+    copy 0(c) = float 0.1
+    copy 4(c) = float 0.2
+    copy 8(c) = float 0.3

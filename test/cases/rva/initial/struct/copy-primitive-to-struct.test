@@ -1,0 +1,31 @@
+#cli
+--emit rva-initial
+
+
+#src
+struct Child(a: int, b: int);
+struct Root(x: int, c: Child, y: int);
+
+fun main(): int {
+    var root: Root;
+    root.x = 0;
+    root.c.a = 1;
+    root.c.b = 2;
+    root.y = 3;
+    return 0;
+}
+
+
+#expect
+label          main:
+prologue       prologue 0
+move           pm(root.0+0) = 0
+move           pm(root.0+4) = 1
+move           pm(root.0+8) = 2
+move           pm(root.0+12) = 3
+move           pr(retval.1) = 0
+jump           jump to .ret_0
+label          .ret_0:
+move           a0 = pr(retval.1)
+epilogue       epilogue 0
+return         ret

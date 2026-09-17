@@ -4,7 +4,7 @@
 
 #src
 var x = 1 + 2 * 3 - 4;
-var y = x * sumi32(10, sumi(20, 50));
+var y = x * sumi32(10, sumi32(20, 50));
 
 fun main(): int {
     return 0;

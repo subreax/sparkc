@@ -77,7 +77,7 @@ private:
         }
         else if (toKind == RvaValue::Kind::Data) {
             auto* regFrom = moveToReg(it->from, RvReg::T0);
-            add(allocator.create<RvaDStore>((RvaData*) clone(it->to), regFrom, getReg(RvReg::T6)));
+            add(allocator.create<RvaDStore>((RvaData*) clone(it->to), regFrom, getReg(RvReg::T5)));
         }
         else {
             add(allocator.create<RvaMov>(clone(it->to), clone(it->from)));
@@ -140,18 +140,27 @@ private:
 
     void fix(RvaGetAddress* it) {
         auto* toReg = moveToReg(it->to, RvReg::T0);
-        if (it->of->kind != RvaValue::Kind::Memory) {
-            sparkError("RvaFixer", "Failed to fix RvaGetAddress: 'of' is not a memory");
+
+        if (it->of->kind == RvaValue::Kind::Data) {
+            auto* data = (RvaData*) clone(it->of);
+            add(allocator.create<RvaGetAddress>(toReg, data));
+            storeIfNeeded(it->to, toReg);
+            return;
         }
 
-        auto* mem = (RvaMemory*) it->of;
-        add(allocator.create<RvaBinary>(
-            toReg,
-            RvaRegister::get(mem->getBase()),
-            RvaBinary::Operator::Plus,
-            allocator.create<RvaImm>(mem->getOffset())
-        ));
-        storeIfNeeded(it->to, toReg);
+        if (it->of->kind == RvaValue::Kind::Memory) {
+            auto* mem = (RvaMemory*) it->of;
+            add(allocator.create<RvaBinary>(
+                toReg,
+                RvaRegister::get(mem->getBase()),
+                RvaBinary::Operator::Plus,
+                allocator.create<RvaImm>(mem->getOffset())
+            ));
+            storeIfNeeded(it->to, toReg);
+            return;
+        }
+
+        sparkError("RvaFixer", "Failed to fix RvaGetAddress");
     }
 
     void storeIfNeeded(RvaValue* initial, RvaRegister* reg) {
@@ -159,7 +168,7 @@ private:
             add(allocator.create<RvaStore>((RvaMemory*) clone(initial), reg));
         }
         else if (initial->kind == RvaValue::Kind::Data) {
-            add(allocator.create<RvaDStore>((RvaData*) clone(initial), reg, getReg(RvReg::T6)));
+            add(allocator.create<RvaDStore>((RvaData*) clone(initial), reg, getReg(RvReg::T5)));
         }
     }
 
@@ -203,7 +212,7 @@ private:
         if (kind == RvaValue::Kind::Data) {
             auto* src = (RvaData*) clone(val);
             auto* dst = getReg(reg);
-            add(allocator.create<RvaDLoad>(dst, src, getReg(RvReg::T6)));
+            add(allocator.create<RvaDLoad>(dst, src, getReg(RvReg::T5)));
             return dst;
         }
 
@@ -214,7 +223,7 @@ private:
     RvaImm* newImm(int32_t value) { return allocator.create<RvaImm>(value); }
 
     void clone(RvaCall* call) {
-        add(allocator.create<RvaCall>(call->getFunName(), call->getOffsetReg()));
+        add(allocator.create<RvaCall>(call->getFunName()));
     }
 
     void clone(RvaPrologue* pr) {
@@ -255,7 +264,7 @@ private:
         }
         case RvaValue::Kind::Data: {
             auto* it = (RvaData*) v;
-            return allocator.create<RvaData>(it->getLabel());
+            return allocator.create<RvaData>(it->getLabel(), it->getOffset());
         }
 
         default:

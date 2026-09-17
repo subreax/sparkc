@@ -93,6 +93,11 @@ void IdentifierResolution::resolve(AstProgItem* progItem) {
 
 void IdentifierResolution::resolve(AstStaticVariable* it) {
     declareStaticVar(it->getName(), it->getType());
+
+    auto* init = it->getInitializer();
+    if (init != nullptr) {
+        it->setInitializer(resolveExp(init));
+    }
 }
 
 void IdentifierResolution::resolve(AstFunction* it) {

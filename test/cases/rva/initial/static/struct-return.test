@@ -1,0 +1,26 @@
+#cli
+--emit rva-initial
+
+#src
+struct color(r: float, g: float, b: float);
+
+var c: color;
+
+fun pixel(): color {
+    return c;
+}
+
+
+#expect
+data_alloc     c 12 bytes
+label          pixel:
+prologue       prologue 0
+move           pr(retval.0) = a0
+move           t6 = pr(retval.0)
+move           [t6+0] = dm(c+0)
+move           [t6+4] = dm(c+4)
+move           [t6+8] = dm(c+8)
+jump           jump to .ret_0
+label          .ret_0:
+epilogue       epilogue 0
+return         ret

@@ -1,0 +1,80 @@
+#cli
+--emit rva-initial
+
+
+#src
+struct color(r: float, g: float, b: float);
+
+fun mix(a: color, b: color, val: float): color {
+    return a;
+}
+
+fun mix2(a: color, b: color): color {
+    return mix(a, b, 0.5);
+}
+
+fun pixel(): color {
+    return mix2(
+        color(1, 0, 0),
+        color(0, 1, 0)
+    );
+}
+
+
+#expect
+label          mix:
+prologue       prologue 0
+move           pr(retval.3) = a0
+move           pr(a.0) = a1
+move           pr(b.1) = a2
+move           pr(val.2) = a3
+move           t6 = pr(retval.3)
+move           t1 = pr(a.0)
+move           [t6+0] = [t1+0]
+move           [t6+4] = [t1+4]
+move           [t6+8] = [t1+8]
+jump           jump to .ret_0
+label          .ret_0:
+epilogue       epilogue 0
+return         ret
+label          mix2:
+prologue       prologue 0 (+RA)
+move           pr(retval.6) = a0
+move           pr(a.4) = a1
+move           pr(b.5) = a2
+move           a0 = pr(retval.6)
+comment        begin temp stack
+move           a1 = pr(a.4)
+move           a2 = pr(b.5)
+move           a3 = 16384
+comment        end temp stack
+call           call mix
+jump           jump to .ret_1
+label          .ret_1:
+epilogue       epilogue 0 (+RA)
+return         ret
+label          pixel:
+prologue       prologue 0 (+RA)
+move           pr(retval.7) = a0
+binary         pr(cast.9) = 1 << 15
+move           pm(color.8+0) = pr(cast.9)
+binary         pr(cast.10) = 0 << 15
+move           pm(color.8+4) = pr(cast.10)
+binary         pr(cast.11) = 0 << 15
+move           pm(color.8+8) = pr(cast.11)
+binary         pr(cast.13) = 0 << 15
+move           pm(color.12+0) = pr(cast.13)
+binary         pr(cast.14) = 1 << 15
+move           pm(color.12+4) = pr(cast.14)
+binary         pr(cast.15) = 0 << 15
+move           pm(color.12+8) = pr(cast.15)
+move           a0 = pr(retval.7)
+comment        begin temp stack
+get_addr       a1 = addrOf(pm(color.8+0))
+get_addr       a2 = addrOf(pm(color.12+0))
+comment        end temp stack
+call           call mix2
+jump           jump to .ret_2
+label          .ret_2:
+epilogue       epilogue 0 (+RA)
+return         ret

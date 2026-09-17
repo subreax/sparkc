@@ -24,23 +24,23 @@ public:
 
     BuildResult() = default;
     BuildResult(
-        uint8_t* binary, 
-        size_t binarySize, 
+        uint8_t* binary,
+        size_t binaryUsedSize,
         const std::unordered_map<StringRef, Function>& functions
     )
         : binary(binary)
-        , binarySize(binarySize)
+        , binaryUsedSize(binaryUsedSize)
         , functions(functions) { }
 
     uint8_t* getBinary() {
         return binary;
     }
 
-    size_t getBinarySize() const {
-        return binarySize;
+    size_t getBinaryUsedSize() const {
+        return binaryUsedSize;
     }
 
-    template<typename T>
+    template <typename T>
     T lookupFunction(const char* name, SymbolType* returnType, std::initializer_list<SymbolType*> params) {
         auto* fun = _lookupFunction(name, returnType, params);
         if (fun == nullptr) {
@@ -64,10 +64,10 @@ private:
         return *fun.getType() == fnType;
     }
 
-    template<typename T>
+    template <typename T>
     static MemBlockRef memBlockRefOf(const std::vector<T>& v) {
         return MemBlockRef(
-            v.size() * sizeof(T), 
+            v.size() * sizeof(T),
             (uint8_t*) v.data()
         );
     }
@@ -83,6 +83,6 @@ private:
     }
 
     uint8_t* binary;
-    size_t binarySize;
+    size_t binaryUsedSize;
     std::unordered_map<StringRef, Function> functions;
 };

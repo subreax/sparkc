@@ -24,8 +24,11 @@ uint32_t encodeImmU(int32_t imm20);
 uint32_t readOpcode(uint32_t instr);
 
 uint32_t iTypeReadFunct3(uint32_t instr);
+int iTypeReadImm(uint32_t instr);
 
 RvReg uTypeReadRd(uint32_t instr);
+
+int sTypeReadImm(uint32_t instr);
 
 bool isImm11(int32_t imm);
 bool isImm20(int32_t imm);

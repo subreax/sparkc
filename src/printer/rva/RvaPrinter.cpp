@@ -1,10 +1,11 @@
 #include "RvaPrinter.h"
 #include "sparkc/common/printer/Colored.h"
-#include <cstring>
-#include <iomanip>
+#include <cstdio>
+
+namespace {
 
 // clang-format off
-static constexpr const char* _REG_STR[] = {
+static constexpr const char* REGISTER_NAMES[] = {
     "zero", "ra", "sp", "gp", "tp", "t0", "t1", "t2", "s0", "s1",
     "a0", "a1", "a2", "a3", "a4", "a5", "a6", "a7", "s2", "s3",
     "s4", "s5", "s6", "s7", "s8", "s9", "s10", "s11", "t3", "t4",
@@ -12,7 +13,7 @@ static constexpr const char* _REG_STR[] = {
 };
 // clang-format on
 
-static constexpr const char* _RVA_BINARY_OP[] = {
+static constexpr const char* BINARY_OPERATORS[] = {
     "+",
     "-",
     "*",
@@ -30,9 +31,9 @@ static constexpr const char* _RVA_BINARY_OP[] = {
     "|",
     "fixmul"
 };
-static constexpr int _RVA_BINARY_OP_SZ = sizeof(_RVA_BINARY_OP) / sizeof(const char*);
+static constexpr int BINARY_OPERATOR_COUNT = sizeof(BINARY_OPERATORS) / sizeof(const char*);
 
-static constexpr const char* _RVA_BRANCH_OP[] = {
+static constexpr const char* BRANCH_OPERATORS[] = {
     "==",
     "!=",
     "<",
@@ -40,7 +41,7 @@ static constexpr const char* _RVA_BRANCH_OP[] = {
     ">",
     ">="
 };
-static constexpr int _RVA_BRANCH_OP_SZ = sizeof(_RVA_BRANCH_OP) / sizeof(const char*);
+static constexpr int BRANCH_OPERATOR_COUNT = sizeof(BRANCH_OPERATORS) / sizeof(const char*);
 
 static inline const char* sign(int v) {
     if (v >= 0) {
@@ -53,7 +54,7 @@ static inline const char* sign(int v) {
 
 static std::ostream& operator<<(std::ostream& os, RvReg reg) {
     if ((int) reg < 32) {
-        os << _REG_STR[(int) reg];
+        os << REGISTER_NAMES[(int) reg];
     }
     else {
         os << "unknown_reg";
@@ -62,8 +63,8 @@ static std::ostream& operator<<(std::ostream& os, RvReg reg) {
 }
 
 static std::ostream& operator<<(std::ostream& os, RvaBinary::Operator op) {
-    if ((int) op < _RVA_BINARY_OP_SZ) {
-        os << _RVA_BINARY_OP[(int) op];
+    if ((int) op < BINARY_OPERATOR_COUNT) {
+        os << BINARY_OPERATORS[(int) op];
     }
     else {
         os << "unknown_op_" << (int) op;
@@ -72,8 +73,8 @@ static std::ostream& operator<<(std::ostream& os, RvaBinary::Operator op) {
 }
 
 static std::ostream& operator<<(std::ostream& os, RvaBranch::Operator op) {
-    if ((int) op < _RVA_BRANCH_OP_SZ) {
-        os << _RVA_BRANCH_OP[(int) op];
+    if ((int) op < BRANCH_OPERATOR_COUNT) {
+        os << BRANCH_OPERATORS[(int) op];
     }
     else {
         os << "unknown_op_" << (int) op;
@@ -81,218 +82,180 @@ static std::ostream& operator<<(std::ostream& os, RvaBranch::Operator op) {
     return os;
 }
 
-static std::ostream& operator<<(std::ostream& os, const RvaValue& value) {
+} // namespace
+
+void RvaPrinter::PrintableValue::print(std::ostream& os) const {
     switch (value.kind) {
     case RvaValue::Kind::Imm:
-        os << ((const RvaImm*) &value)->getValue();
+        os << static_cast<const RvaImm&>(value).getValue();
         break;
 
     case RvaValue::Kind::PseudoReg:
-        os << "pr(" << ((const RvaPseudoReg*) &value)->getId().toString() << ")";
+        os << "pr(" << static_cast<const RvaPseudoReg&>(value).getId().toString() << ")";
         break;
 
     case RvaValue::Kind::PseudoMem: {
-        auto* it = (const RvaPseudoMem*) &value;
+        auto* it = static_cast<const RvaPseudoMem*>(&value);
         os << "pm(" << it->getId().toString() << sign(it->getOffset()) << it->getOffset() << ")";
     } break;
 
     case RvaValue::Kind::Register:
-        os << ((const RvaRegister*) &value)->getReg();
+        os << static_cast<const RvaRegister&>(value).getReg();
         break;
 
     case RvaValue::Kind::Memory: {
-        auto* it = (const RvaMemory*) &value;
+        auto* it = static_cast<const RvaMemory*>(&value);
         os << "[" << it->getBase() << sign(it->getOffset()) << it->getOffset() << "]";
     } break;
 
     case RvaValue::Kind::Data: {
-        auto* it = (const RvaData*) &value;
-        os << "dm(" << Colored::label(it->getLabel()) << ")";
+        auto* it = static_cast<const RvaData*>(&value);
+        os << "dm(" << printer.label(it->getLabel()) << sign(it->getOffset()) << it->getOffset() << ")";
     } break;
 
     default:
         sparkError("RvaPrinter", "Unknown RvaValue");
         break;
     }
-    return os;
 }
 
-static void printType(std::ostream& os, const char* type) {
+void RvaPrinter::printType(const char* type) {
     char buf[16];
-    snprintf(buf, 16, "%-15s", type);
+    std::snprintf(buf, sizeof(buf), "%-15s", type);
     os << buf;
 }
 
-static void printBinary(std::ostream& os, const RvaBinary* it) {
-    printType(os, "binary");
-    os << *it->dst << " = " << *it->left << " " << it->op << " " << *it->right;
+std::string RvaPrinter::label(StringRef value) const {
+    return isColored ? Colored::label(value) : value.toString();
 }
 
-static void printMove(std::ostream& os, const RvaMov* it) {
-    printType(os, "move");
-    os << *it->to << " = " << *it->from;
+std::string RvaPrinter::comment(const std::string& value) const {
+    return isColored ? Colored::comment(value) : value;
 }
 
-static void printLabel(std::ostream& os, const RvaLabel* it) {
-    printType(os, "label");
-    os << Colored::label(it->getValue()) << ":";
-}
-
-static void printJump(std::ostream& os, const RvaJump* it) {
-    printType(os, "jump");
-    os << "jump to " << Colored::label(it->getLabel());
-}
-
-static void printLoad(std::ostream& os, const RvaLoad* it) {
-    printType(os, "load");
-    os << *it->from << " --> " << *it->to;
-}
-
-static void printStore(std::ostream& os, const RvaStore* it) {
-    printType(os, "store");
-    os << *it->from << " --> " << *it->to;
-}
-
-static void printRet(std::ostream& os, const RvaRet* it) {
-    printType(os, "return");
-    os << "ret";
-}
-
-static void printPrologue(std::ostream& os, const RvaPrologue* it) {
-    printType(os, "prologue");
-    os << "prologue " << it->getFrameSize();
-    if (it->willSaveRa()) {
-        os << " (+RA)";
-    }
-}
-
-static void printEpilogue(std::ostream& os, const RvaEpilogue* it) {
-    printType(os, "epilogue");
-    os << "epilogue " << it->getFrameSize();
-    if (it->willLoadRa()) {
-        os << " (+RA)";
-    }
-}
-
-static void printBranch(std::ostream& os, const RvaBranch* it) {
-    printType(os, "branch");
-    os << "branch to " << Colored::label(it->label) << " if " << *it->left << " " << it->op << " "
-       << *it->right;
-}
-
-static void printCall(std::ostream& os, const RvaCall* it) {
-    printType(os, "call");
-    os << "call " << Colored::label(it->getFunName()) << " (offsetReg: " << it->getOffsetReg() << ")";
-}
-
-static void printGetAddr(std::ostream& os, const RvaGetAddress* it) {
-    printType(os, "get_addr");
-    os << *it->to << " = addrOf(" << *it->of << ")";
-}
-
-static void printComment(std::ostream& os, const std::string& comment) {
-    printType(os, "comment");
-    os << Colored::comment(comment);
-}
-
-static void printAllocateOnStack(std::ostream& os, const RvaReserveOnStack* it) {
-    printType(os, "reserve");
-    os << "reserve " << *it->mem;
-}
-
-static void printDataAlloc(std::ostream& os, const RvaDataAlloc* it) {
-    printType(os, "data_alloc");
-    os << Colored::label(it->getLabel()) << " " << it->getSize() << " bytes";
-}
-
-static void printDLoad(std::ostream& os, const RvaDLoad* it) {
-    printType(os, "dload");
-    os << *it->getSrc() << " --> " << *it->getDst() << " (offsetReg: " << *it->getTempOffsetReg() << ")";
-}
-
-static void printDStore(std::ostream& os, const RvaDStore* it) {
-    printType(os, "dstore");
-    os << *it->getSrc() << " --> " << *it->getDst() << " (offsetReg: " << *it->getTempOffsetReg() << ")";
-}
-
-void RvaPrinter::print(std::ostream& os, const std::vector<RvaInstruction*>& instructions) {
+RvaPrinter& RvaPrinter::append(const std::vector<RvaInstruction*>& instructions) {
     for (const auto* instr : instructions) {
-        switch (instr->kind) {
-        case RvaInstruction::Kind::Binary:
-            printBinary(os, (const RvaBinary*) instr);
-            break;
-
-        case RvaInstruction::Kind::Move:
-            printMove(os, (const RvaMov*) instr);
-            break;
-
-        case RvaInstruction::Kind::Label:
-            printLabel(os, (const RvaLabel*) instr);
-            break;
-
-        case RvaInstruction::Kind::Jump:
-            printJump(os, (const RvaJump*) instr);
-            break;
-
-        case RvaInstruction::Kind::Load:
-            printLoad(os, (const RvaLoad*) instr);
-            break;
-
-        case RvaInstruction::Kind::Store:
-            printStore(os, (const RvaStore*) instr);
-            break;
-
-        case RvaInstruction::Kind::Ret:
-            printRet(os, (const RvaRet*) instr);
-            break;
-
-        case RvaInstruction::Kind::Prologue:
-            printPrologue(os, (const RvaPrologue*) instr);
-            break;
-
-        case RvaInstruction::Kind::Epilogue:
-            printEpilogue(os, (const RvaEpilogue*) instr);
-            break;
-
-        case RvaInstruction::Kind::Branch:
-            printBranch(os, (const RvaBranch*) instr);
-            break;
-
-        case RvaInstruction::Kind::Call:
-            printCall(os, (const RvaCall*) instr);
-            break;
-
-        case RvaInstruction::Kind::GetAddress:
-            printGetAddr(os, (const RvaGetAddress*) instr);
-            break;
-
-        case RvaInstruction::Kind::DataAlloc:
-            printDataAlloc(os, (const RvaDataAlloc*) instr);
-            break;
-
-        case RvaInstruction::Kind::DLoad:
-            printDLoad(os, (const RvaDLoad*) instr);
-            break;
-
-        case RvaInstruction::Kind::DStore:
-            printDStore(os, (const RvaDStore*) instr);
-            break;
-
-        case RvaInstruction::Kind::BeginTempStack:
-            printComment(os, "begin temp stack");
-            break;
-
-        case RvaInstruction::Kind::EndTempStack:
-            printComment(os, "end temp stack");
-            break;
-
-        case RvaInstruction::Kind::ReserveOnStack:
-            printAllocateOnStack(os, (const RvaReserveOnStack*) instr);
-            break;
-
-        default:
-            os << "unknown rva kind: " << (int) instr->kind;
-        }
-        os << "\n";
+        append(instr);
     }
+    return *this;
+}
+
+RvaPrinter& RvaPrinter::append(const RvaInstruction* instr) {
+    switch (instr->kind) {
+    case RvaInstruction::Kind::Binary: {
+        auto* it = static_cast<const RvaBinary*>(instr);
+        printType("binary");
+        os << val(it->dst) << " = " << val(it->left) << " " << it->op << " " << val(it->right);
+    } break;
+
+    case RvaInstruction::Kind::Move: {
+        auto* it = static_cast<const RvaMov*>(instr);
+        printType("move");
+        os << val(it->to) << " = " << val(it->from);
+    } break;
+
+    case RvaInstruction::Kind::Label: {
+        auto* it = static_cast<const RvaLabel*>(instr);
+        printType("label");
+        os << label(it->getValue()) << ":";
+    } break;
+
+    case RvaInstruction::Kind::Jump: {
+        auto* it = static_cast<const RvaJump*>(instr);
+        printType("jump");
+        os << "jump to " << label(it->getLabel());
+    } break;
+
+    case RvaInstruction::Kind::Load: {
+        auto* it = static_cast<const RvaLoad*>(instr);
+        printType("load");
+        os << val(it->from) << " --> " << val(it->to);
+    } break;
+
+    case RvaInstruction::Kind::Store: {
+        auto* it = static_cast<const RvaStore*>(instr);
+        printType("store");
+        os << val(it->from) << " --> " << val(it->to);
+    } break;
+
+    case RvaInstruction::Kind::Ret: {
+        printType("return");
+        os << "ret";
+    } break;
+
+    case RvaInstruction::Kind::Prologue: {
+        auto* it = static_cast<const RvaPrologue*>(instr);
+        printType("prologue");
+        os << "prologue " << it->getFrameSize();
+        if (it->willSaveRa()) {
+            os << " (+RA)";
+        }
+    } break;
+
+    case RvaInstruction::Kind::Epilogue: {
+        auto* it = static_cast<const RvaEpilogue*>(instr);
+        printType("epilogue");
+        os << "epilogue " << it->getFrameSize();
+        if (it->willLoadRa()) {
+            os << " (+RA)";
+        }
+    } break;
+
+    case RvaInstruction::Kind::Branch: {
+        auto* it = static_cast<const RvaBranch*>(instr);
+        printType("branch");
+        os << "branch to " << label(it->label) << " if " << val(it->left) << " " << it->op << " " << val(it->right);
+    } break;
+
+    case RvaInstruction::Kind::Call: {
+        auto* it = static_cast<const RvaCall*>(instr);
+        printType("call");
+        os << "call " << label(it->getFunName());
+    } break;
+
+    case RvaInstruction::Kind::GetAddress: {
+        auto* it = static_cast<const RvaGetAddress*>(instr);
+        printType("get_addr");
+        os << val(it->to) << " = addrOf(" << val(it->of) << ")";
+    } break;
+
+    case RvaInstruction::Kind::DataAlloc: {
+        auto* it = static_cast<const RvaDataAlloc*>(instr);
+        printType("data_alloc");
+        os << label(it->getLabel()) << " " << it->getSize() << " bytes";
+    } break;
+
+    case RvaInstruction::Kind::DLoad: {
+        auto* it = static_cast<const RvaDLoad*>(instr);
+        printType("dload");
+        os << val(it->getSrc()) << " --> " << val(it->getDst()) << " (offsetReg: " << val(it->getTempOffsetReg()) << ")";
+    } break;
+
+    case RvaInstruction::Kind::DStore: {
+        auto* it = static_cast<const RvaDStore*>(instr);
+        printType("dstore");
+        os << val(it->getSrc()) << " --> " << val(it->getDst()) << " (offsetReg: " << val(it->getTempOffsetReg()) << ")";
+    } break;
+
+    case RvaInstruction::Kind::BeginTempStack: {
+        printType("comment");
+        os << comment("begin temp stack");
+    } break;
+
+    case RvaInstruction::Kind::EndTempStack: {
+        printType("comment");
+        os << comment("end temp stack");
+    } break;
+
+    case RvaInstruction::Kind::ReserveOnStack: {
+        auto* it = static_cast<const RvaReserveOnStack*>(instr);
+        printType("reserve");
+        os << "reserve " << val(it->mem);
+    } break;
+
+    default:
+        os << "unknown rva kind: " << (int) instr->kind;
+    }
+    os << "\n";
+    return *this;
 }

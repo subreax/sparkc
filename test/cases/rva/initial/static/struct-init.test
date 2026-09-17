@@ -1,0 +1,30 @@
+#cli
+--emit rva-initial
+
+#src
+struct color(r: float, g: float, b: float);
+
+var c = color(1.0f, 0.5f, 0.0f);
+
+fun main(): int {
+    return 0;
+}
+
+#expect
+data_alloc     c 12 bytes
+label          main:
+prologue       prologue 0
+move           pr(retval.0) = 0
+jump           jump to .ret_0
+label          .ret_0:
+move           a0 = pr(retval.0)
+epilogue       epilogue 0
+return         ret
+label          #init:
+prologue       prologue 0
+move           dm(c+0) = 32768
+move           dm(c+4) = 16384
+move           dm(c+8) = 0
+move           a0 = pr(#init.1)
+epilogue       epilogue 0
+return         ret

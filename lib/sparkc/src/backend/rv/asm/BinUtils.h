@@ -19,14 +19,15 @@ public:
         return (imm << (32 - bits)) >> (32 - bits);
     }
 
-    template <int lo_bits>
+    template <int bits>
     static constexpr int32_t lo(int32_t imm) {
-        return sext<lo_bits>(imm & mask<lo_bits>());
+        return sext<bits>(imm & mask<bits>());
     }
 
-    template <int lo_bits>
+    template <int bits>
     static constexpr int32_t hi(int32_t imm) {
-        return imm >> lo_bits;
+        constexpr auto loBits = 32 - bits;
+        return (imm + (1 << (loBits - 1))) >> loBits;
     }
 
     template <int to, int from>

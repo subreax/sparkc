@@ -1,0 +1,56 @@
+#cli
+--emit rva-initial
+
+
+#src
+struct color(r: float, g: float, b: float);
+
+var c = color(0.1, 0.2, 0.3);
+
+fun consume(col: color): color {
+    return col;
+}
+
+fun pass(): int {
+    consume(c);
+    return 0;
+}
+
+
+#expect
+data_alloc     c 12 bytes
+label          consume:
+prologue       prologue 0
+move           pr(retval.1) = a0
+move           pr(col.0) = a1
+move           t6 = pr(retval.1)
+move           t1 = pr(col.0)
+move           [t6+0] = [t1+0]
+move           [t6+4] = [t1+4]
+move           [t6+8] = [t1+8]
+jump           jump to .ret_0
+label          .ret_0:
+epilogue       epilogue 0
+return         ret
+label          pass:
+prologue       prologue 0 (+RA)
+reserve        reserve pm(r_consume.3+0)
+get_addr       a0 = addrOf(pm(r_consume.3+0))
+comment        begin temp stack
+get_addr       a1 = addrOf(dm(c+0))
+comment        end temp stack
+call           call consume
+move           pr(retval.2) = 0
+jump           jump to .ret_1
+label          .ret_1:
+move           a0 = pr(retval.2)
+epilogue       epilogue 0 (+RA)
+return         ret
+label          #init:
+prologue       prologue 0
+move           dm(c+0) = 3277
+move           dm(c+4) = 6554
+move           dm(c+8) = 9830
+move           a0 = pr(#init.4)
+epilogue       epilogue 0
+return         ret

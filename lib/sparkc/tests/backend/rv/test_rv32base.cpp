@@ -1,6 +1,7 @@
 #include <backend/rv/asm/Rv32Base.h>
 #include <catch2/catch_test_macros.hpp>
 #include <backend/rv/asm/BinUtils.h>
+#include <backend/rv/asm/Rv32I.h>
 
 constexpr uint32_t _0101 = 0b01010101010101010101010101010101u;
 constexpr uint32_t _1010 = 0b10101010101010101010101010101010u;
@@ -63,5 +64,32 @@ TEST_CASE("Test rv patchers", "[rv-patch]") {
         uint32_t instr = 0b1010'1010'1010'1010'1010'1010'1010'1010;
         instr = Rv32Base::iTypePatchImm(instr, 0b0011'0011'0011);
         REQUIRE(instr == 0b0011'0011'0011'1010'1010'1010'1010'1010);
+    }
+
+    SECTION("Case 3") {
+        uint32_t instr = Rv32Base::sTypePatchImm(0x00a2a023u, 1234);
+        REQUIRE(instr == 0x4ca2a923u);
+
+        instr = Rv32Base::sTypePatchImm(0x00a2a023u, 1365);
+        REQUIRE(instr == 0x54a2aaa3u);
+
+        instr = Rv32Base::sTypePatchImm(0x00a2a023u, -1366);
+        REQUIRE(instr == 0xaaa2a523u);
+
+        instr = Rv32Base::sTypePatchImm(0x00a2a023u, 2047);
+        REQUIRE(instr == 0x7ea2afa3u);
+    }
+}
+
+TEST_CASE("Test rv readers", "[rv-read]") {
+    SECTION("I-type") {
+        REQUIRE(Rv32Base::iTypeReadImm(0x4d278793u) == 1234);
+        REQUIRE(Rv32Base::iTypeReadImm(0x7ff78793u) == 2047);
+        REQUIRE(Rv32Base::iTypeReadImm(0xb2e78793u) == -1234);
+        REQUIRE(Rv32Base::iTypeReadImm(0x80078793u) == -2048);
+    }
+
+    SECTION("S-type") {
+        REQUIRE(Rv32Base::sTypeReadImm(0x385fae23u) == 924);
     }
 }

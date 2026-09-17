@@ -198,7 +198,7 @@ private:
             }
         }
         add<RvaEndTempStack>();
-        add<RvaCall>(func->getName(), tempReg->getReg());
+        add<RvaCall>(func->getName());
 
         if (!retInMem) {
             add<RvaMov>(retVar, getArgReg(0)); // todo: support 4-8 bytes
@@ -288,14 +288,19 @@ private:
         case SkrValue::Kind::Var: {
             auto* it = (const SkrVar*) value;
             if (!isReplacedToPtr(it) && isStructure(it)) {
-                return allocator.create<RvaPseudoMem>(it->getId(), offsetIfMem);
+                if (isStatic(it)) {
+                    return allocator.create<RvaData>(it->getId(), offsetIfMem);
+                }
+                else {
+                    return allocator.create<RvaPseudoMem>(it->getId(), offsetIfMem);
+                }
             }
             /* Not actually pseudo */
             else if (isStatic(it)) {
                 if (offsetIfMem != 0) {
-                    sparkError("Skr2RvaPseudo", "Offset for static variables is not implemented");
+                    sparkError("Skr2RvaPseudo", "Should be unreachable");
                 }
-                return allocator.create<RvaData>(it->getId());
+                return allocator.create<RvaData>(it->getId(), 0);
             }
             else {
                 return allocator.create<RvaPseudoReg>(it->getId());
@@ -405,7 +410,8 @@ private:
             loadBytes(to, from, fromOffset);
         }
         else {
-            auto sz = getSize(from) - fromOffset;
+            // auto sz = getSize(from) - fromOffset;
+            auto sz = std::min(getSize(to), getSize(from));
             for (size_t off = 0; off < sz; off += 4) {
                 add<RvaMov>(
                     toPseudo(to, toOffset + off),

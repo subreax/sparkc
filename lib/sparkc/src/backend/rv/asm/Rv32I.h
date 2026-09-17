@@ -4,7 +4,7 @@
 class Rv32I {
 public:
     static uint32_t addi(RvReg rd, RvReg rs1, int32_t imm11) {
-        return Rv32Base::iType(0b0010011, 0, rd, rs1, imm11);
+        return Rv32Base::iType(AddiOpcode, 0, rd, rs1, imm11);
     }
 
     static uint32_t add(RvReg rd, RvReg rs1, RvReg rs2) {
@@ -124,6 +124,10 @@ public:
 
     // checkers
 
+    static bool isAddi(uint32_t instr) {
+        return Rv32Base::readOpcode(instr) == AddiOpcode && Rv32Base::iTypeReadFunct3(instr) == 0;
+    }
+
     static bool isJal(uint32_t instr) {
         return Rv32Base::readOpcode(instr) == JalOpcode;
     }
@@ -148,6 +152,7 @@ public:
         return Rv32Base::readOpcode(instr) == StoreOpcode && Rv32Base::iTypeReadFunct3(instr) == 2;
     }
 
+    static constexpr uint32_t AddiOpcode = 0b0010011u;
     static constexpr uint32_t JalOpcode = 0b1101111u;
     static constexpr uint32_t JalrOpcode = 0b1100111u;
     static constexpr uint32_t BranchOpcode = 0b1100011u;

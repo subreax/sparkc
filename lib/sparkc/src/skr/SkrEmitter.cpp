@@ -119,7 +119,7 @@ void SkrEmitter::emit(AstVarDeclaration* decl) {
     auto* initializer = decl->getInitializer();
     if (initializer == nullptr)
         return;
-    emit(initializer, skrf.var(decl->getId()));
+    emitAndConvert(initializer, skrf.var(decl->getId()));
 }
 
 void SkrEmitter::emit(AstStatement* st) {

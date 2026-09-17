@@ -127,14 +127,20 @@ private:
 
 class RvaData : public RvaValue {
 public:
-    RvaData(StringRef label)
+    RvaData(StringRef label, int offset)
         : RvaValue(Kind::Data)
-        , label(label) { }
+        , label(label)
+        , offset(offset) { }
 
     StringRef getLabel() const {
         return label;
     }
 
+    int getOffset() const {
+        return offset;
+    }
+
 private:
     StringRef label;
+    int offset;
 };

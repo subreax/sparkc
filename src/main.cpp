@@ -84,7 +84,7 @@ public:
             return;
         }
 
-        RvaPrinter::print(cout, rva);
+        RvaPrinter::print(cout, rva, options.colored);
     }
 
     void onReplaceRvaPseudo(const std::vector<RvaInstruction*>& rva) override {
@@ -92,7 +92,7 @@ public:
             return;
         }
 
-        RvaPrinter::print(cout, rva);
+        RvaPrinter::print(cout, rva, options.colored);
     }
 
     void onFixRva(const std::vector<RvaInstruction*>& rva) override {
@@ -100,7 +100,7 @@ public:
             return;
         }
 
-        RvaPrinter::print(cout, rva);
+        RvaPrinter::print(cout, rva, options.colored);
     }
 
     void onBinary(const BuildResult& res) override {
@@ -149,7 +149,7 @@ int main(int argc, const char** argv) {
 
     StageCallback stageCallback(cliOptions);
 
-    uint8_t binary[1024];
+    uint8_t binary[2048];
 
     SparkCompilerConfig config;
     config.poolSize = 4096 * 3;
@@ -206,10 +206,10 @@ int main(int argc, const char** argv) {
             printMemUsage("pool1", memoryUsage.pool1);
             printMemUsage("pool2", memoryUsage.pool2);
             printMemUsage("shared", memoryUsage.shared);
-            printMemUsage("bin", MemoryStats(buildResult.getBinarySize(), sizeof(binary)));
+            printMemUsage("bin", MemoryStats(buildResult.getBinaryUsedSize(), sizeof(binary)));
         }
 
-        MemUtils::dump(binary, buildResult.getBinarySize(), cliOptions.binaryOutFilePath);
+        MemUtils::dump(binary, sizeof(binary), cliOptions.binaryOutFilePath);
     }
     return 0;
 }

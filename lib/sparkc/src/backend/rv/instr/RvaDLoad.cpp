@@ -3,5 +3,5 @@
 
 void RvaDLoad::emit(RvListing& listing) {
     listing.addWithLabel(Rv32I::auipc(tempOffsetReg->getReg(), 0), src->getLabel());
-    listing.add(Rv32I::lw(dst->getReg(), tempOffsetReg->getReg(), 0));
+    listing.add(Rv32I::lw(dst->getReg(), tempOffsetReg->getReg(), src->getOffset()));
 }

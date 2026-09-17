@@ -52,6 +52,7 @@ void RvListing::link() {
             instr |= Rv32Base::encodeImmJ(calculateOffsetToLabel(u.offset, u.label));
             write_u32(instr, u.offset);
         }
+        // function call
         else if (Rv32I::isAuipc(instr) && Rv32I::isJalr(get_u32(u.offset + 4))) {
             int32_t funOffset = calculateOffsetToLabel(u.offset, u.label);
             if (Rv32Base::isImm20(funOffset - 4)) {
@@ -59,23 +60,34 @@ void RvListing::link() {
                 write_u32(Rv32I::jal(RvReg::RA, funOffset - 4), u.offset + 4);
             }
             else {
-                RvReg rd = Rv32Base::uTypeReadRd(instr);
                 auto split = Rv32Base::splitImm11(funOffset);
-                write_u32(Rv32I::auipc(rd, split.hi), u.offset);
-                write_u32(Rv32I::jalr(RvReg::RA, rd, split.lo), u.offset + 4);
+                write_u32(Rv32I::auipc(RvReg::RA, split.hi), u.offset);
+                write_u32(Rv32I::jalr(RvReg::RA, RvReg::RA, split.lo), u.offset + 4);
             }
         }
+        // load static var
         else if (Rv32I::isAuipc(instr) && Rv32I::isLw(get_u32(u.offset + 4))) {
             int32_t memOffset = calculateOffsetToLabel(u.offset, u.label);
+            memOffset += Rv32Base::iTypeReadImm(get_u32(u.offset + 4));
             auto split = Rv32Base::splitImm11(memOffset);
             write_u32(Rv32Base::uTypePatchImm(instr, split.hi), u.offset);
             write_u32(Rv32Base::iTypePatchImm(get_u32(u.offset + 4), split.lo), u.offset + 4);
         }
+        // store static var
         else if (Rv32I::isAuipc(instr) && Rv32I::isSw(get_u32(u.offset + 4))) {
             int32_t memOffset = calculateOffsetToLabel(u.offset, u.label);
+            memOffset += Rv32Base::sTypeReadImm(get_u32(u.offset + 4));
             auto split = Rv32Base::splitImm11(memOffset);
             write_u32(Rv32Base::uTypePatchImm(instr, split.hi), u.offset);
             write_u32(Rv32Base::sTypePatchImm(get_u32(u.offset + 4), split.lo), u.offset + 4);
+        }
+        // addr of static var
+        else if (Rv32I::isAuipc(instr) && Rv32I::isAddi(get_u32(u.offset + 4))) {
+            int32_t memOffset = calculateOffsetToLabel(u.offset, u.label);
+            memOffset += Rv32Base::iTypeReadImm(get_u32(u.offset + 4));
+            auto split = Rv32Base::splitImm11(memOffset);
+            write_u32(Rv32Base::uTypePatchImm(instr, split.hi), u.offset);
+            write_u32(Rv32Base::iTypePatchImm(get_u32(u.offset + 4), split.lo), u.offset + 4);
         }
         else {
             sparkError("RvListing", "Can't link instruction: %08x", instr);
@@ -83,7 +95,9 @@ void RvListing::link() {
     }
 }
 
-size_t RvListing::getSize() const { return codeSz; }
+size_t RvListing::getSize() const {
+    return codeSz + dataSz;
+}
 
 std::vector<Label> RvListing::getPublicLabels() const {
     std::vector<Label> outLabels;

@@ -1,0 +1,26 @@
+#cli
+--emit skr
+
+#src
+struct Child(a: int, b: int);
+struct Root(x: int, c: Child, y: int);
+
+fun main(): int {
+    var root: Root;
+    var a = root.x;
+    var b = root.c.a;
+    var c = root.c.b;
+    var d = root.y;
+    return 0;
+}
+
+
+#expect
+fun main(): int
+    copy a.1 = int 0(root.0)
+    copy b.2 = int 4(root.0)
+    copy c.3 = int 8(root.0)
+    copy d.4 = int 12(root.0)
+    copy retval.5 = int 0
+    jmp .ret_0
+    .ret_0:

@@ -110,8 +110,18 @@ uint32_t Rv32Base::iTypeReadFunct3(uint32_t instr) {
     return BinUtils::slice<14, 12>(instr);
 }
 
+int Rv32Base::iTypeReadImm(uint32_t instr) {
+    return BinUtils::sext<12>(instr >> 20);
+}
+
 RvReg Rv32Base::uTypeReadRd(uint32_t instr) {
     return static_cast<RvReg>(BinUtils::slice<11, 7>(instr));
+}
+
+int Rv32Base::sTypeReadImm(uint32_t instr) {
+    return BinUtils::sext<12>(
+        (BinUtils::slice<31, 25>(instr) << 5) | (BinUtils::slice<11, 7>(instr))
+    );
 }
 
 bool Rv32Base::isImm11(int32_t imm) {
@@ -124,11 +134,8 @@ bool Rv32Base::isImm20(int32_t imm) {
 
 Rv32Base::BinSplit Rv32Base::splitImm11(int32_t imm) {
     BinSplit res;
-    res.hi = BinUtils::hi<12>(imm);
+    res.hi = BinUtils::hi<20>(imm);
     res.lo = BinUtils::lo<12>(imm);
-    if (res.lo < 0) {
-        res.hi += 1;
-    }
     return res;
 }
 
@@ -141,6 +148,5 @@ uint32_t Rv32Base::iTypePatchImm(uint32_t instr, int32_t imm11) {
 }
 
 uint32_t Rv32Base::sTypePatchImm(uint32_t instr, int32_t imm11) {
-    return (instr & ~((BinUtils::slice<4, 0>(imm11) << 7) | (BinUtils::slice<11, 5>(imm11) << 25)))
-        | encodeImmS(imm11);
+    return (instr & ~encodeImmS(-1)) | encodeImmS(imm11);
 }
