@@ -140,7 +140,9 @@ void SkrEmitter::emit(AstReturnStatement* st) {
     body += skrf.jump(retLabel);
 }
 
-void SkrEmitter::emit(AstExpressionStatement* st) { emit(st->getExpression()); }
+void SkrEmitter::emit(AstExpressionStatement* st) {
+    emit(st->getExpression(), nullptr);
+}
 
 void SkrEmitter::emit(AstIfStatement* st) {
     auto ifFalseLabel = labelGen.uniquePrivate("false");
@@ -180,7 +182,7 @@ void SkrEmitter::emitBranchInverted(AstExp* exp, StringRef falseLabel) {
 void SkrEmitter::emitBranch(AstExp* exp, StringRef label, bool invert) {
     if (isLogicalBin(exp) && exp->type->kind == SymbolType::Kind::Integer) {
         AstBinaryExp* binExp = (AstBinaryExp*) exp;
-        auto* left = emitAndConvert(binExp->getLeft());
+        auto* left = emitAndConvert(binExp->getLeft(), nullptr);
         SkrBranch::Operator skrOp;
         if (invert) {
             skrOp = invertedBranchOpOf(binExp->getOperator());
@@ -188,12 +190,11 @@ void SkrEmitter::emitBranch(AstExp* exp, StringRef label, bool invert) {
         else {
             skrOp = branchOpOf(binExp->getOperator());
         }
-        auto* right = emitAndConvert(binExp->getRight());
-        auto* branch = skrf.branch(left, skrOp, right, label);
-        body += branch;
+        auto* right = emitAndConvert(binExp->getRight(), nullptr);
+        body += skrf.branch(left, skrOp, right, label);
     }
     else {
-        auto* res = emitAndConvert(exp);
+        auto* res = emitAndConvert(exp, nullptr);
         SkrBranch::Operator skrOp;
         if (invert) {
             skrOp = SkrBranch::Operator::Equals;
@@ -201,8 +202,7 @@ void SkrEmitter::emitBranch(AstExp* exp, StringRef label, bool invert) {
         else {
             skrOp = SkrBranch::Operator::NotEquals;
         }
-        auto* branch = skrf.branch(res, skrOp, skrf.iconst(0), label);
-        body += branch;
+        body += skrf.branch(res, skrOp, skrf.iconst(0), label);
     }
 }
 
@@ -251,7 +251,7 @@ SkrExpRes SkrEmitter::emitConstant(AstConstantExp* exp, SkrVar* dst) {
 }
 
 SkrExpRes SkrEmitter::emitAddrOf(AstAddrOf* exp, SkrVar* dst) {
-    SkrExpRes var = emit(exp->getExp());
+    SkrExpRes var = emit(exp->getExp(), nullptr);
     if (dst == nullptr)
         dst = createVar("addr", typesf.pointer(getType(var.get())));
     body += skrf.getAddr(dst, var.get()->toSkrVar());
@@ -267,18 +267,18 @@ SkrExpRes SkrEmitter::emitVar(AstVar* exp, SkrVar* dst) {
 }
 
 SkrExpRes SkrEmitter::emitAssignment(AstAssignment* exp) {
-    SkrExpRes left = emit(exp->getVar());
+    SkrExpRes left = emit(exp->getVar(), nullptr);
     if (left.kind != SkrExpRes::Kind::Field) {
         return SkrExpRes::val(emitAndConvert(exp->getExp(), left.get()->toSkrVar()));
     }
-    SkrValue* right = emitAndConvert(exp->getExp());
+    SkrValue* right = emitAndConvert(exp->getExp(), nullptr);
     body += skrf.copyToOffset(left.getBase(), left.getOffset(), right);
     return SkrExpRes::val(right);
 }
 
 SkrExpRes SkrEmitter::emitCast(AstCast* exp, SkrVar* dst) {
     auto* targetType = exp->type;
-    SkrValue* srcVal = emitAndConvert(exp->getExp());
+    SkrValue* srcVal = emitAndConvert(exp->getExp(), nullptr);
     if (dst == nullptr) {
         dst = createVar("cast", targetType);
     }
@@ -300,7 +300,7 @@ SkrExpRes SkrEmitter::emitDot(AstDot* exp) {
         getStructTag(exp->getFrom()->type),
         getFieldId(exp->getField())
     );
-    auto inner = emit(exp->getFrom());
+    auto inner = emit(exp->getFrom(), nullptr);
     return SkrExpRes::field(inner.getBase(), inner.getOffset() + field.offset);
 }
 
@@ -362,9 +362,9 @@ SkrExpRes SkrEmitter::emitBinary(AstBinaryExp* exp, SkrVar* dst) {
         break;
     }
     default: {
-        SkrValue* left = emitAndConvert(exp->getLeft());
+        SkrValue* left = emitAndConvert(exp->getLeft(), nullptr);
         auto op = binaryOpOf(exp->getOperator());
-        SkrValue* right = emitAndConvert(exp->getRight());
+        SkrValue* right = emitAndConvert(exp->getRight(), nullptr);
         if (dst == nullptr) {
             dst = createVar(funName, getType(left));
         }
@@ -380,7 +380,7 @@ SkrExpRes SkrEmitter::emitFunCall(AstFunCall* call, SkrVar* dst) {
     std::vector<SkrValue*> skrArgs;
     skrArgs.reserve(astArgs.size());
     for (size_t i = 0; i < astArgs.size(); i++) {
-        skrArgs.emplace_back(emitAndConvert(astArgs[i]));
+        skrArgs.emplace_back(emitAndConvert(astArgs[i], nullptr));
     }
 
     if (dst == nullptr) {
@@ -401,10 +401,9 @@ SkrExpRes SkrEmitter::emitStructInit(AstStructInit* it, SkrVar* dst) {
 
     const auto& fields = typeTable.get(tag);
     for (size_t i = 0; i < args.size(); i++) {
-        auto* arg = emitAndConvert(args[i]);
+        auto* arg = emitAndConvert(args[i], nullptr);
         int offset = fields[i].offset;
-        auto* instr = skrf.copyToOffset(dst, offset, arg);
-        body += instr;
+        body += skrf.copyToOffset(dst, offset, arg);
     }
     return SkrExpRes::val(dst);
 }

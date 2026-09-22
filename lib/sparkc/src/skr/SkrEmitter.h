@@ -50,11 +50,11 @@ private:
     void emitBranchInverted(AstExp* exp, StringRef falseLabel);
     void emitBranch(AstExp* exp, StringRef label, bool invert);
 
-    SkrExpRes emit(AstExp* exp, SkrVar* dst = nullptr);
+    SkrExpRes emit(AstExp* exp, SkrVar* dst);
     StringRef getFieldId(AstExp* exp);
-    SkrExpRes emitBinary(AstBinaryExp* exp, SkrVar* dst = nullptr);
-    SkrExpRes emitFunCall(AstFunCall* call, SkrVar* dst = nullptr);
-    SkrExpRes emitStructInit(AstStructInit* it, SkrVar* dst = nullptr);
+    SkrExpRes emitBinary(AstBinaryExp* exp, SkrVar* dst);
+    SkrExpRes emitFunCall(AstFunCall* call, SkrVar* dst);
+    SkrExpRes emitStructInit(AstStructInit* it, SkrVar* dst);
     SkrExpRes emitConstant(AstConstantExp* exp, SkrVar* dst);
     SkrExpRes emitAddrOf(AstAddrOf* exp, SkrVar* dst);
     SkrExpRes emitVar(AstVar* exp, SkrVar* dst);
@@ -62,7 +62,7 @@ private:
     SkrExpRes emitCast(AstCast* exp, SkrVar* dst);
     SkrExpRes emitDot(AstDot* exp);
 
-    SkrValue* emitAndConvert(AstExp* exp, SkrVar* dst = nullptr);
+    SkrValue* emitAndConvert(AstExp* exp, SkrVar* dst);
 
     SymbolType::Kind getTypeKind(SkrValue* value);
 
