@@ -18,6 +18,7 @@ public:
     void addWithLabel(uint32_t instr, StringRef label);
 
     void addGlobalVar(StringRef id, size_t sz);
+    void addStringConst(StringRef id, StringRef str);
 
     void link();
 
@@ -45,6 +46,8 @@ private:
     int32_t getLabelOffset(StringRef label);
 
     bool isLabelExternal(const Label& label) const;
+
+    uint32_t getFreeMem() const;
 
     MemBlockRef out;
 

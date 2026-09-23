@@ -18,6 +18,18 @@ static float parseFloat(const Token& token) {
     return parsed;
 }
 
+static StringRef parseString(const Token& token) {
+    StringRef val = token.value;
+    if (val.getLength() < 2 || val[0] != '"' || val[val.getLength() - 1] != '"') {
+        throw ParseConstException(token);
+    }
+
+    return StringRef(
+        token.value.getReference() + 1,
+        token.value.getLength() - 2
+    );
+}
+
 Parser::Parser(Lexer& lexer, AstFactory& astFactory, SymbolTypeFactory& symbolTypeFactory)
     : lexer(lexer)
     , astf(astFactory)
@@ -252,6 +264,11 @@ AstExp* Parser::parseFactor() {
         return astf.floatConstantExp(parseFloat(token));
     }
 
+    case T_STRING_CONSTANT: {
+        auto token = takeToken();
+        return astf.stringConstantExp(parseString(token));
+    }
+
     case T_OPEN_PAR: {
         takeToken();
         auto exp = parseExpression();
@@ -299,6 +316,11 @@ SymbolType* Parser::parseType() {
     case T_FLOAT_KEYWORD:
         takeToken();
         type = typesf.float_();
+        break;
+
+    case T_STRING_KEYWORD:
+        takeToken();
+        type = typesf.string_();
         break;
 
     case T_IDENTIFIER:

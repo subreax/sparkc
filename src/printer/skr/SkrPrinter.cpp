@@ -132,11 +132,18 @@ void SkrPrinter::append(const SkrInstruction* skr) {
 std::string SkrPrinter::val(const SkrValue* val) const {
     if (val->isConst()) {
         auto* c = val->toSkrConst()->getConst();
-        if (c->type->kind == SymbolType::Kind::Integer) {
+        if (c->isInt()) {
             return ExpandableStringBuilder(16).append(c->intValue()).toString();
         }
-        else if (c->type->kind == SymbolType::Kind::Float) {
+        else if (c->isFloat()) {
             return ExpandableStringBuilder(24).append(c->floatValue()).toString();
+        }
+        else if (c->isString()) {
+            return ExpandableStringBuilder(24)
+                .append("\"")
+                .append(c->stringValue())
+                .append("\"")
+                .toString();
         }
         else {
             sparkError("SkrPrinter", "Unknown Constant::Kind %d", c->type->kind);

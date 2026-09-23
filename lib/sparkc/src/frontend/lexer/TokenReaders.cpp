@@ -52,6 +52,7 @@ static StringRef readString(const char* src, const char* what) {
 StringRef TokenReaders::readVarKeyword(const char* src) { return readKeyword(src, "var"); }
 StringRef TokenReaders::readIntKeyword(const char* src) { return readKeyword(src, "int"); }
 StringRef TokenReaders::readFloatKeyword(const char* src) { return readKeyword(src, "float"); }
+StringRef TokenReaders::readStringKeyword(const char* src) { return readKeyword(src, "string"); }
 StringRef TokenReaders::readReturnKeyword(const char* src) { return readKeyword(src, "return"); }
 StringRef TokenReaders::readIfKeyword(const char* src) { return readKeyword(src, "if"); }
 StringRef TokenReaders::readElseKeyword(const char* src) { return readKeyword(src, "else"); }
@@ -113,6 +114,28 @@ StringRef TokenReaders::readFloatConstant(const char* src) {
     }
 
     if (src[i] == 'f' || src[i] == 'F') {
+        i++;
+    }
+
+    return StringRef(src, i);
+}
+
+StringRef TokenReaders::readStringConstant(const char* src) {
+    if (src[0] != '"') {
+        return StringRef::nullInstance();
+    }
+
+    int i = 1;
+    while (src[i] && src[i] != '"' && src[i] != '\n' && src[i] != '\r') {
+        i++;
+    }
+
+    // parser should emit error
+    /* if (src[i] != '"') {
+        return StringRef::nullInstance();
+    } */
+
+    if (src[i] == '"') {
         i++;
     }
 

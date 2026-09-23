@@ -81,7 +81,7 @@ BuildResult SparkCompiler::build(const char* src, uint8_t* outBin, size_t outCap
 
     Frontend frontend(src, astFactory, ctx.symTable, ctx.typeTable, ctx.idGen, *stageCallback);
     Middleware middleware(ctx.symTable, ctx.typeTable, ctx.idGen, ctx.labelGen, skrFactory, skrFactoryShared, *stageCallback, skrOptimizerConfig);
-    RvBackend backend(pools->pool1, pools->pool2, ctx.symTable, ctx.symSize, ctx.idGen, *stageCallback);
+    RvBackend backend(pools->pool1, pools->pool2, ctx.symTable, ctx.symSize, ctx.idGen, ctx.labelGen, *stageCallback);
 
     while (frontend.hasNext()) {
         pools->pool1.reset();

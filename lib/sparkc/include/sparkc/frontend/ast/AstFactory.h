@@ -118,6 +118,11 @@ public:
         return allocator.create<AstConstantExp>(constant);
     }
 
+    AstConstantExp* stringConstantExp(StringRef value) {
+        auto* constant = allocator.create<StringConstant>(value);
+        return allocator.create<AstConstantExp>(constant);
+    }
+
     AstFunCall* funCall(StringRef name, const std::vector<AstExp*>& args) {
         auto argsBA = BoundArray<AstExp*>::fromVector(args, allocator);
         return allocator.create<AstFunCall>(name, argsBA);

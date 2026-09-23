@@ -4,6 +4,8 @@
 #include "sparkc/backend/rv/instr/everything.h"
 #include "sparkc/common/Error.h"
 #include "sparkc/common/alloc/Allocator.h"
+#include "sparkc/common/IdentifierGen.h"
+#include "sparkc/common/LabelGen.h"
 #include "sparkc/size/SymbolSize.h"
 #include "sparkc/skr/SkrFunction.h"
 #include "sparkc/skr/SkrStaticVar.h"
@@ -19,12 +21,13 @@ public:
         SkrProgItem* item,
         Allocator& allocator,
         IdentifierGen& idGen,
+        LabelGen& labelGen,
         SymbolTable& table,
         SymbolSize& ss,
         StackFrame& frame,
         std::vector<RvaInstruction*>& buf
     ) {
-        Skr2RvaPseudo emitter(allocator, idGen, table, ss, frame, buf);
+        Skr2RvaPseudo emitter(allocator, idGen, labelGen, table, ss, frame, buf);
         if (item->kind == SkrProgItem::Kind::Function) {
             emitter.emit((SkrFunction*) item);
         }
@@ -40,6 +43,7 @@ private:
     Skr2RvaPseudo(
         Allocator& allocator,
         IdentifierGen& idGen,
+        LabelGen& labelGen,
         SymbolTable& symbolTable,
         SymbolSize& ss,
         StackFrame& frame,
@@ -47,6 +51,7 @@ private:
     )
         : allocator(allocator)
         , idGen(idGen)
+        , labelGen(labelGen)
         , symbolTable(symbolTable)
         , symbolSize(ss)
         , frame(frame)
@@ -193,7 +198,13 @@ private:
                 sparkError("Skr2RvaPseudo", "Not implemented");
             }
             else {
-                add<RvaMov>(getArgDst(argIdx), toPseudo(arg));
+                // todo: refactor
+                if (arg->isConst() && arg->toSkrConst()->getConst()->isString()) {
+                    add<RvaGetAddress>(getArgDst(argIdx), toPseudo(arg));
+                }
+                else {
+                    add<RvaMov>(getArgDst(argIdx), toPseudo(arg));
+                }
                 argIdx++;
             }
         }
@@ -273,17 +284,25 @@ private:
         case SkrValue::Kind::Const: {
             auto* it = (const SkrConst*) value;
             auto* constant = it->getConst();
-            int32_t val = 0;
             if (constant->isInt()) {
-                val = constant->intValue();
+                int32_t val = constant->intValue();
+                return allocator.create<RvaImm>(val);
             }
             else if (constant->isFloat()) {
-                val = FixedUtils::fromFloat(constant->floatValue());
+                int32_t val = FixedUtils::fromFloat(constant->floatValue());
+                return allocator.create<RvaImm>(val);
             }
-            else {
-                sparkError("Skr2RvaPseudo", "Unknown Constant type: %d", constant->type);
+            else if (constant->isString()) {
+                StringRef str = constant->stringValue();
+                StringRef id = labelGen.uniquePrivate("str");
+                symbolTable.declareVar(id, SymbolStringType::getInstance(), true);
+                add<RvaDataCreateString>(id, str);
+                /* Not actually pseudo */
+                return allocator.create<RvaData>(id, offsetIfMem);
             }
-            return allocator.create<RvaImm>(val);
+
+            sparkError("Skr2RvaPseudo", "Unknown Constant type: %d", constant->type);
+            return nullptr;
         }
         case SkrValue::Kind::Var: {
             auto* it = (const SkrVar*) value;
@@ -409,6 +428,12 @@ private:
             }
             loadBytes(to, from, fromOffset);
         }
+        else if (from->isConst() && from->toSkrConst()->getConst()->isString()) {
+            add<RvaGetAddress>(
+                toPseudo(to, toOffset),
+                toPseudo(from, fromOffset)
+            );
+        }
         else {
             // auto sz = getSize(from) - fromOffset;
             auto sz = std::min(getSize(to), getSize(from));
@@ -512,6 +537,7 @@ private:
 
     Allocator& allocator;
     IdentifierGen& idGen;
+    LabelGen& labelGen;
     SymbolTable& symbolTable;
     SymbolSize& symbolSize;
     StackFrame& frame;

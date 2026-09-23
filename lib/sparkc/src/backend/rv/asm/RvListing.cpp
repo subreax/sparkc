@@ -39,6 +39,14 @@ void RvListing::addGlobalVar(StringRef id, size_t sz) {
     labels.emplace_back(offset, id);
 }
 
+void RvListing::addStringConst(StringRef id, StringRef str) {
+    uint32_t offset = allocateData(str.getLength() + 1);
+    labels.emplace_back(offset, id);
+
+    memcpy(out.mem + offset, str.getReference(), str.getLength());
+    out.mem[offset + str.getLength()] = 0;
+}
+
 void RvListing::link() {
     for (Unresolved& u : unresolved) {
         uint32_t instr = get_u32(u.offset);
@@ -110,6 +118,7 @@ std::vector<Label> RvListing::getPublicLabels() const {
 }
 
 void RvListing::write_u32(uint32_t instr, int32_t offset) {
+    // todo: this function is used to write instructions, but it can overwrite data section
     if (offset + 4 <= out.sz) {
         *((uint32_t*) (out.mem + offset)) = instr;
     }
@@ -131,7 +140,7 @@ uint32_t& RvListing::get_u32(uint32_t offset) {
 }
 
 uint32_t RvListing::allocateData(size_t sz) {
-    if (codeSz < (dataSz + sz)) {
+    if (getFreeMem() >= sz) {
         dataSz += sz;
         return out.sz - dataSz;
     }
@@ -155,4 +164,13 @@ int32_t RvListing::getLabelOffset(StringRef label) {
 
 bool RvListing::isLabelExternal(const Label& label) const {
     return label.offset < 0 || label.offset >= out.sz;
+}
+
+uint32_t RvListing::getFreeMem() const {
+    int32_t total = out.sz;
+    int32_t free = total - int32_t(codeSz) - int32_t(dataSz);
+    if (free < 0) {
+        sparkError("RvListing", "Somehow free size is less than 0");
+    }
+    return (uint32_t) free;
 }

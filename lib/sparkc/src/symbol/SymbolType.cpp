@@ -5,6 +5,7 @@ std::string SymbolType::toString() const {
     switch (kind) {
     case SymbolType::Kind::Integer: return "int";
     case SymbolType::Kind::Float: return "float";
+    case SymbolType::Kind::String: return "string";
 
     case SymbolType::Kind::Pointer: {
         auto* refType = (SymbolPointerType*) this;

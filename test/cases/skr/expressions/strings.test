@@ -1,0 +1,29 @@
+#cli
+--emit skr
+
+#src
+fun console_log(s: string): int {
+    return 0;
+}
+
+fun main(): int {
+    console_log("hello world");
+    var s1 = "another string";
+    console_log(s1);
+    return 0;
+}
+
+
+#expect
+fun console_log(s.0: string): int
+    copy retval.1 = int 0
+    jmp .ret_0
+    .ret_0:
+
+fun main(): int
+    r_console_log.4 = int console_log("hello world")
+    copy s1.2 = string "another string"
+    r_console_log.5 = int console_log(s1.2)
+    copy retval.3 = int 0
+    jmp .ret_1
+    .ret_1:

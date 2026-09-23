@@ -32,6 +32,7 @@ set(SPARKC_SRC
   src/backend/rv/instr/RvaRet.cpp
   src/backend/rv/instr/RvaStore.cpp
   src/backend/rv/instr/RvaDataAlloc.cpp
+  src/backend/rv/instr/RvaDataCreateString.cpp
   src/backend/rv/instr/RvaDLoad.cpp
   src/backend/rv/instr/RvaDStore.cpp
   src/common/Constant.cpp

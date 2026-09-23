@@ -284,12 +284,18 @@ SymbolType* TypeChecker::getCommonType(AstExp* e1, AstExp* e2) {
 SymbolType* TypeChecker::getCommonType(SymbolType* t1, SymbolType* t2) {
     auto k1 = t1->kind;
     auto k2 = t2->kind;
-    if (k1 == k2) {
+    if (k1 == k2 && k1 != SymbolType::Kind::Function && k1 != SymbolType::Kind::String && k1 != SymbolType::Kind::Structure) {
         return t1;
     }
 
     if (k1 == SymbolType::Kind::Function || k2 == SymbolType::Kind::Function) {
         throw TypeException("Common type with function doesn't exist");
+    }
+    else if (k1 == SymbolType::Kind::String || k2 == SymbolType::Kind::String) {
+        throw TypeException("Common type with string doesn't exist");
+    }
+    else if (k1 == SymbolType::Kind::Structure || k2 == SymbolType::Kind::Structure) {
+        throw TypeException("Common type with structure doesn't exist");
     }
     else if (k1 == SymbolType::Kind::Integer && k2 == SymbolType::Kind::Float) {
         return t2;
@@ -329,6 +335,21 @@ AstExp* TypeChecker::cast(AstExp* exp, SymbolType* targetType) {
         } */
         return exp;
     }
+
+    if (
+        exp->hasType(SymbolType::Kind::String)
+        || targetType->kind == SymbolType::Kind::String
+    ) {
+        throw TypeException("Strings can't be casted to another type");
+    }
+
+    if (
+        exp->hasType(SymbolType::Kind::Structure)
+        || targetType->kind == SymbolType::Kind::Structure
+    ) {
+        throw TypeException("Structures can't be casted to another type");
+    }
+
     /* else if (exp->hasType(SymbolType::Kind::Pointer)) {
         return cast(dereference(exp), targetType);
     }

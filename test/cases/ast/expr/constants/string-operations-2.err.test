@@ -1,0 +1,15 @@
+#cli
+--emit ast
+
+#src
+fun console_log(s: string): int {
+    return 0;
+}
+
+fun main(): int {
+    console_log("hello world" + "!");
+    return 0;
+}
+
+
+#expect_failure

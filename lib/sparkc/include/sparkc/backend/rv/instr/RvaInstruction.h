@@ -20,6 +20,7 @@ public:
         Call,
         GetAddress,
         DataAlloc,
+        DataCreateString,
         DLoad,
         DStore,
         BeginTempStack,

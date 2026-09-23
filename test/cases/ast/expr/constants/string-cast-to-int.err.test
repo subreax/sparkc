@@ -1,0 +1,15 @@
+#cli
+--emit ast
+
+#src
+fun incr(i: int): int {
+    return i + 1;
+}
+
+fun main(): int {
+    incr("hello world");
+    return 0;
+}
+
+
+#expect_failure

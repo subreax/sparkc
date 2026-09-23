@@ -8,6 +8,10 @@ float Constant::floatValue() const {
     return ((FloatConstant*) this)->val;
 }
 
+StringRef Constant::stringValue() const {
+    return ((StringConstant*) this)->val;
+}
+
 bool Constant::operator==(const Constant& other) const {
     if (type->kind != other.type->kind) {
         return false;
@@ -18,6 +22,9 @@ bool Constant::operator==(const Constant& other) const {
     }
     else if (type->kind == SymbolType::Kind::Float) {
         return floatValue() == other.floatValue();
+    }
+    else if (type->kind == SymbolType::Kind::String) {
+        return stringValue() == other.stringValue();
     }
     else {
         sparkError("Constant", "Unknown symbol type: %d", type->kind);

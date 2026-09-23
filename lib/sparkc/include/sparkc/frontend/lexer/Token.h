@@ -2,43 +2,45 @@
 #include "sparkc/common/StringRef.h"
 #include <cstdint>
 
-#define TOKEN_KIND_LIST(X)                  \
-    X(T_VAR_KEYWORD, "var")                 \
-    X(T_INT_KEYWORD, "int")                 \
-    X(T_FLOAT_KEYWORD, "float")             \
-    X(T_RETURN_KEYWORD, "return")           \
-    X(T_IF_KEYWORD, "if")                   \
-    X(T_ELSE_KEYWORD, "else")               \
-    X(T_WHILE_KEYWORD, "while")             \
-    X(T_FUN_KEYWORD, "fun")                 \
-    X(T_STRUCT_KEYWORD, "struct")           \
-    X(T_IDENTIFIER, "<identifier>")         \
-    X(T_OPEN_PAR, "(")                      \
-    X(T_CLOSE_PAR, ")")                     \
-    X(T_OPEN_BRACE, "{")                    \
-    X(T_CLOSE_BRACE, "}")                   \
-    X(T_INT_CONSTANT, "<int constant>")     \
-    X(T_FLOAT_CONSTANT, "<float constant>") \
-    X(T_COLON, ":")                         \
-    X(T_SEMICOLON, ";")                     \
-    X(T_PLUS, "+")                          \
-    X(T_HYPHEN, "-")                        \
-    X(T_ASTERISK, "*")                      \
-    X(T_FWD_SLASH, "/")                     \
-    X(T_PERCENT, "%")                       \
-    X(T_EQUALS, "=")                        \
-    X(T_AMP, "&")                           \
-    X(T_AMP_AMP, "&&")                      \
-    X(T_VBAR_VBAR, "||")                    \
-    X(T_EQUALS_EQUALS, "==")                \
-    X(T_NOT_EQUALS, "!=")                   \
-    X(T_LESS_THAN, "<")                     \
-    X(T_LESS_OR_EQ, "<=")                   \
-    X(T_GREATER_THAN, ">")                  \
-    X(T_GREATER_OR_EQ, ">=")                \
-    X(T_PERIOD, ".")                        \
-    X(T_COMMA, ",")                         \
-    X(T_EOF, "<eof>")                       \
+#define TOKEN_KIND_LIST(X)                    \
+    X(T_VAR_KEYWORD, "var")                   \
+    X(T_INT_KEYWORD, "int")                   \
+    X(T_FLOAT_KEYWORD, "float")               \
+    X(T_STRING_KEYWORD, "string")             \
+    X(T_RETURN_KEYWORD, "return")             \
+    X(T_IF_KEYWORD, "if")                     \
+    X(T_ELSE_KEYWORD, "else")                 \
+    X(T_WHILE_KEYWORD, "while")               \
+    X(T_FUN_KEYWORD, "fun")                   \
+    X(T_STRUCT_KEYWORD, "struct")             \
+    X(T_IDENTIFIER, "<identifier>")           \
+    X(T_OPEN_PAR, "(")                        \
+    X(T_CLOSE_PAR, ")")                       \
+    X(T_OPEN_BRACE, "{")                      \
+    X(T_CLOSE_BRACE, "}")                     \
+    X(T_INT_CONSTANT, "<int constant>")       \
+    X(T_FLOAT_CONSTANT, "<float constant>")   \
+    X(T_STRING_CONSTANT, "<string constant>") \
+    X(T_COLON, ":")                           \
+    X(T_SEMICOLON, ";")                       \
+    X(T_PLUS, "+")                            \
+    X(T_HYPHEN, "-")                          \
+    X(T_ASTERISK, "*")                        \
+    X(T_FWD_SLASH, "/")                       \
+    X(T_PERCENT, "%")                         \
+    X(T_EQUALS, "=")                          \
+    X(T_AMP, "&")                             \
+    X(T_AMP_AMP, "&&")                        \
+    X(T_VBAR_VBAR, "||")                      \
+    X(T_EQUALS_EQUALS, "==")                  \
+    X(T_NOT_EQUALS, "!=")                     \
+    X(T_LESS_THAN, "<")                       \
+    X(T_LESS_OR_EQ, "<=")                     \
+    X(T_GREATER_THAN, ">")                    \
+    X(T_GREATER_OR_EQ, ">=")                  \
+    X(T_PERIOD, ".")                          \
+    X(T_COMMA, ",")                           \
+    X(T_EOF, "<eof>")                         \
     X(T_BAD, "<bad>")
 
 enum TokenKind {

@@ -5,18 +5,20 @@
 #include "sparkc/symbol/SymbolTable.h"
 #include "sparkc/size/SymbolSize.h"
 #include "sparkc/common/IdentifierGen.h"
+#include "sparkc/common/LabelGen.h"
 #include "Skr2RvaPseudo.h"
 #include "RvaPseudoReplacer.h"
 #include "RvaFixer.h"
 
 class RvBackend {
 public:
-    RvBackend(Allocator& pool1, Allocator& pool2, SymbolTable& symTable, SymbolSize& symSize, IdentifierGen& idGen, SparkStageCallback& stageCallback)
+    RvBackend(Allocator& pool1, Allocator& pool2, SymbolTable& symTable, SymbolSize& symSize, IdentifierGen& idGen, LabelGen& labelGen, SparkStageCallback& stageCallback)
         : pool1(pool1)
         , pool2(pool2)
         , symTable(symTable)
         , symSize(symSize)
         , idGen(idGen)
+        , labelGen(labelGen)
         , stageCallback(stageCallback) { }
 
     void emit(SkrProgItem* skrItem) {
@@ -25,7 +27,7 @@ public:
         pool1.reset();
         stackFrame = std::make_shared<StackFrame>(pool1);
 
-        Skr2RvaPseudo::emit(skrItem, pool1, idGen, symTable, symSize, *stackFrame, tempRvas);
+        Skr2RvaPseudo::emit(skrItem, pool1, idGen, labelGen, symTable, symSize, *stackFrame, tempRvas);
         stageCallback.onEmitRva(tempRvas);
     }
 
@@ -48,6 +50,7 @@ private:
     SymbolTable& symTable;
     SymbolSize& symSize;
     IdentifierGen& idGen;
+    LabelGen& labelGen;
 
     std::shared_ptr<StackFrame> stackFrame;
     SparkStageCallback& stageCallback;

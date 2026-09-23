@@ -37,6 +37,7 @@ private:
             case RvaInstruction::Kind::Label: clone((RvaLabel*) rva); break;
             case RvaInstruction::Kind::Ret: add(allocator.create<RvaRet>()); break;
             case RvaInstruction::Kind::DataAlloc: clone((RvaDataAlloc*) rva); break;
+            case RvaInstruction::Kind::DataCreateString: clone((RvaDataCreateString*) rva); break;
 
             case RvaInstruction::Kind::BeginTempStack:
             case RvaInstruction::Kind::EndTempStack:
@@ -244,6 +245,10 @@ private:
 
     void clone(RvaDataAlloc* it) {
         add(allocator.create<RvaDataAlloc>(it->getLabel(), it->getSize()));
+    }
+
+    void clone(RvaDataCreateString* it) {
+        add(allocator.create<RvaDataCreateString>(it->getLabel(), it->getString()));
     }
 
     RvaValue* clone(RvaValue* v) {

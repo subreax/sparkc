@@ -320,6 +320,10 @@ static std::string toString(Constant* constant) {
         oss << it->val;
         return oss.str();
     }
+    else if (constant->isString()) {
+        auto* it = (StringConstant*) constant;
+        return it->val.toString();
+    }
     else {
         sparkError("AstPrinter", "Unknown Constant: %d", constant->type->kind);
         return "";

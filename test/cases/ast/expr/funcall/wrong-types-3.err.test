@@ -1,0 +1,17 @@
+#cli
+--emit ast
+
+
+#src
+struct color(r: float, g: float, b: float);
+
+fun print(s: string): int {
+    return 0;
+}
+
+fun main(): int {
+    print(color(1.0f, 0.0f, 0.0f));
+    return 0;
+}
+
+#expect_failure

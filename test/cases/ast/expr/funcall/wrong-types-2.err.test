@@ -1,0 +1,15 @@
+#cli
+--emit ast
+
+
+#src
+fun print(s: string): int {
+    return 0;
+}
+
+fun main(): int {
+    print(2.0);
+    return 0;
+}
+
+#expect_failure

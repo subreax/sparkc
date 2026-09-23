@@ -225,6 +225,12 @@ RvaPrinter& RvaPrinter::append(const RvaInstruction* instr) {
         os << label(it->getLabel()) << " " << it->getSize() << " bytes";
     } break;
 
+    case RvaInstruction::Kind::DataCreateString: {
+        auto* it = static_cast<const RvaDataCreateString*>(instr);
+        printType("data_new_str");
+        os << label(it->getLabel()) << " \"" << it->getString().toString() << '"';
+    } break;
+
     case RvaInstruction::Kind::DLoad: {
         auto* it = static_cast<const RvaDLoad*>(instr);
         printType("dload");

@@ -16,6 +16,10 @@ public:
         return SymbolFloatType::getInstance();
     }
 
+    SymbolStringType* string_() {
+        return SymbolStringType::getInstance();
+    }
+
     SymbolFunctionType* function(SymbolType* returnType, const std::vector<SymbolType*>& params) {
         auto paramsBA = BoundArray<SymbolType*>::fromVector(params, allocator);
         return allocator.create<SymbolFunctionType>(returnType, paramsBA);

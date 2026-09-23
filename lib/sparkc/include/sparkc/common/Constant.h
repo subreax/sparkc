@@ -5,6 +5,7 @@
 
 class IntConstant;
 class FloatConstant;
+class StringConstant;
 
 class Constant {
 public:
@@ -13,9 +14,11 @@ public:
 
     bool isInt() const { return type->kind == SymbolType::Kind::Integer; }
     bool isFloat() const { return type->kind == SymbolType::Kind::Float; }
+    bool isString() const { return type->kind == SymbolType::Kind::String; }
 
     int32_t intValue() const;
     float floatValue() const;
+    StringRef stringValue() const;
 
     bool operator==(const Constant& other) const;
 
@@ -48,4 +51,13 @@ public:
         , val(val) { }
 
     float val;
+};
+
+class StringConstant : public Constant {
+public:
+    StringConstant(StringRef str)
+        : Constant(SymbolStringType::getInstance())
+        , val(str) { }
+
+    StringRef val;
 };

@@ -7,6 +7,7 @@ public:
     enum class Kind {
         Integer,
         Float,
+        String,
         Pointer,
         Function,
         Structure
@@ -42,6 +43,18 @@ public:
 private:
     SymbolFloatType()
         : SymbolType(Kind::Float) { }
+};
+
+class SymbolStringType : public SymbolType {
+public:
+    static SymbolStringType* getInstance() {
+        static SymbolStringType it;
+        return &it;
+    }
+
+private:
+    SymbolStringType()
+        : SymbolType(Kind::String) { }
 };
 
 class SymbolFunctionType : public SymbolType {

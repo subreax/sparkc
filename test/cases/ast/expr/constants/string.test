@@ -1,0 +1,62 @@
+#cli
+--emit ast
+
+#src
+fun console_log(s: string): int {
+    return 0;
+}
+
+fun main(): int {
+    console_log("hello world");
+    return 0;
+}
+
+
+#expect
+AstFunction(
+  name: 'console_log',
+  returnType: 'int',
+  params: [
+    AstFunParam(
+      type: 'string',
+      name: 's.0'
+    )
+  ],
+  body: AstBlock(
+    items: [
+      AstReturnStatement(
+        exp: AstConstantExp(
+          type: 'int',
+          value: '0'
+        )
+      )
+    ]
+  )
+)
+AstFunction(
+  name: 'main',
+  returnType: 'int',
+  params: [],
+  body: AstBlock(
+    items: [
+      AstExpressionStatement(
+        exp: AstFunCall(
+          type: 'int',
+          funName: 'console_log',
+          args: [
+            AstConstantExp(
+              type: 'string',
+              value: 'hello world'
+            )
+          ]
+        )
+      ),
+      AstReturnStatement(
+        exp: AstConstantExp(
+          type: 'int',
+          value: '0'
+        )
+      )
+    ]
+  )
+)

@@ -12,6 +12,7 @@
 #include "RvaCall.h"
 #include "RvaGetAddress.h"
 #include "RvaDataAlloc.h"
+#include "RvaDataCreateString.h"
 #include "RvaDLoad.h"
 #include "RvaDStore.h"
 

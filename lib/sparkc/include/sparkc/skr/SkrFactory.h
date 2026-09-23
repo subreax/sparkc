@@ -113,12 +113,18 @@ public:
         return allocator.create<SkrConst>(allocator.create<FloatConstant>(value));
     }
 
+    SkrConst* stringConst(StringRef value) {
+        return allocator.create<SkrConst>(allocator.create<StringConstant>(value));
+    }
+
     SkrConst* constant(Constant* c) {
         switch (c->type->kind) {
         case SymbolType::Kind::Integer:
             return iconst(c->intValue());
         case SymbolType::Kind::Float:
             return fconst(c->floatValue());
+        case SymbolType::Kind::String:
+            return stringConst(c->stringValue());
         default:
             sparkError("SkrFactory", "Unknown Constant kind: %d", c->type->kind);
             return nullptr;
