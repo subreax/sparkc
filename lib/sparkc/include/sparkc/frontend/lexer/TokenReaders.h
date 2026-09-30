@@ -42,4 +42,5 @@ StringRef readComma(const char* src);
 StringRef readPeriod(const char* src);
 StringRef readAmp(const char* src);
 StringRef readEOF(const char* src);
+StringRef readComment(const char* src);
 }; // namespace TokenReaders

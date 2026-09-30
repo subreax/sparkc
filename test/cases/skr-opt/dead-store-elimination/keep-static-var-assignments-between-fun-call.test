@@ -1,0 +1,32 @@
+#cli
+--emit skr --optimize dse
+
+#src
+var x: int;
+
+fun doSomething(): int {
+    return x;
+}
+
+fun onStart(): int {
+    x = 0;
+    doSomething();
+    x = 20;
+    return 0;
+}
+
+#expect
+staticvar x: int
+
+fun doSomething(): int
+    copy retval.0 = int x
+    jmp .ret_0
+    .ret_0:
+
+fun onStart(): int
+    copy x = int 0
+    r_doSomething.2 = int doSomething()
+    copy x = int 20
+    copy retval.1 = int 0
+    jmp .ret_1
+    .ret_1:

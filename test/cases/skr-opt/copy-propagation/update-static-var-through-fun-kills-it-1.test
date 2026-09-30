@@ -1,7 +1,6 @@
 #cli
 --emit skr --optimize copy-prop
 
-
 #src
 var t: float;
 

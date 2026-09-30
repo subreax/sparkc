@@ -36,7 +36,7 @@ public:
             return false;
         }
 
-        return type->kind == other->kind;
+        return *type == *other;
     }
 
     bool hasType(SymbolType::Kind other) const {

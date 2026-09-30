@@ -1,0 +1,32 @@
+#cli
+--emit skr --optimize copy-prop
+
+#src
+var a: int;
+
+fun update(newval: int): int {
+    a = newval;
+    return newval;
+}
+
+fun main(): int {
+    a = 20;
+    update(50);
+    return a;
+}
+
+#expect
+staticvar a: int
+
+fun update(newval.0: int): int
+    copy a = int newval.0
+    copy retval.1 = int newval.0
+    jmp .ret_0
+    .ret_0:
+
+fun main(): int
+    copy a = int 20
+    r_update.3 = int update(50)
+    copy retval.2 = int a
+    jmp .ret_1
+    .ret_1:

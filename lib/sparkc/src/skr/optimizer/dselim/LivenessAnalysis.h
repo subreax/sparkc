@@ -4,6 +4,7 @@
 #include "VarSet.h"
 #include "sparkc/skr/optimizer/SkrCfg.h"
 #include "sparkc/skr/instr/everything.h"
+#include "../SkrOptimizerUtils.h"
 
 class LivenessAnalysis {
 public:
@@ -11,7 +12,9 @@ public:
         : symTable(symTable)
         , annotations(graph.getSize())
         , graph(graph)
-        , retVar(retVar) { }
+        , retVar(retVar)
+        , staticVars(SkrOptimizerUtils::getStaticVars(symTable))
+        , aliasedVars(SkrOptimizerUtils::getAliasedVars(graph)) { }
 
     void run() {
         Uniqueue<size_t> workQueue;
@@ -47,13 +50,7 @@ public:
 private:
     void addStaticAndRetVarsToEndBlock() {
         VarSet vars;
-
-        for (const auto& [name, symbol] : symTable) {
-            if (symbol.isStatic()) {
-                vars.generate(name);
-            }
-        }
-
+        generateStaticVars(vars);
         vars.generate(retVar);
         annotations[graph.getSize() - 1].setBlockVars(vars);
     }
@@ -103,6 +100,7 @@ private:
                 for (auto* arg : it->getArgs()) {
                     vars.generateIfVar(arg);
                 }
+                generateStaticVars(vars);
             }
             else if (instr->kind == SkrInstruction::Kind::Float2Int) {
                 auto* it = (SkrFloat2Int*) instr;
@@ -113,6 +111,24 @@ private:
                 auto* it = (SkrInt2Float*) instr;
                 vars.kill(it->getDst());
                 vars.generateIfVar(it->getSrc());
+            }
+            else if (instr->kind == SkrInstruction::Kind::Load) {
+                auto* it = (SkrLoad*) instr;
+                if (it->getTo()->isVar()) {
+                    vars.kill(it->getTo()->toSkrVar());
+                }
+                vars.generateIfVar(it->getFrom());
+                generateAliasedVars(vars);
+            }
+            else if (instr->kind == SkrInstruction::Kind::Store) {
+                auto* it = (SkrStore*) instr;
+                vars.generate(it->getTo());
+                vars.generateIfVar(it->getFrom());
+            }
+            else if (instr->kind == SkrInstruction::Kind::GetAddr) {
+                auto* it = (SkrGetAddr*) instr;
+                vars.kill(it->getTo());
+                vars.generate(it->getVar());
             }
         }
 
@@ -134,9 +150,22 @@ private:
         }
     }
 
+    void generateStaticVars(VarSet& live) {
+        for (auto var : staticVars) {
+            live.generate(var);
+        }
+    }
+
+    void generateAliasedVars(VarSet& live) {
+        for (auto var : aliasedVars) {
+            live.generate(var);
+        }
+    }
+
     SymbolTable& symTable;
     std::vector<DSEBlock> annotations;
     const SkrCfg& graph;
     const SkrVar* retVar;
     std::vector<StringRef> staticVars;
+    std::vector<StringRef> aliasedVars;
 };

@@ -1,0 +1,71 @@
+#cli
+--emit ast
+
+#src
+struct pair(a: int, b: int, c: int);
+
+fun doSomething(p: pair**): int {
+    var a = p..a;
+    return a;
+}
+
+#expect
+AstStruct(
+  tag: 'pair',
+  fields: [
+    Field(
+      type: 'int',
+      name: 'a'
+    ),
+    Field(
+      type: 'int',
+      name: 'b'
+    ),
+    Field(
+      type: 'int',
+      name: 'c'
+    )
+  ]
+)
+AstFunction(
+  name: 'doSomething',
+  returnType: 'int',
+  params: [
+    AstFunParam(
+      type: 'pair**',
+      name: 'p.0'
+    )
+  ],
+  body: AstBlock(
+    items: [
+      AstVarDeclaration(
+        type: 'int',
+        name: 'a.1',
+        init: AstDot(
+          type: 'int',
+          from: AstDereference(
+            type: 'pair',
+            exp: AstDereference(
+              type: 'pair*',
+              exp: AstVar(
+                type: 'pair**',
+                id: 'p.0'
+              )
+            )
+          ),
+          depth: 1,
+          field: AstVar(
+            type: 'int',
+            id: 'a'
+          )
+        )
+      ),
+      AstReturnStatement(
+        exp: AstVar(
+          type: 'int',
+          id: 'a.1'
+        )
+      )
+    ]
+  )
+)

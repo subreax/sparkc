@@ -1,0 +1,13 @@
+#cli
+--emit ast
+
+#src
+struct pair(a: float, b: float);
+
+fun main(): int {
+    var p = pair(0.5f, 0.0f);
+    p..b = 0.3f;
+    return 0;
+}
+
+#expect_failure

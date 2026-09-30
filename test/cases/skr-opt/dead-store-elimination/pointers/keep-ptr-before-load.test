@@ -1,0 +1,20 @@
+#cli
+--emit skr --optimize dse
+
+
+#src
+struct Child(a: int, b: int);
+struct Root(x: int, child: Child);
+
+fun main(root: Root*): float {
+    var c = &root.child;
+    return c.a;
+}
+
+#expect
+fun main(root.0: Root*): float
+    c.1 = Child* root.0 + 4
+    load d.3 = int 0(c.1)
+    retval.2 = toFloat(d.3)
+    jmp .ret_0
+    .ret_0:

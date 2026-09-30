@@ -1,0 +1,16 @@
+#cli
+--emit skr
+
+#src
+fun main(ppa: int**): int {
+    var a = **ppa;
+    return a;
+}
+
+#expect
+fun main(ppa.0: int**): int
+    load d.3 = int* 0(ppa.0)
+    load a.1 = int 0(d.3)
+    copy retval.2 = int a.1
+    jmp .ret_0
+    .ret_0:

@@ -1,0 +1,19 @@
+#cli
+--emit skr
+
+#src
+fun main(): int {
+    var a = 0;
+    var pa = &a;
+    var ppa = &pa;
+    return 0;
+}
+
+#expect
+fun main(): int
+    copy a.0 = int 0
+    pa.1 = addrOf(a.0)
+    ppa.2 = addrOf(pa.1)
+    copy retval.3 = int 0
+    jmp .ret_0
+    .ret_0:

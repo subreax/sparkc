@@ -103,7 +103,7 @@ void SkrPrinter::append(const SkrInstruction* skr) {
     else if (kind == SkrInstruction::Kind::Load) {
         auto* it = (SkrLoad*) skr;
         sb << "load "
-           << val(it->getTo()) << " = " << type(it->getTo()) << int32_t { it->getFromOffset() } << "(" << val(it->getFrom()) << ")";
+           << val(it->getTo()) << " = " << type(it->getTo()) << " " << int32_t { it->getFromOffset() } << "(" << val(it->getFrom()) << ")";
     }
     else if (kind == SkrInstruction::Kind::Store) {
         auto* it = (SkrStore*) skr;
@@ -113,6 +113,9 @@ void SkrPrinter::append(const SkrInstruction* skr) {
     else if (kind == SkrInstruction::Kind::GetAddr) {
         auto* it = (SkrGetAddr*) skr;
         sb << val(it->getTo()) << " = addrOf(" << val(it->getVar()) << ")";
+        if (it->getOffset() != 0) {
+            sb << "+" << it->getOffset();
+        };
     }
     else if (kind == SkrInstruction::Kind::CopyToOffset) {
         auto* it = (SkrCopyToOffset*) skr;

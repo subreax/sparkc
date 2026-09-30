@@ -1,0 +1,45 @@
+#cli
+--emit ast
+
+#src
+fun main(): int {
+    var a = 10;
+    var pa = &((a));
+    return a;
+}
+
+#expect
+AstFunction(
+  name: 'main',
+  returnType: 'int',
+  params: [],
+  body: AstBlock(
+    items: [
+      AstVarDeclaration(
+        type: 'int',
+        name: 'a.0',
+        init: AstConstantExp(
+          type: 'int',
+          value: '10'
+        )
+      ),
+      AstVarDeclaration(
+        type: 'int*',
+        name: 'pa.1',
+        init: AstAddrOf(
+          type: 'int*',
+          exp: AstVar(
+            type: 'int',
+            id: 'a.0'
+          )
+        )
+      ),
+      AstReturnStatement(
+        exp: AstVar(
+          type: 'int',
+          id: 'a.0'
+        )
+      )
+    ]
+  )
+)

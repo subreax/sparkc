@@ -1,0 +1,15 @@
+#cli
+--emit skr
+
+#src
+fun main(a: int*): int {
+    *a = 20;
+    return 0;
+}
+
+#expect
+fun main(a.0: int*): int
+    store 0(a.0) = int 20
+    copy retval.1 = int 0
+    jmp .ret_0
+    .ret_0:

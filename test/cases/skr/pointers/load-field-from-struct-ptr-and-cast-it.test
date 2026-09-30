@@ -1,0 +1,18 @@
+#cli
+--emit skr
+
+
+#src
+struct pair(a: int, b: int);
+
+fun main(p: pair*): float {
+    return p.b;
+}
+
+
+#expect
+fun main(p.0: pair*): float
+    load d.2 = int 4(p.0)
+    retval.1 = toFloat(d.2)
+    jmp .ret_0
+    .ret_0:

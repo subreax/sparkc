@@ -28,7 +28,11 @@ bool operator==(const SymbolType& t1, const SymbolType& t2) {
         return false;
     }
 
-    if (t1.kind == SymbolType::Kind::Integer || t1.kind == SymbolType::Kind::Float) {
+    if (
+        t1.kind == SymbolType::Kind::Integer
+        || t1.kind == SymbolType::Kind::Float
+        || t1.kind == SymbolType::Kind::String
+    ) {
         return true;
     }
 

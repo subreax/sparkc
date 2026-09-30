@@ -15,7 +15,9 @@ public:
 private:
     static std::string buildErrorMessage(TokenKind expected, const Token& actual) {
         ExpandableStringBuilder sb;
-        sb << "Expected '" << int32_t { expected } << "', but found '" << actual.value.toString() << "' (" << int32_t { actual.kind } << ")";
+        sb << "Expected '"
+           << TokenKind_toStdString(expected) << "' (" << int32_t { expected } << ")"
+           << ", but found '" << actual.value.toString() << "' (" << int32_t { actual.kind } << ")";
         return sb.toString();
     }
 

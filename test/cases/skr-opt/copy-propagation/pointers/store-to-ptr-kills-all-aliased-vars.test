@@ -1,0 +1,31 @@
+#cli
+--emit skr --optimize copy-prop
+
+#src
+fun main(): int {
+    var x = 1;
+    var y = 2;
+    var z = 3;
+    
+    var px = &x;
+    *px = 10;
+    var py = &y;
+
+    // 'y' could be replaced with 2 after optimization,
+    // but now we assume it's correct behaviour not to replace it
+    z = x + y;
+    return z;
+}
+
+#expect
+fun main(): int
+    copy x.0 = int 1
+    copy y.1 = int 2
+    copy z.2 = int 3
+    px.3 = addrOf(x.0)
+    store 0(px.3) = int 10
+    py.4 = addrOf(y.1)
+    z.2 = int x.0 + y.1
+    copy retval.5 = int z.2
+    jmp .ret_0
+    .ret_0:

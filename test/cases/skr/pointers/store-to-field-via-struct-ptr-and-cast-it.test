@@ -1,0 +1,20 @@
+#cli
+--emit skr
+
+
+#src
+struct pair(a: int, b: int);
+
+fun main(p: pair*): int {
+    p.b = 2.3f;
+    return 0;
+}
+
+
+#expect
+fun main(p.0: pair*): int
+    cast.2 = toInt(2.3)
+    store 4(p.0) = int cast.2
+    copy retval.1 = int 0
+    jmp .ret_0
+    .ret_0:

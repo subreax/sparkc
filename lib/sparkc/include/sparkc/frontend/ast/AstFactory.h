@@ -96,8 +96,8 @@ public:
         return allocator.create<AstAssignment>(var, exp);
     }
 
-    AstDot* dot(AstExp* from, AstExp* field) {
-        return allocator.create<AstDot>(from, field);
+    AstDot* dot(AstExp* from, int depth, AstExp* field) {
+        return allocator.create<AstDot>(from, depth, field);
     }
 
     AstBinaryExp* binaryExp(AstExp* left, AstBinaryExp::Operator op, AstExp* right) {
@@ -144,7 +144,11 @@ public:
         return allocator.create<AstCast>(exp, targetType);
     }
 
-    AstDereference* dereference(AstExp* exp, SymbolType* type) {
+    AstAddrOf* addrOf(AstExp* exp, SymbolType* type = nullptr) {
+        return allocator.create<AstAddrOf>(exp, type);
+    }
+
+    AstDereference* dereference(AstExp* exp, SymbolType* type = nullptr) {
         return allocator.create<AstDereference>(exp, type);
     }
 

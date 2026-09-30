@@ -1,0 +1,71 @@
+#cli
+--emit ast
+
+#src
+struct color(r: float, g: float, b: float);
+
+fun main(c: color*): int {
+    var pg = &c.g;
+    return 0;
+}
+
+#expect
+AstStruct(
+  tag: 'color',
+  fields: [
+    Field(
+      type: 'float',
+      name: 'r'
+    ),
+    Field(
+      type: 'float',
+      name: 'g'
+    ),
+    Field(
+      type: 'float',
+      name: 'b'
+    )
+  ]
+)
+AstFunction(
+  name: 'main',
+  returnType: 'int',
+  params: [
+    AstFunParam(
+      type: 'color*',
+      name: 'c.0'
+    )
+  ],
+  body: AstBlock(
+    items: [
+      AstVarDeclaration(
+        type: 'float*',
+        name: 'pg.1',
+        init: AstAddrOf(
+          type: 'float*',
+          exp: AstDot(
+            type: 'float',
+            from: AstDereference(
+              type: 'color',
+              exp: AstVar(
+                type: 'color*',
+                id: 'c.0'
+              )
+            ),
+            depth: 1,
+            field: AstVar(
+              type: 'float',
+              id: 'g'
+            )
+          )
+        )
+      ),
+      AstReturnStatement(
+        exp: AstConstantExp(
+          type: 'int',
+          value: '0'
+        )
+      )
+    ]
+  )
+)

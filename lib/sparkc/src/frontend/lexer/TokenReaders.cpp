@@ -166,3 +166,26 @@ StringRef TokenReaders::readComma(const char* src) { return readChar(src, ','); 
 StringRef TokenReaders::readPeriod(const char* src) { return readChar(src, '.'); }
 StringRef TokenReaders::readAmp(const char* src) { return readChar(src, '&'); }
 StringRef TokenReaders::readEOF(const char* src) { return readChar(src, '\0'); }
+
+StringRef TokenReaders::readComment(const char* src) {
+    if (startsWith(src, "//")) {
+        int len = 2;
+        while (src[len] != '\n') {
+            len++;
+        }
+        return StringRef(src, len);
+    }
+    else if (startsWith(src, "/*")) {
+        int len = 2;
+        while (!startsWith(&src[len], "*/")) {
+            len++;
+        }
+        if (startsWith(&src[len], "*/")) {
+            len += 2;
+        }
+
+        return StringRef(src, len);
+    }
+
+    return StringRef::nullInstance();
+}

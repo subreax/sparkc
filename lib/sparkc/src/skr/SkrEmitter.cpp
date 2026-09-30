@@ -211,9 +211,6 @@ SkrExpRes SkrEmitter::emit(AstExp* exp, SkrVar* dst) {
     case AstExp::Kind::Constant:
         return emitConstant((AstConstantExp*) exp, dst);
 
-    case AstExp::Kind::AddrOf:
-        return emitAddrOf((AstAddrOf*) exp, dst);
-
     case AstExp::Kind::Binary:
         return emitBinary((AstBinaryExp*) exp, dst);
 
@@ -228,6 +225,12 @@ SkrExpRes SkrEmitter::emit(AstExp* exp, SkrVar* dst) {
 
     case AstExp::Kind::Cast:
         return emitCast((AstCast*) exp, dst);
+
+    case AstExp::Kind::AddrOf:
+        return emitAddrOf((AstAddrOf*) exp, dst);
+
+    case AstExp::Kind::Dereference:
+        return emitDereference((AstDereference*) exp, dst);
 
     case AstExp::Kind::Dot:
         return emitDot((AstDot*) exp);
@@ -250,14 +253,6 @@ SkrExpRes SkrEmitter::emitConstant(AstConstantExp* exp, SkrVar* dst) {
     return SkrExpRes::val(dst);
 }
 
-SkrExpRes SkrEmitter::emitAddrOf(AstAddrOf* exp, SkrVar* dst) {
-    SkrExpRes var = emit(exp->getExp(), nullptr);
-    if (dst == nullptr)
-        dst = createVar("addr", typesf.pointer(getType(var.get())));
-    body += skrf.getAddr(dst, var.get()->toSkrVar());
-    return SkrExpRes::val(dst);
-}
-
 SkrExpRes SkrEmitter::emitVar(AstVar* exp, SkrVar* dst) {
     auto* var = skrf.var(exp->getId());
     if (dst == nullptr)
@@ -268,12 +263,23 @@ SkrExpRes SkrEmitter::emitVar(AstVar* exp, SkrVar* dst) {
 
 SkrExpRes SkrEmitter::emitAssignment(AstAssignment* exp) {
     SkrExpRes left = emit(exp->getVar(), nullptr);
-    if (left.kind != SkrExpRes::Kind::Field) {
+    if (left.kind == SkrExpRes::Kind::Val) {
         return SkrExpRes::val(emitAndConvert(exp->getExp(), left.get()->toSkrVar()));
     }
-    SkrValue* right = emitAndConvert(exp->getExp(), nullptr);
-    body += skrf.copyToOffset(left.getBase(), left.getOffset(), right);
-    return SkrExpRes::val(right);
+    else if (left.kind == SkrExpRes::Kind::Ptr) {
+        auto* right = emitAndConvert(exp->getExp(), nullptr);
+        body += skrf.store(left.getBase(), left.getOffset(), right);
+        return left;
+    }
+    else if (left.kind == SkrExpRes::Kind::Field) {
+        SkrValue* right = emitAndConvert(exp->getExp(), nullptr);
+        body += skrf.copyToOffset(left.getBase(), left.getOffset(), right);
+        return SkrExpRes::val(right);
+    }
+    else {
+        sparkError("SkrEmitter", "Unknown SkrExpRes: %d", left.kind);
+        return SkrExpRes::val(nullptr);
+    }
 }
 
 SkrExpRes SkrEmitter::emitCast(AstCast* exp, SkrVar* dst) {
@@ -301,7 +307,35 @@ SkrExpRes SkrEmitter::emitDot(AstDot* exp) {
         getFieldId(exp->getField())
     );
     auto inner = emit(exp->getFrom(), nullptr);
+    if (inner.kind == SkrExpRes::Kind::Ptr) {
+        return SkrExpRes::ptr(inner.getBase(), inner.getOffset() + field.offset);
+    }
     return SkrExpRes::field(inner.getBase(), inner.getOffset() + field.offset);
+}
+
+SkrExpRes SkrEmitter::emitAddrOf(AstAddrOf* exp, SkrVar* dst) {
+    SkrExpRes res = emit(exp->getExp(), nullptr);
+    if (dst == nullptr) {
+        dst = createVar("addr", typesf.pointer(getType(res.get())));
+    }
+
+    if (res.kind == SkrExpRes::Kind::Ptr) {
+        body += skrf.binary(
+            dst,
+            res.getBase(),
+            SkrBinary::Operator::Plus,
+            skrf.iconst(res.getOffset())
+        );
+    }
+    else {
+        body += skrf.getAddr(dst, res.getBase(), res.getOffset());
+    }
+    return SkrExpRes::val(dst);
+}
+
+SkrExpRes SkrEmitter::emitDereference(AstDereference* exp, SkrVar* dst) {
+    SkrValue* ptr = emitAndConvert(exp->getExp(), nullptr);
+    return SkrExpRes::ptr(ptr, 0);
 }
 
 StringRef SkrEmitter::getFieldId(AstExp* exp) {
@@ -414,6 +448,13 @@ SkrValue* SkrEmitter::emitAndConvert(AstExp* exp, SkrVar* dst) {
     switch (res.kind) {
     case SkrExpRes::Kind::Val:
         return res.get();
+
+    case SkrExpRes::Kind::Ptr:
+        if (dst == nullptr) {
+            dst = createVar("d", exp->type);
+        }
+        body += skrf.load(dst, res.getBase(), res.getOffset());
+        return dst;
 
     case SkrExpRes::Kind::Field:
         if (dst == nullptr) {

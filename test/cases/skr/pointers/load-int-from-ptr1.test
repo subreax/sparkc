@@ -1,0 +1,15 @@
+#cli
+--emit skr
+
+#src
+fun main(pa: int*): int {
+    var a = *pa;
+    return a;
+}
+
+#expect
+fun main(pa.0: int*): int
+    load a.1 = int 0(pa.0)
+    copy retval.2 = int a.1
+    jmp .ret_0
+    .ret_0:

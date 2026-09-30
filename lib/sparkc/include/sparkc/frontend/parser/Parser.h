@@ -34,6 +34,8 @@ private:
     void parseFunArgs(std::vector<AstExp*>& outArgs);
     SymbolType* parseType();
 
+    int readPeriods();
+
     Token takeToken();
     Token expect(TokenKind kind);
 

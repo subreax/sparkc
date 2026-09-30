@@ -34,12 +34,14 @@ private:
     void typeCheck(AstAssignment* ass);
     void typeCheck(AstDot* it);
     void typeCheck(AstStructInit* it);
+    void typeCheck(AstAddrOf* it);
+    void typeCheck(AstDereference* it);
 
     static SymbolType* getCommonType(AstExp* e1, AstExp* e2);
     static SymbolType* getCommonType(SymbolType* t1, SymbolType* t2);
-    static SymbolType* dereference(SymbolType* t);
+    // static SymbolType* dereference(SymbolType* t);
 
-    AstExp* dereference(AstExp* exp);
+    AstExp* dereference(AstExp* exp, int count);
 
     AstExp* cast(AstExp* exp, SymbolType* targetType);
 

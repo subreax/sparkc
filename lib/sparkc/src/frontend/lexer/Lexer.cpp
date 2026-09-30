@@ -85,12 +85,22 @@ bool Lexer::hasNext() {
 }
 
 void Lexer::skipWhitespaces() {
-    while (isspace(src[pos])) {
-        if (src[pos] == '\n') {
-            line++;
-            column = -1;
+    int oldPos = -1;
+    while (oldPos != pos) {
+        oldPos = pos;
+
+        while (isspace(src[pos])) {
+            if (src[pos] == '\n') {
+                line++;
+                column = -1;
+            }
+            pos++;
+            column++;
         }
-        pos++;
-        column++;
+
+        auto comment = TokenReaders::readComment(&src[pos]);
+        if (comment.isNotNull()) {
+            pos += comment.getLength();
+        }
     }
 }

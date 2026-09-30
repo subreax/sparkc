@@ -1,0 +1,13 @@
+#cli
+--emit ast
+
+#src
+fun main(): int {
+    var a = 0;
+    var pa: int* = &a;
+    pa = 123;
+    *pa = 100;
+    return 0;
+}
+
+#expect_failure

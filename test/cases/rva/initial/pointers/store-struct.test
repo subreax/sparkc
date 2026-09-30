@@ -1,0 +1,30 @@
+#cli
+--emit rva-initial
+
+
+#src
+struct color(r: float, g: float, b: float);
+
+fun main(arg: color*): int {
+    arg.c = color(1.0f, 0.5f, 0.0f);
+    return 0;
+}
+
+
+#expect
+label          main:
+prologue       prologue 0
+move           pr(arg.0) = a0
+move           pm(color.2+0) = 32768
+move           pm(color.2+4) = 16384
+move           pm(color.2+8) = 0
+move           t6 = pr(arg.0)
+move           [t6+0] = pm(color.2+0)
+move           [t6+4] = pm(color.2+4)
+move           [t6+8] = pm(color.2+8)
+move           pr(retval.1) = 0
+jump           jump to .ret_0
+label          .ret_0:
+move           a0 = pr(retval.1)
+epilogue       epilogue 0
+return         ret

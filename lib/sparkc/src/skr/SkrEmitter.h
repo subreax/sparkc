@@ -56,11 +56,12 @@ private:
     SkrExpRes emitFunCall(AstFunCall* call, SkrVar* dst);
     SkrExpRes emitStructInit(AstStructInit* it, SkrVar* dst);
     SkrExpRes emitConstant(AstConstantExp* exp, SkrVar* dst);
-    SkrExpRes emitAddrOf(AstAddrOf* exp, SkrVar* dst);
     SkrExpRes emitVar(AstVar* exp, SkrVar* dst);
     SkrExpRes emitAssignment(AstAssignment* exp);
     SkrExpRes emitCast(AstCast* exp, SkrVar* dst);
     SkrExpRes emitDot(AstDot* exp);
+    SkrExpRes emitAddrOf(AstAddrOf* exp, SkrVar* dst);
+    SkrExpRes emitDereference(AstDereference* exp, SkrVar* dst);
 
     SkrValue* emitAndConvert(AstExp* exp, SkrVar* dst);
 

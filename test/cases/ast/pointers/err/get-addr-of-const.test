@@ -1,0 +1,10 @@
+#cli
+--emit ast
+
+#src
+fun main(): int {
+    &5;
+    return 0;
+}
+
+#expect_failure

@@ -1,0 +1,46 @@
+#cli
+--emit ast
+
+#src
+fun main(a: int*): int {
+    *a = 20;
+    return 0;
+}
+
+#expect
+AstFunction(
+  name: 'main',
+  returnType: 'int',
+  params: [
+    AstFunParam(
+      type: 'int*',
+      name: 'a.0'
+    )
+  ],
+  body: AstBlock(
+    items: [
+      AstExpressionStatement(
+        exp: AstAssignment(
+          type: 'int',
+          var: AstDereference(
+            type: 'int',
+            exp: AstVar(
+              type: 'int*',
+              id: 'a.0'
+            )
+          ),
+          exp: AstConstantExp(
+            type: 'int',
+            value: '20'
+          )
+        )
+      ),
+      AstReturnStatement(
+        exp: AstConstantExp(
+          type: 'int',
+          value: '0'
+        )
+      )
+    ]
+  )
+)

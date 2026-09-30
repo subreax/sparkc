@@ -99,6 +99,13 @@ SkrInstruction* CopyPropagation::rewriteInstruction(
             return skrf.int2Float(it->getDst(), src);
         }
     }
+    else if (instr->kind == SkrInstruction::Kind::Store) {
+        auto* it = (SkrStore*) instr;
+        auto* from = replace(it->getFrom(), copies);
+        if (*from != *it->getFrom()) {
+            return skrf.store(it->getTo(), it->getToOffset(), from);
+        }
+    }
 
     return instr;
 }

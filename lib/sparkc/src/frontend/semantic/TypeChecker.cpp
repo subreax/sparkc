@@ -1,4 +1,5 @@
 #include "sparkc/frontend/semantic/TypeChecker.h"
+#include <array>
 #include "sparkc/common/Error.h"
 #include "sparkc/frontend/ast/everything.h"
 #include "sparkc/symbol/SymbolTable.h"
@@ -20,6 +21,17 @@ static bool isArithOp(AstBinaryExp::Operator op) {
 
 static bool isLogicalOp(AstBinaryExp::Operator op) {
     return !isArithOp(op);
+}
+
+static bool isBinaryOperationAllowed(SymbolType* type) {
+    return type->kind == SymbolType::Kind::Integer || type->kind == SymbolType::Kind::Float;
+}
+
+static SymbolType* dereference(SymbolType* type) {
+    if (type->kind == SymbolType::Kind::Pointer) {
+        return ((SymbolPointerType*) type)->getVarType();
+    }
+    return type;
 }
 
 TypeChecker::TypeChecker(
@@ -155,6 +167,8 @@ void TypeChecker::typeCheck(AstExp* exp) {
     case AstExp::Kind::FunCall: typeCheck((AstFunCall*) exp); break;
     case AstExp::Kind::Dot: typeCheck((AstDot*) exp); break;
     case AstExp::Kind::StructInit: typeCheck((AstStructInit*) exp); break;
+    case AstExp::Kind::AddrOf: typeCheck((AstAddrOf*) exp); break;
+    case AstExp::Kind::Dereference: typeCheck((AstDereference*) exp); break;
     default:
         sparkError(
             "TypeChecker",
@@ -186,6 +200,10 @@ void TypeChecker::typeCheck(AstBinaryExp* bin) {
         bin->type = symbolTable.getTypeFactory().int_();
     }
 
+    if (!isBinaryOperationAllowed(commonType)) {
+        throw TypeException("Binary operation for type " + commonType->toString() + " is not allowed");
+    }
+
     bin->setLeft(cast(bin->getLeft(), commonType));
     bin->setRight(cast(bin->getRight(), commonType));
 }
@@ -215,15 +233,15 @@ void TypeChecker::typeCheck(AstFunCall* call) {
 
 void TypeChecker::typeCheck(AstAssignment* ass) {
     auto kind = ass->getVar()->kind;
-    if (kind != AstExp::Kind::Var && kind != AstExp::Kind::Dot) {
+    if (kind != AstExp::Kind::Var && kind != AstExp::Kind::Dot && kind != AstExp::Kind::Dereference) {
         throw TypeException(
-            std::string("Expressions can only be assigned to variables or dots, not to a ")
+            std::string("Expressions can only be assigned to variables (normal or dereferenced) or to structure fields, not to a ")
             + AstExp::kindToString(kind)
         );
     }
 
     typeCheck(ass->getVar());
-    ass->setVar(dereference(ass->getVar()));
+    ass->setVar(ass->getVar());
     ass->type = ass->getVar()->type;
 
     typeCheck(ass->getExp());
@@ -232,10 +250,17 @@ void TypeChecker::typeCheck(AstAssignment* ass) {
 
 void TypeChecker::typeCheck(AstDot* it) {
     typeCheck(it->getFrom());
-    it->setFrom(dereference(it->getFrom()));
+    if (it->getFrom()->hasType(SymbolType::Kind::Pointer)) {
+        it->setFrom(dereference(it->getFrom(), it->getDepth()));
+        it->setDepth(1);
+    }
+
     auto* fromType = it->getFrom()->type;
     if (fromType->kind != SymbolType::Kind::Structure) {
         throw TypeException("Trying to access a struct member on a non-struct type");
+    }
+    if (it->getDepth() > 1) {
+        throw TypeException("There is more dots than should be");
     }
 
     if (it->getField()->kind != AstExp::Kind::Var) {
@@ -277,6 +302,27 @@ void TypeChecker::typeCheck(AstStructInit* it) {
     it->type = symbolTable.getTypeFactory().structure(tag);
 }
 
+void TypeChecker::typeCheck(AstAddrOf* it) {
+    typeCheck(it->getExp());
+    if (it->getExp()->kind == AstExp::Kind::Var || it->getExp()->kind == AstExp::Kind::Dot) {
+        it->type = symbolTable.getTypeFactory().pointer(it->getExp()->type);
+    }
+    else {
+        throw TypeException("Get address only works for variables or fields");
+    }
+}
+
+void TypeChecker::typeCheck(AstDereference* it) {
+    typeCheck(it->getExp());
+    if (it->getExp()->hasType(SymbolType::Kind::Pointer)) {
+        auto* ptrType = (SymbolPointerType*) it->getExp()->type;
+        it->type = ptrType->getVarType();
+    }
+    else {
+        throw TypeException("Can't dereference non-pointer variable");
+    }
+}
+
 SymbolType* TypeChecker::getCommonType(AstExp* e1, AstExp* e2) {
     return getCommonType(e1->type, e2->type);
 }
@@ -284,55 +330,40 @@ SymbolType* TypeChecker::getCommonType(AstExp* e1, AstExp* e2) {
 SymbolType* TypeChecker::getCommonType(SymbolType* t1, SymbolType* t2) {
     auto k1 = t1->kind;
     auto k2 = t2->kind;
-    if (k1 == k2 && k1 != SymbolType::Kind::Function && k1 != SymbolType::Kind::String && k1 != SymbolType::Kind::Structure) {
+    if (k1 == k2) {
         return t1;
     }
 
-    if (k1 == SymbolType::Kind::Function || k2 == SymbolType::Kind::Function) {
-        throw TypeException("Common type with function doesn't exist");
-    }
-    else if (k1 == SymbolType::Kind::String || k2 == SymbolType::Kind::String) {
-        throw TypeException("Common type with string doesn't exist");
-    }
-    else if (k1 == SymbolType::Kind::Structure || k2 == SymbolType::Kind::Structure) {
-        throw TypeException("Common type with structure doesn't exist");
-    }
-    else if (k1 == SymbolType::Kind::Integer && k2 == SymbolType::Kind::Float) {
+    if (k1 == SymbolType::Kind::Integer && k2 == SymbolType::Kind::Float) {
         return t2;
     }
     else if (k1 == SymbolType::Kind::Float && k2 == SymbolType::Kind::Integer) {
         return t1;
     }
-
-    auto* t1deref = dereference(t1);
-    auto* t2deref = dereference(t2);
-    if (t1deref->kind != t2deref->kind) {
-        throw TypeException("References should have the same base type");
+    else if (k1 == SymbolType::Kind::Pointer && k2 == SymbolType::Kind::Pointer) {
+        if (*t1 != *t2) {
+            throw TypeException("Can't cast pointers");
+        }
+        return t1;
     }
 
-    return t1deref;
+    throw TypeException("No common type between " + t1->toString() + " and " + t2->toString());
 }
 
-SymbolType* TypeChecker::dereference(SymbolType* t) {
-    if (t->kind == SymbolType::Kind::Pointer) {
-        return ((SymbolPointerType*) t)->getVarType();
-    }
-    return t;
-}
-
-AstExp* TypeChecker::dereference(AstExp* exp) {
-    auto* type = exp->type;
-    if (type->kind == SymbolType::Kind::Pointer) {
-        return astf.dereference(exp, dereference(type));
+AstExp* TypeChecker::dereference(AstExp* exp, int count) {
+    while (count > 0) {
+        if (!exp->hasType(SymbolType::Kind::Pointer)) {
+            throw TypeException("Can't dereference");
+        }
+        auto* expType = (SymbolPointerType*) exp->type;
+        exp = astf.dereference(exp, expType->getVarType());
+        count--;
     }
     return exp;
 }
 
 AstExp* TypeChecker::cast(AstExp* exp, SymbolType* targetType) {
     if (exp->hasType(targetType)) {
-        /* if (!arePointersCompatible(exp->type, targetType)) {
-            throw TypeException("Can't cast pointer to another type");
-        } */
         return exp;
     }
 
@@ -350,28 +381,9 @@ AstExp* TypeChecker::cast(AstExp* exp, SymbolType* targetType) {
         throw TypeException("Structures can't be casted to another type");
     }
 
-    /* else if (exp->hasType(SymbolType::Kind::Pointer)) {
-        return cast(dereference(exp), targetType);
+    if (exp->hasType(SymbolType::Kind::Pointer) || targetType->kind == SymbolType::Kind::Pointer) {
+        throw TypeException("Not enough dereferences of pointer");
     }
-    else if (targetType->kind == SymbolType::Kind::Pointer) {
-        if (exp->kind != AstExp::Kind::Var) {
-            throw TypeException("Can't get address: exp is not AstVar");
-        }
 
-        if (exp->type->kind == dereference(targetType)->kind) {
-            return allocator.create<AstAddrOf>(exp, targetType);
-        } else {
-            throw TypeException("Can't reference to a variable with another
-    type");
-        }
-    } */
     return astf.cast(exp, targetType);
 }
-
-/* bool arePointersCompatible(SymbolType* t1, SymbolType* t2) {
-    if (t1->kind == SymbolType::Kind::Pointer && t2->kind ==
-SymbolType::Kind::Pointer) { return dereference(t1)->kind ==
-dereference(t2)->kind;
-    }
-    return true;
-} */

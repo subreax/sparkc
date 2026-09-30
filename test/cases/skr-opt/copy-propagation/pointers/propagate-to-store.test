@@ -1,0 +1,17 @@
+#cli
+--emit skr --optimize copy-prop
+
+#src
+fun update(ptr: int*): int {
+    var a = 10;
+    *ptr = a;
+    return 0;
+}
+
+#expect
+fun update(ptr.0: int*): int
+    copy a.1 = int 10
+    store 0(ptr.0) = int 10
+    copy retval.2 = int 0
+    jmp .ret_0
+    .ret_0:

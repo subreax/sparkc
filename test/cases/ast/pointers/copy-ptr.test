@@ -1,0 +1,71 @@
+#cli
+--emit ast
+
+#src
+fun main(ppa: int**, ppb: int**): int {
+    var pa = *ppa;
+    var pb = *ppb;
+    pa = pb;
+    return 0;
+}
+
+#expect
+AstFunction(
+  name: 'main',
+  returnType: 'int',
+  params: [
+    AstFunParam(
+      type: 'int**',
+      name: 'ppa.0'
+    ),
+    AstFunParam(
+      type: 'int**',
+      name: 'ppb.1'
+    )
+  ],
+  body: AstBlock(
+    items: [
+      AstVarDeclaration(
+        type: 'int*',
+        name: 'pa.2',
+        init: AstDereference(
+          type: 'int*',
+          exp: AstVar(
+            type: 'int**',
+            id: 'ppa.0'
+          )
+        )
+      ),
+      AstVarDeclaration(
+        type: 'int*',
+        name: 'pb.3',
+        init: AstDereference(
+          type: 'int*',
+          exp: AstVar(
+            type: 'int**',
+            id: 'ppb.1'
+          )
+        )
+      ),
+      AstExpressionStatement(
+        exp: AstAssignment(
+          type: 'int*',
+          var: AstVar(
+            type: 'int*',
+            id: 'pa.2'
+          ),
+          exp: AstVar(
+            type: 'int*',
+            id: 'pb.3'
+          )
+        )
+      ),
+      AstReturnStatement(
+        exp: AstConstantExp(
+          type: 'int',
+          value: '0'
+        )
+      )
+    ]
+  )
+)

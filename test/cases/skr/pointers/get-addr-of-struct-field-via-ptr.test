@@ -1,0 +1,18 @@
+#cli
+--emit skr
+
+#src
+struct color(r: float, g: float, b: float);
+
+fun main(c: color*): int {
+    var pg = &c.g;
+    return 0;
+}
+
+
+#expect
+fun main(c.0: color*): int
+    pg.1 = float* c.0 + 4
+    copy retval.2 = int 0
+    jmp .ret_0
+    .ret_0:

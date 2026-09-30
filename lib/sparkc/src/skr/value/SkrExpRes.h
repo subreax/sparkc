@@ -5,12 +5,12 @@ class SkrExpRes {
 public:
     enum class Kind {
         Val,
-        /* Ptr, */
+        Ptr,
         Field
     };
 
     static SkrExpRes val(SkrValue* value) { return SkrExpRes(Kind::Val, value, 0); }
-    // static SkrExpRes ptr(SkrValue* base, int offset) { return SkrExpRes(Kind::Ptr, base, offset); }
+    static SkrExpRes ptr(SkrValue* base, int offset) { return SkrExpRes(Kind::Ptr, base, offset); }
     static SkrExpRes field(SkrValue* base, int offset) { return SkrExpRes(Kind::Field, base, offset); }
 
     SkrValue* get() const { return _val; }

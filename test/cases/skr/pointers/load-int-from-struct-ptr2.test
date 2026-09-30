@@ -1,0 +1,19 @@
+#cli
+--emit skr
+
+#src
+struct pair(a: int, b: int, c: int);
+
+fun doSomething(p: pair**): int {
+    var a = p..a;
+    return a;
+}
+
+
+#expect
+fun doSomething(p.0: pair**): int
+    load d.3 = pair* 0(p.0)
+    load a.1 = int 0(d.3)
+    copy retval.2 = int a.1
+    jmp .ret_0
+    .ret_0:

@@ -1,0 +1,41 @@
+#cli
+--emit ast
+
+#src
+fun main(pa: int*): int {
+    var a = *pa;
+    return a;
+}
+
+#expect
+AstFunction(
+  name: 'main',
+  returnType: 'int',
+  params: [
+    AstFunParam(
+      type: 'int*',
+      name: 'pa.0'
+    )
+  ],
+  body: AstBlock(
+    items: [
+      AstVarDeclaration(
+        type: 'int',
+        name: 'a.1',
+        init: AstDereference(
+          type: 'int',
+          exp: AstVar(
+            type: 'int*',
+            id: 'pa.0'
+          )
+        )
+      ),
+      AstReturnStatement(
+        exp: AstVar(
+          type: 'int',
+          id: 'a.1'
+        )
+      )
+    ]
+  )
+)

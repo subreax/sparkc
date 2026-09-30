@@ -1,0 +1,29 @@
+#cli
+--emit ast
+
+#src
+fun main(ptr: int*): int {
+    return 0;
+}
+
+#expect
+AstFunction(
+  name: 'main',
+  returnType: 'int',
+  params: [
+    AstFunParam(
+      type: 'int*',
+      name: 'ptr.0'
+    )
+  ],
+  body: AstBlock(
+    items: [
+      AstReturnStatement(
+        exp: AstConstantExp(
+          type: 'int',
+          value: '0'
+        )
+      )
+    ]
+  )
+)

@@ -239,8 +239,9 @@ AstExp* Parser::parseExpression(int prevPrecedence) {
             left = astf.assignment(left, right);
         }
         else if (op.kind == T_PERIOD) {
+            int depth = 1 + readPeriods();
             AstExp* right = parseExpression(precedence + 1);
-            left = astf.dot(left, right);
+            left = astf.dot(left, depth, right);
         }
         else {
             AstExp* right = parseExpression(precedence + 1);
@@ -292,6 +293,18 @@ AstExp* Parser::parseFactor() {
         }
     }
 
+    case T_AMP: {
+        takeToken();
+        auto* exp = parseExpression();
+        return astf.addrOf(exp);
+    }
+
+    case T_ASTERISK: {
+        takeToken();
+        auto* exp = parseFactor();
+        return astf.dereference(exp);
+    }
+
     default: throw WrongExprException(current);
     }
 }
@@ -331,7 +344,20 @@ SymbolType* Parser::parseType() {
         throw UnknownTypeException(current);
     }
 
+    while (current.kind == T_ASTERISK) {
+        takeToken();
+        type = typesf.pointer(type);
+    }
     return type;
+}
+
+int Parser::readPeriods() {
+    int count = 0;
+    while (current.kind == T_PERIOD) {
+        takeToken();
+        count++;
+    }
+    return count;
 }
 
 Token Parser::takeToken() {

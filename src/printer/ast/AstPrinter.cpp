@@ -286,6 +286,7 @@ static void print(TreePrinter& p, const AstExp* exp) {
         p.field("type", type2string(dot));
         p.field("from");
         print(p, dot->getFrom());
+        p.field("depth", dot->getDepth());
         p.field("field");
         print(p, dot->getField());
         p.endObject();

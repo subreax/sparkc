@@ -56,6 +56,14 @@ private:
             auto* it = (SkrInt2Float*) instr;
             return !annotation.contains(it->getDst());
         }
+        else if (instr->kind == SkrInstruction::Kind::GetAddr) {
+            auto* it = (SkrGetAddr*) instr;
+            return !annotation.contains(it->getTo());
+        }
+        else if (instr->kind == SkrInstruction::Kind::Load) {
+            auto* it = (SkrLoad*) instr;
+            return !annotation.contains(it->getTo());
+        }
         // never delete function calls because:
         // 1. they can update static vars
         // 2. a funtion can be an external function that changes system behaviour

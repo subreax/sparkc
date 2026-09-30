@@ -67,8 +67,8 @@ public:
         return allocator.create<SkrBranch>(left, op, right, label);
     }
 
-    SkrGetAddr* getAddr(SkrVar* dst, SkrVar* src) {
-        return allocator.create<SkrGetAddr>(dst, src);
+    SkrGetAddr* getAddr(SkrVar* dst, SkrVar* src, int offset) {
+        return allocator.create<SkrGetAddr>(dst, src, offset);
     }
 
     SkrInt2Float* int2Float(SkrVar* dst, SkrValue* src) {
@@ -89,6 +89,14 @@ public:
             BoundArray<SkrValue*>::fromVector(args, allocator),
             retVar
         );
+    }
+
+    SkrLoad* load(SkrVar* to, SkrValue* from, int fromOffset) {
+        return allocator.create<SkrLoad>(to, from, fromOffset);
+    }
+
+    SkrStore* store(SkrVar* to, int toOffset, SkrValue* from) {
+        return allocator.create<SkrStore>(to, toOffset, from);
     }
 
     SkrCopyToOffset* copyToOffset(SkrVar* to, int offset, SkrValue* from) {

@@ -6,13 +6,15 @@
 #include "sparkc/skr/instr/everything.h"
 #include "sparkc/common/cfg/CfgUtils.h"
 #include "sparkc/symbol/SymbolTable.h"
+#include "../SkrOptimizerUtils.h"
 
 class ReachingCopiesAnalysis {
 public:
     ReachingCopiesAnalysis(SymbolTable& symTable, SkrCfg& graph)
         : graph(graph)
         , annotatedBlocks(graph.getSize())
-        , staticVars(getStaticVars(symTable)) { }
+        , staticVars(SkrOptimizerUtils::getStaticVars(symTable))
+        , aliasedVars(SkrOptimizerUtils::getAliasedVars(graph)) { }
 
     void run() {
         const ReachingCopies identity = getAllCopies();
@@ -106,6 +108,7 @@ private:
                 auto* callInstr = (SkrFunCall*) instr;
                 currentCopies.kill(callInstr->getRetVar());
                 currentCopies.killAll(staticVars);
+                currentCopies.killAll(aliasedVars);
             }
             else if (instr->kind == SkrInstruction::Kind::Float2Int) {
                 auto* it = (SkrFloat2Int*) instr;
@@ -123,11 +126,18 @@ private:
                 auto* it = (SkrCopyFromOffset*) instr;
                 currentCopies.kill(it->getTo()->toSkrVar());
             }
+            else if (instr->kind == SkrInstruction::Kind::GetAddr) {
+                auto* it = (SkrGetAddr*) instr;
+                currentCopies.kill(it->getTo());
+            }
             else if (instr->kind == SkrInstruction::Kind::Load) {
-                sparkError("ReachingCopiesAnalysis", "Load is not implemented");
+                auto* it = (SkrLoad*) instr;
+                currentCopies.kill(it->getTo()->toSkrVar());
             }
             else if (instr->kind == SkrInstruction::Kind::Store) {
-                sparkError("ReachingCopiesAnalysis", "Store is not implemented");
+                auto* it = (SkrStore*) instr;
+                currentCopies.kill(it->getTo());
+                currentCopies.killAll(aliasedVars);
             }
         }
         annotated.setBlockAnnotation(currentCopies);
@@ -167,19 +177,10 @@ private:
         return elem;
     }
 
-    static std::vector<StringRef> getStaticVars(SymbolTable& symTable) {
-        std::vector<StringRef> vars;
-        for (const auto& [name, symbol] : symTable) {
-            if (symbol.isStatic()) {
-                vars.emplace_back(name);
-            }
-        }
-        return vars;
-    }
-
     static constexpr size_t MAX_ITERATIONS = 300;
 
     SkrCfg& graph;
     std::vector<RCABlock> annotatedBlocks;
     std::vector<StringRef> staticVars;
+    std::vector<StringRef> aliasedVars;
 };

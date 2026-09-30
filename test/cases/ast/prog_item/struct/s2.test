@@ -65,11 +65,13 @@ AstFunction(
                 type: 'grad',
                 id: 'g.0'
               ),
+              depth: 1,
               field: AstVar(
                 type: 'color',
                 id: 'from'
               )
             ),
+            depth: 1,
             field: AstVar(
               type: 'float',
               id: 'r'
@@ -92,11 +94,13 @@ AstFunction(
                 type: 'grad',
                 id: 'g.0'
               ),
+              depth: 1,
               field: AstVar(
                 type: 'color',
                 id: 'from'
               )
             ),
+            depth: 1,
             field: AstVar(
               type: 'float',
               id: 'g'
@@ -117,6 +121,7 @@ AstFunction(
               type: 'grad',
               id: 'g.0'
             ),
+            depth: 1,
             field: AstVar(
               type: 'color',
               id: 'to'

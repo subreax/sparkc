@@ -1,0 +1,12 @@
+#cli
+--emit ast
+
+#src
+struct pair(a: float, b: float, c: float);
+
+fun main(p: pair**): int {
+    p...a = 5;
+    return 0;
+}
+
+#expect_failure

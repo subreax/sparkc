@@ -1,0 +1,19 @@
+#cli
+--emit skr
+
+#src
+fun main(ppa: int**, ppb: int**): int {
+    var pa = *ppa;
+    var pb = *ppb;
+    pa = pb;
+    return 0;
+}
+
+#expect
+fun main(ppa.0: int**, ppb.1: int**): int
+    load pa.2 = int* 0(ppa.0)
+    load pb.3 = int* 0(ppb.1)
+    copy pa.2 = int* pb.3
+    copy retval.4 = int 0
+    jmp .ret_0
+    .ret_0:

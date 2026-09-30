@@ -1,0 +1,23 @@
+#cli
+--emit rva-initial
+
+
+#src
+fun main(arg: int*): int {
+    *arg = 10;
+    return 0;
+}
+
+
+#expect
+label          main:
+prologue       prologue 0
+move           pr(arg.0) = a0
+move           t6 = pr(arg.0)
+move           [t6+0] = 10
+move           pr(retval.1) = 0
+jump           jump to .ret_0
+label          .ret_0:
+move           a0 = pr(retval.1)
+epilogue       epilogue 0
+return         ret
